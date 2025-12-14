@@ -26,6 +26,7 @@ model Product {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   active    Boolean  @default(true)
+  memories  Memory[]
 }
 
 model Memory {
@@ -40,6 +41,9 @@ model Memory {
   
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
   
   media       Media[]
   

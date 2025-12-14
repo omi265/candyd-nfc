@@ -158,6 +158,10 @@ function CheckIcon() {
 
 // --- Menu Dropdown ---
 
+import { logout } from "@/app/actions/auth";
+import { getUserProducts } from "@/app/actions/memories";
+import { useSearchParams } from "next/navigation";
+
 function MenuDropdown({
   isOpen,
   onClose,
@@ -166,16 +170,46 @@ function MenuDropdown({
   onClose: () => void;
 }) {
   const [isCharmDropdownOpen, setIsCharmDropdownOpen] = useState(false);
-  const [selectedCharm, setSelectedCharm] = useState("Charm 1");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentCharmId = searchParams.get('charmId');
   const menuRef = useRef<HTMLDivElement>(null);
+  
+  const [products, setProducts] = useState<{id: string, name: string}[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
-  const charms = ["Charm 1", "Charm 2", "Charm 3"];
+  // Fetch products on open
+  useEffect(() => {
+    if (isOpen) {
+        setIsLoadingProducts(true);
+        getUserProducts().then(fetchedProducts => {
+            setProducts(fetchedProducts);
+            setIsLoadingProducts(false);
+        });
+    }
+  }, [isOpen]);
+
+  // Derived state for display
+  const currentProduct = products.find(p => p.id === currentCharmId);
+  const displayLabel = currentProduct ? currentProduct.name : "All Charms";
+
   const menuItems = [
     { label: "SETTINGS", href: "/settings" },
     { label: "MANAGE CHARMS", href: "/manage-charms" },
     { label: "HELP", href: "/help" },
     { label: "EXPLORE PRODUCTS", href: "/products" },
   ];
+
+  const handleCharmSelect = (productId: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (productId) {
+          params.set('charmId', productId);
+      } else {
+          params.delete('charmId');
+      }
+      router.push(`/?${params.toString()}`);
+      setIsCharmDropdownOpen(false);
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -216,7 +250,7 @@ function MenuDropdown({
             >
               <CharmIcon />
               <span className="text-[#5B2D7D] font-medium">
-                {selectedCharm}
+                {displayLabel}
               </span>
               <motion.div
                 animate={{ rotate: isCharmDropdownOpen ? 180 : 0 }}
@@ -236,30 +270,48 @@ function MenuDropdown({
                   className="overflow-hidden"
                 >
                   <div className="space-y-1 mt-2">
-                    {charms.map((charm, index) => (
-                      <motion.button
-                        key={charm}
+                    {/* All Charms Option */}
+                    <motion.button
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.15, delay: index * 0.05 }}
-                        onClick={() => {
-                          setSelectedCharm(charm);
-                          setIsCharmDropdownOpen(false);
-                        }}
+                        transition={{ duration: 0.15 }}
+                        onClick={() => handleCharmSelect(null)}
+                        className="w-full flex items-center justify-center gap-2 py-2 text-[#5B2D7D] hover:bg-[#D8CCE8]/50 rounded-lg transition-colors"
+                    >
+                        <span className={!currentCharmId ? "font-medium" : "opacity-70"}>
+                            All Charms
+                        </span>
+                        {!currentCharmId && <CheckIcon />}
+                    </motion.button>
+                  
+                    {/* Product List */}
+                    {products.map((product, index) => (
+                      <motion.button
+                        key={product.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.15, delay: (index + 1) * 0.05 }}
+                        onClick={() => handleCharmSelect(product.id)}
                         className="w-full flex items-center justify-center gap-2 py-2 text-[#5B2D7D] hover:bg-[#D8CCE8]/50 rounded-lg transition-colors"
                       >
                         <span
                           className={
-                            selectedCharm === charm
+                            currentCharmId === product.id
                               ? "font-medium"
                               : "opacity-70"
                           }
                         >
-                          {charm}
+                          {product.name}
                         </span>
-                        {selectedCharm === charm && <CheckIcon />}
+                        {currentCharmId === product.id && <CheckIcon />}
                       </motion.button>
                     ))}
+                    
+                    {products.length === 0 && !isLoadingProducts && (
+                        <div className="text-center text-[#5B2D7D]/60 text-sm py-2">
+                            No charms found
+                        </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -288,6 +340,26 @@ function MenuDropdown({
               </motion.div>
               </Link>
             ))}
+
+            <button
+                onClick={() => {
+                    logout();
+                    onClose();
+                }}
+                className="w-full text-left"
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.25, delay: 0.1 + menuItems.length * 0.05 }}
+                className="flex items-center gap-3 px-2 py-1"
+              >
+                <FlowerIcon />
+                <span className="text-[#5B2D7D] font-bold text-xl tracking-wide">
+                  LOGOUT
+                </span>
+              </motion.div>
+            </button>
           </nav>
         </motion.div>
       )}

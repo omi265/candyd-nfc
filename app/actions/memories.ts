@@ -13,6 +13,7 @@ const createMemorySchema = z.object({
   location: z.string().optional(),
   emotions: z.string().optional(), // Comma separated or JSON string
   mood: z.string().optional(),
+  productId: z.string().optional(),
 });
 
 export async function createMemory(prevState: { error?: string; success?: boolean } | undefined, formData: FormData) {
@@ -27,7 +28,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
     return { error: "Invalid fields: " + validatedFields.error.issues.map((i) => i.message).join(", ") };
   }
 
-  const { title, description, date, time, location, emotions, mood } = validatedFields.data;
+  const { title, description, date, time, location, emotions, mood, productId } = validatedFields.data;
 
   // content-type check for date if needed, assuming ISO or valid string for now
   // For this app, the date format from frontend might need parsing "DD-MM-YYYY" -> ISO
@@ -59,6 +60,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
         emotions: emotionsArray,
         mood,
         userId: session.user.id,
+        productId: productId || undefined,
         // Media is skipped for now as per user request
       },
     });
@@ -71,15 +73,21 @@ export async function createMemory(prevState: { error?: string; success?: boolea
   }
 }
 
-export async function getMemories() {
+export async function getMemories(productId?: string) {
   const session = await auth();
   if (!session?.user?.id) return [];
 
   try {
-    const memories = await db.memory.findMany({
-      where: {
+    const whereClause: any = {
         userId: session.user.id,
-      },
+    };
+
+    if (productId) {
+        whereClause.productId = productId;
+    }
+
+    const memories = await db.memory.findMany({
+      where: whereClause,
       orderBy: {
         createdAt: 'desc',
       },
@@ -92,4 +100,38 @@ export async function getMemories() {
     console.error("Failed to fetch memories:", error);
     return [];
   }
+}
+
+export async function getUserProducts() {
+    const session = await auth();
+    if (!session?.user?.id) return [];
+
+    try {
+        const products = await db.product.findMany({
+            where: {
+                userId: session.user.id,
+                active: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            }
+        });
+        return products;
+    } catch (error) {
+        console.error("Failed to fetch user products:", error);
+        return [];
+    }
+}
+
+export async function getProductIdFromToken(token: string) {
+    try {
+        const product = await db.product.findUnique({
+            where: { token },
+            select: { id: true }
+        });
+        return product?.id || null;
+    } catch (error) {
+        console.error("Failed to get product from token:", error);
+        return null;
+    }
 }

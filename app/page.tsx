@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "motion/react";
 import { getMemories } from "@/app/actions/memories";
@@ -170,6 +170,9 @@ function EmptyCard({ isActive, onClick }: { isActive: boolean; onClick: () => vo
 export default function Home() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const charmId = searchParams.get('charmId');
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [activeCellIndex, setActiveCellIndex] = useState(4);
@@ -188,7 +191,8 @@ export default function Home() {
      async function loadMemories() {
          if (user) {
              try {
-                const fetchedMemories = await getMemories();
+                setIsMemoryLoading(true);
+                const fetchedMemories = await getMemories(charmId || undefined);
                 
                 // Map memories to grid data. Strategy: Fill empty slots.
                 const newGrid = [...INITIAL_GRID_DATA];
@@ -219,7 +223,7 @@ export default function Home() {
          }
      }
      loadMemories();
-  }, [user]);
+  }, [user, charmId]);
 
   // Initial Center Scroll & Observer
   useEffect(() => {
@@ -272,26 +276,26 @@ export default function Home() {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-[#FDF2EC]">
-      <div className="flex-shrink-0">
+    <div className="flex flex-col h-full bg-[#FDF2EC] relative">
+      <div className="flex-shrink-0 pt-2 pb-2">
           <FilterBar />
       </div>
 
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 min-h-0 relative flex flex-col justify-end">
             <div 
                 ref={scrollContainerRef}
-                className="w-full h-full overflow-auto snap-both snap-mandatory no-scrollbar touch-pan-x touch-pan-y"
+                className="w-full overflow-auto snap-both snap-mandatory no-scrollbar touch-pan-x touch-pan-y pb-24"
                 style={{ scrollBehavior: 'smooth' }}
             >
                 {/* 
-                   Padding Logic for 75vw x 60vh Cards:
-                   Px: (100 - 75) / 2 = 12.5vw
-                   Py: (100 - 60) / 2 = 20vh
-                   Gap: gap-1
+                   Padding Logic to center the 5th element (center of 3x3) initially and allow scrolling.
+                   Grid is 3x3. 
+                   We want the user to be able to scroll to all edges.
+                   The container aligns to the bottom of the screen (flex-end).
                 */}
                 <div className="
-                    grid grid-cols-3 grid-rows-3 gap-1 
-                    w-max px-[12.5vw] py-[20vh]
+                    grid grid-cols-3 grid-rows-3 gap-2
+                    w-max px-[12.5vw]
                 ">
                     {gridData.map((item, index) => (
                         <div 

@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn } from "@/auth";
+import { signIn, signOut } from "@/auth";
 import { db } from "@/lib/db";
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
@@ -57,4 +57,8 @@ export async function registerUser(prevState: { error?: string, success?: boolea
      });
 
      return { success: true };
+}
+
+export async function logout() {
+  await signOut({ redirectTo: "/login" });
 }

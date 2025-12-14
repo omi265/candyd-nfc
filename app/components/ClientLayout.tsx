@@ -35,17 +35,13 @@ export default function ClientLayout({
 
   // Authenticated Layout
   return (
-    <div className="min-h-screen bg-[#FDF2EC] flex flex-col max-w-md mx-auto relative shadow-2xl">
-      <AppHeader userName={user.name} />
-      {/* 
-        We use flex-1 to make sure the content takes available space.
-        Note: Children pages should standardly not include their own min-h-screen if they want to flow within this.
-        However, if they do, it might just stack. 
-        Current pages have min-h-screen already. We might need to adjust them to avoid double scrollbars or huge heights. 
-        Actually, the child pages like Home have `min-h-screen`. 
-        If we wrap them in another div, and they are `min-h-screen`, it's fine.
-      */}
-      {children}
+    <div className="h-dvh bg-[#FDF2EC] flex flex-col max-w-md mx-auto relative shadow-2xl overflow-hidden">
+      <div className="shrink-0 z-50 relative bg-[#FDF2EC]">
+          <AppHeader userName={user.name} />
+      </div>
+      <div className="flex-1 overflow-y-auto no-scrollbar relative w-full">
+          {children}
+      </div>
     </div>
   );
 }
