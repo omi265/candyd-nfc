@@ -167,7 +167,11 @@ function EmptyCard({ isActive, onClick }: { isActive: boolean; onClick: () => vo
 }
 
 
-export default function Home() {
+import { Suspense } from "react";
+
+// ... (keep previous types and components: PlusIcon, SearchIcon, GridIcon, ListIcon, FilterBar, MemoryCard, EmptyCard, GridItemType, INITIAL_GRID_DATA)
+
+function HomeContent() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -337,5 +341,13 @@ export default function Home() {
       </div>
     </div>
   );
+}
+
+export default function Home() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#FDF2EC] text-[#5B2D7D]">Loading...</div>}>
+            <HomeContent />
+        </Suspense>
+    )
 }
 
