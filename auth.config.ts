@@ -12,17 +12,19 @@ export const authConfig = {
       // simplified: returning true lets middleware.ts logic dictate
       return true; 
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
     async session({ session, token }) {
       if (token.id && session.user) {
         session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
+    },
+    async jwt({ token, user }) {
+      if (user && user.id) {
+        token.id = user.id;
+        token.role = user.role || "USER";
+      }
+      return token;
     },
   },
   providers: [], // Providers added in auth.ts

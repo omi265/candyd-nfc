@@ -17,9 +17,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        token: { label: "Token", type: "text" },
       },
       authorize: async (credentials) => {
         try {
+            // 1. Check for Token Login
+            if (credentials.token && typeof credentials.token === 'string') {
+              const product = await db.product.findUnique({
+                where: { token: credentials.token },
+                include: { user: true }
+              });
+
+              if (product && product.active && product.user) {
+                return product.user;
+              }
+              return null;
+            }
+
+            // 2. Standard Email/Password Login
             const parsedCredentials = await loginSchema.safeParseAsync(credentials);
             
             if (!parsedCredentials.success) return null;
