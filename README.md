@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Candyd NFC
+
+A web application for creating and storing memories linked to physical NFC products. Tap your NFC-enabled product to instantly access and add memories.
+
+## Features
+
+- **NFC Product Linking** - Associate physical NFC products with your account using unique tokens
+- **Memory Creation** - Store memories with titles, descriptions, dates, locations, emotions, and mood
+- **Media Uploads** - Attach photos and videos to memories via Cloudinary
+- **Interactive Memory Grid** - Browse memories with smooth animations and filtering
+- **Token-Based Access** - Tap an NFC product to authenticate and view associated memories
+- **Admin Dashboard** - Manage products, view user stats, and create new NFC tokens
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js v5 (JWT sessions)
+- **Media Storage**: Cloudinary
+- **Styling**: Tailwind CSS 4
+- **Animations**: Motion (Framer Motion)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+
+- PostgreSQL database (or Neon cloud PostgreSQL)
+- Cloudinary account (for media uploads)
+
+### Environment Variables
+
+Create a `.env` file with:
+
+```
+DATABASE_URL=postgresql://...
+AUTH_SECRET=your-secret-key
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npx prisma migrate dev
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+├── actions/       # Server actions (auth, memories, admin)
+├── api/           # Route handlers (auth, upload signing)
+├── components/    # Shared React components
+├── admin/         # Admin dashboard
+├── login/         # Authentication pages
+├── register/
+├── upload-memory/ # Memory creation
+└── nfc/           # NFC token-based login
+lib/               # Utilities (db client, auth context, cloudinary)
+prisma/            # Database schema and migrations
+```

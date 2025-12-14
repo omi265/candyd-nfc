@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn, signOut } from "@/auth";
+import { signIn, signOut, auth } from "@/auth";
 import { db } from "@/lib/db";
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
@@ -61,4 +61,15 @@ export async function registerUser(prevState: { error?: string, success?: boolea
 
 export async function logout() {
   await signOut({ redirectTo: "/login" });
+}
+
+export async function updateProfile(formData: FormData) {
+    const session = await auth(); 
+    if (!session?.user) return { error: "Not authenticated" };
+    
+    // Placeholder for actual update logic
+    // const name = formData.get("name");
+    // await db.user.update(...)
+    
+    return { success: true };
 }
