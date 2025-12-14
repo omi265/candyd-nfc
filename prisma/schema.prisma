@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  memories  Memory[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Memory {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  date        DateTime
+  time        String?  // Can be formatted time string
+  location    String?
+  emotions    String[] // Array of emotion strings
+  mood        String?
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  media       Media[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  url       String   // Cloudinary URL
+  type      String   // 'image', 'video', 'audio'
+  
+  memoryId  String
+  memory    Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
