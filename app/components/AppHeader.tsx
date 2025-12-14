@@ -9,27 +9,12 @@ import { useRouter } from "next/navigation";
 
 function Logo() {
   return (
-    <div className="w-8 h-8 flex items-center justify-center">
-      <svg
-        viewBox="0 0 32 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-8 h-8"
-      >
-        <path
-          d="M16 4C16 4 12 8 12 14C12 20 16 28 16 28C16 28 20 20 20 14C20 8 16 4 16 4Z"
-          stroke="#5B2D7D"
-          strokeWidth="2"
-          fill="none"
-        />
-        <path
-          d="M8 12C8 12 10 14 16 14C22 14 24 12 24 12"
-          stroke="#5B2D7D"
-          strokeWidth="2"
-          fill="none"
-        />
-        <circle cx="16" cy="10" r="2" fill="#5B2D7D" />
-      </svg>
+    <div className="w-8 h-8 flex items-center justify-center relative">
+      <img
+        src="/Candyd_logo.svg"
+        alt="Candyd Logo"
+        className="w-full h-full object-contain"
+      />
     </div>
   );
 }
@@ -49,22 +34,15 @@ function MenuButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function FlowerIcon() {
+function StarIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-6 h-6"
-    >
-      <path
-        d="M12 2L13.5 8.5L20 7L15 12L20 17L13.5 15.5L12 22L10.5 15.5L4 17L9 12L4 7L10.5 8.5L12 2Z"
-        fill="#A4C538"
-        stroke="#A4C538"
-        strokeWidth="1"
-        strokeLinejoin="round"
+    <div className="w-6 h-6 flex items-center justify-center relative">
+      <img
+        src="/Star.svg"
+        alt="Star"
+        className="w-full h-full object-contain"
       />
-    </svg>
+    </div>
   );
 }
 
@@ -333,7 +311,7 @@ function MenuDropdown({
                 transition={{ duration: 0.25, delay: 0.1 + index * 0.05 }}
                 className="flex items-center gap-3 px-2 py-1"
               >
-                <FlowerIcon />
+                <StarIcon />
                 <span className="text-[#5B2D7D] font-bold text-xl tracking-wide">
                   {item.label}
                 </span>
@@ -354,7 +332,7 @@ function MenuDropdown({
                 transition={{ duration: 0.25, delay: 0.1 + menuItems.length * 0.05 }}
                 className="flex items-center gap-3 px-2 py-1"
               >
-                <FlowerIcon />
+                <StarIcon />
                 <span className="text-[#5B2D7D] font-bold text-xl tracking-wide">
                   LOGOUT
                 </span>

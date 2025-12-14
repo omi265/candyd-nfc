@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { registerUser } from "@/app/actions/auth";
 import { authenticate } from "@/app/actions/auth";
+import { useFormStatus } from "react-dom";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,34 +14,32 @@ export default function RegisterPage() {
     if (result?.error) return result.error;
     if (result?.success) {
       // Auto-login after successful registration
-      // We reuse the authenticate action but we need to make sure formData has email/password
-      // The formData already has email/password from the registration form
       const loginResult = await authenticate(undefined, formData);
       if (loginResult) return loginResult; // standard auth error string
-      // If no error, wait for redirect or push router
-      // Authenticate usually redirects, but if we are here, we might need to handle it.
-      // However, server actions redirect by throwing an error, so if `authenticate` redirects, this code won't run past it.
       return null;
     }
     return null;
   }, null);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black px-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 font-[family-name:var(--font-outfit)]">
+      <div className="w-full max-w-md space-y-8 bg-white/40 backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-white/50">
+        <div className="flex flex-col items-center text-center">
+            <div className="w-20 h-20 mb-4 relative flex items-center justify-center">
+                <img src="/Candyd_logo.svg" alt="Candyd Logo" className="w-full h-full object-contain" />
+            </div>
+          <h1 className="text-3xl font-bold tracking-tight text-primary-purple">
             Create an account
           </h1>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-text-gray">
             Sign up to get started
           </p>
         </div>
 
         <form action={formAction} className="mt-8 space-y-6">
           {errorMessage && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
-              <p className="text-sm text-red-700 dark:text-red-400">{errorMessage}</p>
+            <div className="rounded-2xl bg-red-50 p-4 border border-red-100">
+              <p className="text-sm text-red-600 font-medium text-center">{errorMessage}</p>
             </div>
           )}
 
@@ -48,7 +47,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
               >
                 Full name
               </label>
@@ -58,7 +57,7 @@ export default function RegisterPage() {
                 type="text"
                 autoComplete="name"
                 required
-                className="mt-1 block w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/20"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
                 placeholder="John Doe"
               />
             </div>
@@ -66,7 +65,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
               >
                 Email address
               </label>
@@ -76,7 +75,7 @@ export default function RegisterPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="mt-1 block w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/20"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
                 placeholder="you@example.com"
               />
             </div>
@@ -84,7 +83,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
               >
                 Password
               </label>
@@ -95,24 +94,19 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 required
                 minLength={6}
-                className="mt-1 block w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 text-zinc-900 dark:text-white placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/20"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
                 placeholder="••••••••"
               />
             </div>
-
-            {/* Note: Server action validation doesn't check confirmPassword, removing reliance on client state validation.
-                Ideally we add Zod refine for confirmPassword if we send it.
-                For now, simplified to just password to match action schema.
-            */}
           </div>
 
           <RegisterButton />
 
-          <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-center text-sm text-text-gray">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-medium text-zinc-900 dark:text-white hover:underline"
+              className="font-bold text-primary-purple hover:underline"
             >
               Sign in
             </Link>
@@ -130,12 +124,10 @@ function RegisterButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      className="w-full rounded-2xl bg-primary-purple px-4 py-3.5 text-sm font-bold text-white hover:bg-primary-purple/90 focus:outline-none focus:ring-4 focus:ring-primary-purple/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary-purple/20 active:scale-[0.98]"
     >
       {pending ? "Creating account..." : "Create account"}
     </button>
   );
 }
-
-import { useFormStatus } from "react-dom";
 
