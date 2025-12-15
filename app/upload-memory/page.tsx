@@ -78,8 +78,8 @@ export default function MemoryUploadPage() {
     // Form State
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [date, setDate] = useState("17-06-2025");
-    const [time, setTime] = useState("12:09:93");
+    const [date, setDate] = useState("");
+    const [time, setTime] = useState("");
     const [location, setLocation] = useState("");
     const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
@@ -124,7 +124,12 @@ export default function MemoryUploadPage() {
             if (selectedMood) formData.append("mood", selectedMood);
             if (selectedProductId) formData.append("productId", selectedProductId);
             
-            // Media is skipped for now as per instructions
+            // Append media files
+            if (media.length > 0) {
+                media.forEach((file) => {
+                    formData.append("media", file);
+                });
+            }
 
             const result = await createMemory(undefined, formData);
             if (result?.error) {
@@ -161,13 +166,7 @@ export default function MemoryUploadPage() {
                             </p>
                         </div>
                      </div>
-                     <button className="w-10 h-10 rounded-full bg-[#FFF5F0] flex items-center justify-center shadow-sm text-[#5B2D7D]">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                            <line x1="4" y1="6" x2="20" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                            <line x1="4" y1="18" x2="20" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        </svg>
-                     </button>
+
                 </div>
 
                 <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
@@ -240,15 +239,14 @@ export default function MemoryUploadPage() {
                          <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Date<span className="text-[#C27A59]">*</span></label>
                          <div className="relative">
                             <input
-                                type="text"
+                                type="date"
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
                                 className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                             />
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                 <CalendarIcon />
                             </div>
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A68CAB] text-[11px]">(today)</span>
                          </div>
                     </div>
                     
@@ -257,12 +255,12 @@ export default function MemoryUploadPage() {
                          <label className="block text-[#5B2D7D] text-[13px] font-bold mb-2">Time</label>
                          <div className="relative">
                             <input
-                                type="text"
+                                type="time"
                                 value={time}
                                 onChange={(e) => setTime(e.target.value)}
                                 className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                             />
-                             <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                 <ClockIcon />
                             </div>
                          </div>
@@ -405,7 +403,7 @@ export default function MemoryUploadPage() {
                     disabled={isPending}
                     className="flex-1 bg-[#D4C3D8] text-[#5B2D7D] text-[15px] font-bold h-[56px] rounded-[28px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#C2ADC7] transition-all disabled:opacity-70 active:scale-95 relative"
                 >
-                     <span className="">{isPending ? "Saving..." : "Create now"}</span>
+                     <span className="">{isPending ? "Uploading..." : "Create now"}</span>
                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.4301 5.92993L20.5001 11.9999L14.4301 18.0699" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M3.5 12H20.33" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </button>
              </div>

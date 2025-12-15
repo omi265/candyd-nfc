@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import cloudinary from "@/lib/cloudinary";
 
 const createMemorySchema = z.object({
   title: z.string().min(1, "Title is required").max(15, "Title too long"),
@@ -28,13 +29,10 @@ export async function createMemory(prevState: { error?: string; success?: boolea
     return { error: "Invalid fields: " + validatedFields.error.issues.map((i) => i.message).join(", ") };
   }
 
+
   const { title, description, date, time, location, emotions, mood, productId } = validatedFields.data;
 
-  // content-type check for date if needed, assuming ISO or valid string for now
-  // For this app, the date format from frontend might need parsing "DD-MM-YYYY" -> ISO
-  // Let's assume frontend sends something parseable or we handle it here.
-  // Given "17-06-2025" from frontend default:
-  
+  // content-type check for date if needed
   let parsedDate = new Date();
   try {
       const [day, month, year] = date.split("-");
@@ -47,10 +45,15 @@ export async function createMemory(prevState: { error?: string; success?: boolea
       console.error("Date parsing error", e);
   }
 
-  try {
-    const emotionsArray = emotions ? emotions.split(",") : [];
+  // Handle Media Uploads
+  const mediaFiles = formData.getAll("media") as File[];
+  const uploadedMedia = [];
 
-    await db.memory.create({
+  try {
+    // 1. Create Memory
+    const emotionsArray = emotions ? emotions.split(",") : [];
+    
+    const memory = await db.memory.create({
       data: {
         title,
         description,
@@ -61,14 +64,59 @@ export async function createMemory(prevState: { error?: string; success?: boolea
         mood,
         userId: session.user.id,
         productId: productId || undefined,
-        // Media is skipped for now as per user request
       },
     });
+
+    // 2. Upload Media if present
+    if (mediaFiles && mediaFiles.length > 0) {
+        for (const file of mediaFiles) {
+            if (file instanceof File && file.size > 0) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
+                    
+                    // Determine resource type based on mime type or just auto
+                    // Simple heuristic:
+                    const type = file.type.startsWith('video') ? 'video' : 
+                                 file.type.startsWith('audio') ? 'video' : // Cloudinary treats audio as video usually or distinct, 'auto' is safest
+                                 'image';
+
+                    const uploadResult: any = await new Promise((resolve, reject) => {
+                        cloudinary.uploader.upload_stream(
+                           { 
+                             resource_type: "auto",
+                             folder: "candyd_memories"
+                           },
+                           (error, result) => {
+                               if (error) reject(error);
+                               else resolve(result);
+                           }
+                        ).end(buffer);
+                    });
+
+                    if (uploadResult?.secure_url) {
+                        await db.media.create({
+                            data: {
+                                url: uploadResult.secure_url,
+                                type: uploadResult.resource_type, // 'image', 'video', 'raw'
+                                size: file.size,
+                                memoryId: memory.id
+                            }
+                        });
+                    }
+                } catch (uploadError) {
+                    console.error("Failed to upload file:", file.name, uploadError);
+                    // Continue with other files? Or throw?
+                    // Let's continue but maybe log warning
+                }
+            }
+        }
+    }
 
     revalidatePath("/"); // Update home page
     return { success: true };
   } catch (error) {
-    console.error("Database Error:", error);
+    console.error("Database/Upload Error:", error);
     return { error: "Failed to create memory." };
   }
 }
