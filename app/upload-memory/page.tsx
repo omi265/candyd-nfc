@@ -1,6 +1,7 @@
 "use client";
 
 import { createMemory, getUserProducts } from "@/app/actions/memories";
+import { getCloudinarySignature } from "@/app/actions/upload";
 
 // ... (icons remain the same, so imports are fine)
 // Re-importing necessary hooks only to be safe with the replacement context
@@ -74,16 +75,18 @@ export default function MemoryUploadPage() {
     const { user, isLoading } = useAuth(); // Keeping for frontend check, real auth is in server action
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
+    const [isUploading, setIsUploading] = useState(false);
 
     // Form State
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [date, setDate] = useState("");
-    const [time, setTime] = useState("");
+    const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [time, setTime] = useState(() => new Date().toTimeString().slice(0, 5));
     const [location, setLocation] = useState("");
     const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
-    const [media, setMedia] = useState<File[]>([]); // simplified for demo
+    const [media, setMedia] = useState<File[]>([]); 
+    const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
     const [optionalExpanded, setOptionalExpanded] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
@@ -103,7 +106,12 @@ export default function MemoryUploadPage() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setMedia(Array.from(e.target.files));
+            const files = Array.from(e.target.files);
+            setMedia(files);
+            
+            // Create previews immediately
+            const previews = files.map(file => URL.createObjectURL(file));
+            setMediaPreviews(previews);
         }
     };
 
@@ -113,31 +121,86 @@ export default function MemoryUploadPage() {
 
     const handleSubmit = async () => {
         setError(null);
-        startTransition(async () => {
-            const formData = new FormData();
-            formData.append("title", title);
-            formData.append("description", description);
-            formData.append("date", date);
-            formData.append("time", time);
-            formData.append("location", location);
-            formData.append("emotions", selectedEmotions.join(","));
-            if (selectedMood) formData.append("mood", selectedMood);
-            if (selectedProductId) formData.append("productId", selectedProductId);
-            
-            // Append media files
+        setIsUploading(true);
+
+        try {
+            // 1. Upload Media First
+            const uploadedUrls: string[] = [];
+            const uploadedTypes: string[] = [];
+
             if (media.length > 0) {
-                media.forEach((file) => {
-                    formData.append("media", file);
-                });
+                console.log("UPLOAD: Starting media upload for", media.length, "files");
+                // Get signature once (or per file if safer/needed, but once is fine usually)
+                const signatureData = await getCloudinarySignature();
+                console.log("UPLOAD: Signature received", signatureData);
+                const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
+                
+                for (const file of media) {
+                    console.log("UPLOAD: Uploading file", file.name);
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    formData.append("api_key", apiKey!);
+                    formData.append("timestamp", timestamp.toString());
+                    formData.append("signature", signature);
+                    formData.append("folder", folder);
+
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        console.error("UPLOAD: Cloudinary error", err);
+                        throw new Error(err.error?.message || "Upload failed");
+                    }
+
+                    const data = await response.json();
+                    console.log("UPLOAD: Cloudinary success", data);
+                    uploadedUrls.push(data.secure_url);
+                    uploadedTypes.push(data.resource_type);
+                }
+            } else {
+                console.log("UPLOAD: No media files selected");
             }
 
-            const result = await createMemory(undefined, formData);
-            if (result?.error) {
-                setError(result.error);
-            } else if (result?.success) {
-                router.push("/");
-            }
-        });
+            // 2. Submit Memory with URLs
+            startTransition(async () => {
+                const formData = new FormData();
+                formData.append("title", title);
+                formData.append("description", description);
+                formData.append("date", date);
+                formData.append("time", time);
+                formData.append("location", location);
+                formData.append("emotions", selectedEmotions.join(","));
+                if (selectedMood) formData.append("mood", selectedMood);
+                if (selectedProductId) formData.append("productId", selectedProductId);
+                
+                // Pass URLs and Types as JSON strings
+                if (uploadedUrls.length > 0) {
+                    formData.append("mediaUrls", JSON.stringify(uploadedUrls));
+                    formData.append("mediaTypes", JSON.stringify(uploadedTypes));
+                }
+
+                console.log("UPLOAD: Submitting to createMemory action with URLs", uploadedUrls);
+                const result = await createMemory(undefined, formData);
+                console.log("UPLOAD: createMemory result", result);
+
+                if (result?.error) {
+                    console.error("UPLOAD: createMemory error", result.error);
+                    setError(result.error);
+                } else if (result?.success) {
+                    console.log("UPLOAD: Success, redirecting...");
+                    router.push("/");
+                }
+                setIsUploading(false); // Reset uploading state
+            });
+
+        } catch (err: any) {
+            console.error("Upload Error:", err);
+            setError(err.message || "Failed to upload media.");
+            setIsUploading(false);
+        }
     };
 
     if (isLoading || !user) return <div className="min-h-screen flex items-center justify-center bg-[#FDF2EC] text-[#5B2D7D]">Loading...</div>;
@@ -223,12 +286,37 @@ export default function MemoryUploadPage() {
                                 </div>
                             </div>
                         ) : (
-                             // Keeping media preview same for brevity, user focused on empty state design usually
                              <div className="bg-[#FFF5F0] rounded-2xl p-3 relative space-y-2 border border-[#E8D1E0]">
-                                {/* ... Media Preview logic same as above ... */}
-                                {/* For safety, I'll put a placeholder or the same code if requested, but let's stick to the empty state focus */}
-                                <div className="h-40 bg-zinc-100 rounded-xl flex items-center justify-center text-[#5B2D7D]">
-                                    Media Selected
+                                <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
+                                    {mediaPreviews.map((src, i) => (
+                                        <div key={i} className="flex-shrink-0 w-24 h-24 rounded-xl bg-gray-200 overflow-hidden relative border border-[#E8D1E0]">
+                                           {/* Simple check for video extension or just show as img/video */}
+                                            {media[i]?.type.startsWith("video") ? (
+                                                <video src={src} className="w-full h-full object-cover" muted />
+                                            ) : (
+                                                <img src={src} alt="preview" className="w-full h-full object-cover" />
+                                            )}
+                                        </div>
+                                    ))}
+                                    <label className="flex-shrink-0 w-24 h-24 rounded-xl border border-dashed border-[#5B2D7D]/30 flex flex-col items-center justify-center gap-1 cursor-pointer bg-white/50 hover:bg-white transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-[#F37B55] flex items-center justify-center shadow-sm">
+                                            <UploadIcon />
+                                        </div>
+                                        <span className="text-[9px] text-[#5B2D7D] font-medium">Add More</span>
+                                        <input type="file" className="hidden" onChange={(e) => {
+                                             if (e.target.files && e.target.files.length > 0) {
+                                                const newFiles = Array.from(e.target.files);
+                                                setMedia(prev => [...prev, ...newFiles]);
+                                                setMediaPreviews(prev => [...prev, ...newFiles.map(f => URL.createObjectURL(f))]);
+                                             }
+                                        }} multiple accept="image/*,video/*,audio/*" />
+                                    </label>
+                                </div>
+                                <div className="flex justify-between items-center px-1">
+                                    <span className="text-[11px] text-[#A68CAB] font-medium">{media.length} file{media.length > 1 ? 's' : ''} selected</span>
+                                    <button type="button" onClick={() => { setMedia([]); setMediaPreviews([]); }} className="text-[11px] text-[#C27A59] font-bold hover:underline">
+                                        Clear all
+                                    </button>
                                 </div>
                              </div>
                         )}
@@ -400,10 +488,10 @@ export default function MemoryUploadPage() {
                 <button
                     type="button" 
                     onClick={handleSubmit} 
-                    disabled={isPending}
+                    disabled={isPending || isUploading}
                     className="flex-1 bg-[#D4C3D8] text-[#5B2D7D] text-[15px] font-bold h-[56px] rounded-[28px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#C2ADC7] transition-all disabled:opacity-70 active:scale-95 relative"
                 >
-                     <span className="">{isPending ? "Uploading..." : "Create now"}</span>
+                     <span className="">{isUploading ? "Uploading media..." : isPending ? "Saving..." : "Create now"}</span>
                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.4301 5.92993L20.5001 11.9999L14.4301 18.0699" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M3.5 12H20.33" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </button>
              </div>

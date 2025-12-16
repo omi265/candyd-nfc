@@ -18,9 +18,12 @@ export default async function Home({
   const resolvedSearchParams = await searchParams;
   const charmId = typeof resolvedSearchParams?.charmId === 'string' ? resolvedSearchParams.charmId : undefined;
 
+  console.log("HOME: Session User ID:", session?.user?.id);
   let memories: any[] = [];
   try {
      memories = await getMemories(charmId);
+     console.log("HOME: Fetched Memories Count:", memories.length);
+     console.log("HOME: Fetched Memories Data:", JSON.stringify(memories, null, 2));
   } catch (error) {
      console.error("Failed to fetch memories on server", error);
      // We can continue with empty memories or handle error

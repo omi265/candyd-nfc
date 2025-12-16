@@ -15,39 +15,37 @@ const createMemorySchema = z.object({
   emotions: z.string().optional(), // Comma separated or JSON string
   mood: z.string().optional(),
   productId: z.string().optional(),
+  mediaUrls: z.string().optional(), // JSON string of string[]
+  mediaTypes: z.string().optional(), // JSON string of string[]
 });
 
 export async function createMemory(prevState: { error?: string; success?: boolean } | undefined, formData: FormData) {
+  console.log("ACTION: createMemory called");
   const session = await auth();
   if (!session?.user?.id) {
+    console.error("ACTION: Unauthorized");
     return { error: "Unauthorized" };
   }
+  console.log("ACTION: User authorized", session.user.id);
 
-  const validatedFields = createMemorySchema.safeParse(Object.fromEntries(formData.entries()));
+  const rawData = Object.fromEntries(formData.entries());
+  console.log("ACTION: Raw form data keys", Object.keys(rawData));
+  const validatedFields = createMemorySchema.safeParse(rawData);
 
   if (!validatedFields.success) {
+    console.error("ACTION: Validation failed", validatedFields.error);
     return { error: "Invalid fields: " + validatedFields.error.issues.map((i) => i.message).join(", ") };
   }
 
 
-  const { title, description, date, time, location, emotions, mood, productId } = validatedFields.data;
+  const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes } = validatedFields.data;
 
   // content-type check for date if needed
-  let parsedDate = new Date();
-  try {
-      const [day, month, year] = date.split("-");
-      if (day && month && year) {
-          parsedDate = new Date(`${year}-${month}-${day}`);
-      } else {
-          parsedDate = new Date(date);
-      }
-  } catch (e) {
-      console.error("Date parsing error", e);
+  const parsedDate = new Date(date);
+  if (isNaN(parsedDate.getTime())) {
+      console.error("ACTION: Invalid Date", date);
+      return { error: "Invalid date format" };
   }
-
-  // Handle Media Uploads
-  const mediaFiles = formData.getAll("media") as File[];
-  const uploadedMedia = [];
 
   try {
     // 1. Create Memory
@@ -67,57 +65,35 @@ export async function createMemory(prevState: { error?: string; success?: boolea
       },
     });
 
-    // 2. Upload Media if present
-    if (mediaFiles && mediaFiles.length > 0) {
-        for (const file of mediaFiles) {
-            if (file instanceof File && file.size > 0) {
-                try {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const buffer = Buffer.from(arrayBuffer);
-                    
-                    // Determine resource type based on mime type or just auto
-                    // Simple heuristic:
-                    const type = file.type.startsWith('video') ? 'video' : 
-                                 file.type.startsWith('audio') ? 'video' : // Cloudinary treats audio as video usually or distinct, 'auto' is safest
-                                 'image';
+    // 2. Add Media Records (from client-side uploaded URLs)
+    if (mediaUrls && mediaTypes) {
+        try {
+            const urls = JSON.parse(mediaUrls) as string[];
+            const types = JSON.parse(mediaTypes) as string[];
 
-                    const uploadResult: any = await new Promise((resolve, reject) => {
-                        cloudinary.uploader.upload_stream(
-                           { 
-                             resource_type: "auto",
-                             folder: "candyd_memories"
-                           },
-                           (error, result) => {
-                               if (error) reject(error);
-                               else resolve(result);
-                           }
-                        ).end(buffer);
+            if (Array.isArray(urls) && Array.isArray(types) && urls.length === types.length) {
+                for (let i = 0; i < urls.length; i++) {
+                     await db.media.create({
+                        data: {
+                            url: urls[i],
+                            type: types[i], // 'image', 'video'
+                            size: 0, // We don't have size readily available, or we could pass it. Optional.
+                            memoryId: memory.id
+                        }
                     });
-
-                    if (uploadResult?.secure_url) {
-                        await db.media.create({
-                            data: {
-                                url: uploadResult.secure_url,
-                                type: uploadResult.resource_type, // 'image', 'video', 'raw'
-                                size: file.size,
-                                memoryId: memory.id
-                            }
-                        });
-                    }
-                } catch (uploadError) {
-                    console.error("Failed to upload file:", file.name, uploadError);
-                    // Continue with other files? Or throw?
-                    // Let's continue but maybe log warning
                 }
             }
+        } catch (e) {
+            console.error("Error parsing media URLs/Types", e);
+            // Non-blocking, but good to know
         }
     }
 
     revalidatePath("/"); // Update home page
     return { success: true };
-  } catch (error) {
-    console.error("Database/Upload Error:", error);
-    return { error: "Failed to create memory." };
+  } catch (error: any) {
+    console.error("Database Error:", error);
+    return { error: "Failed to create memory: " + (error.message || "Unknown DB error") };
   }
 }
 
