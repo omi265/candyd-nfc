@@ -1,10 +1,9 @@
 "use client";
 
-import { useAuth } from "@/lib/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "motion/react";
-import { getMemories } from "@/app/actions/memories";
+import { MemoryDrawer } from "@/components/memory-drawer";
 
 // --- Icons ---
 
@@ -77,12 +76,6 @@ type GridItemType =
   | { type: 'memory', id: string, image: string, title: string, date: string }
   | { type: 'empty', id: string };
 
-const INITIAL_GRID_DATA: GridItemType[] = [
-    { type: 'empty', id: 'e1' }, { type: 'empty', id: 'e2' }, { type: 'empty', id: 'e3' },
-    { type: 'empty', id: 'e4' }, { type: 'empty', id: 'e5' }, { type: 'empty', id: 'e6' },
-    { type: 'empty', id: 'e7' }, { type: 'empty', id: 'e8' }, { type: 'empty', id: 'e9' },
-];
-
 // --- Components ---
 
 function FilterBar() {
@@ -104,15 +97,17 @@ function FilterBar() {
   );
 }
 
-function MemoryCard({ item, isActive }: { item: Extract<GridItemType, { type: 'memory' }>; isActive: boolean }) {
+function MemoryCard({ item, isActive, onClick }: { item: Extract<GridItemType, { type: 'memory' }>; isActive: boolean; onClick: () => void }) {
     return (
         <motion.div 
-            className="w-full h-full relative p-4 flex flex-col justify-end shadow-lg rounded-[32px] overflow-hidden group origin-center"
+            onClick={onClick}
+            className="w-full h-full relative p-4 flex flex-col justify-end shadow-lg rounded-[32px] overflow-hidden group origin-center cursor-pointer"
             animate={{ 
                 scale: isActive ? 1 : 0.85,
                 opacity: isActive ? 1 : 0.5,
                 filter: isActive ? 'blur(0px)' : 'blur(3px)'
             }}
+            whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
         >
              {/* Background Image */}
@@ -138,7 +133,7 @@ function MemoryCard({ item, isActive }: { item: Extract<GridItemType, { type: 'm
 function EmptyCard({ isActive, onClick }: { isActive: boolean; onClick: () => void }) {
     return (
         <motion.div 
-            className={`w-full h-full rounded-[32px] flex flex-col items-center justify-center overflow-hidden
+            className={`w-full h-full rounded-[32px] flex flex-col items-center justify-center overflow-hidden cursor-pointer
                  ${isActive ? 'bg-[#EAE8C3]/90 backdrop-blur-sm shadow-md' : 'bg-white/60 shadow-md'}
             `}
             animate={{ 
@@ -147,10 +142,10 @@ function EmptyCard({ isActive, onClick }: { isActive: boolean; onClick: () => vo
                 filter: isActive ? 'blur(0px)' : 'blur(1px)'
             }}
             transition={{ duration: 0.5, ease: "easeOut" }}
+            onClick={onClick}
         > 
              <motion.div 
-                onClick={isActive ? onClick : undefined}
-                className="flex flex-col items-center justify-center cursor-pointer"
+                className="flex flex-col items-center justify-center"
                 animate={{ 
                     opacity: isActive ? 1 : 0.5,
                     scale: isActive ? 1 : 0.9 
@@ -188,17 +183,14 @@ interface HomeContentProps {
 }
 
 export default function HomeContent({ initialMemories, user }: HomeContentProps) {
-  // Use user from props if available, otherwise from context (though server should enforce it)
-  // Actually, we should probably still rely on context for client-side updates if any, but for initial render use props.
-  // But context.user might be null initially.
-  
   const router = useRouter();
   const searchParams = useSearchParams();
   const charmId = searchParams.get('charmId');
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const [activeCellIndex, setActiveCellIndex] = useState(4); // Default to center, will update based on gridSize
+  const [activeCellIndex, setActiveCellIndex] = useState(4);
+  const [selectedMemory, setSelectedMemory] = useState<any>(null);
   
   // Determine grid size based on initial memories
   const memoryCount = initialMemories ? initialMemories.length : 0;
@@ -214,10 +206,8 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
     
     const newGrid = [...initialGrid];
     
-    // Priority fill order: Center first, then outward
     const FILL_ORDER = getCenterOutOrder(gridSize);
     
-    // Limit memories to grid capacity
     const memoriesToMap = initialMemories.slice(0, totalCells);
 
     memoriesToMap.forEach((memory: any, index: number) => {
@@ -248,19 +238,6 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
     return newGrid;
   });
 
-  // Remove the useEffect that fetches memories on mount
-  // But we might want to refetch if charmId changes heavily?
-  // The server component will handle the initial fetch based on searchParams.
-  // So if charmId changes in URL, the server component re-renders (if using standard nav), or client?
-  // If navigating via router.push with search params, it's a soft nav.
-  // But page.tsx is a server component, so searchParams prop usage makes it dynamic.
-  // Next.js might re-run the server component on search param change.
-  
-  // We still might want a client-side fetch effect that ONLY runs if initialMemories didn't account for current charmId?
-  // Or just rely on the server component to provide data.
-  // Let's rely on server passing fresh data.
-  // However, we need to update state when initialMemories prop changes.
-  
   useEffect(() => {
     if (initialMemories) {
         const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(initialMemories.length)));
@@ -301,12 +278,10 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
     }
   }, [initialMemories]);
 
-
   // Initial Center Scroll & Observer
   useEffect(() => {
       if (scrollContainerRef.current) {
           const centerIndex = getCenterOutOrder(gridSize)[0];
-          // Update active cell index to center initially
           setActiveCellIndex(centerIndex);
           
           const centerEl = itemsRef.current[centerIndex];
@@ -331,10 +306,7 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
                   }
               });
           },
-          {
-              root: container,
-              threshold: 0.6
-          }
+          { root: container, threshold: 0.6 }
       );
 
       itemsRef.current.forEach(el => {
@@ -342,10 +314,17 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
       });
 
       return () => observer.disconnect();
-  }, [gridData]);
+  }, [gridData, gridSize]);
 
   const handleAddMemory = () => {
     router.push("/upload-memory");
+  };
+
+  const handleMemoryClick = (id: string) => {
+      const memory = initialMemories?.find(m => m.id === id);
+      if (memory) {
+          setSelectedMemory(memory);
+      }
   };
 
   return (
@@ -373,9 +352,12 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
                             ref={el => { itemsRef.current[index] = el }}
                             className="snap-center w-[75vw] h-[60vh]"
                         >
-                            {/* We handle undefined gracefully, but array is pre-filled */}
                             {item && item.type === 'memory' ? (
-                                <MemoryCard item={item} isActive={activeCellIndex === index} />
+                                <MemoryCard 
+                                    item={item} 
+                                    isActive={activeCellIndex === index} 
+                                    onClick={() => handleMemoryClick(item.id)}
+                                />
                             ) : (
                                 <EmptyCard 
                                     isActive={activeCellIndex === index} 
@@ -406,6 +388,13 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
                  </button>
             </div>
       </div>
+      
+      {/* Memory Drawer as an overlay on Home */}
+      <MemoryDrawer 
+        memory={selectedMemory} 
+        open={!!selectedMemory} 
+        onOpenChange={(open) => !open && setSelectedMemory(null)} 
+      />
     </div>
   );
 }

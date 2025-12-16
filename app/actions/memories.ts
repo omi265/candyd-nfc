@@ -159,3 +159,109 @@ export async function getProductIdFromToken(token: string) {
         return null;
     }
 }
+
+export async function getMemory(id: string) {
+    const session = await auth();
+    if (!session?.user?.id || !id) return null;
+
+    try {
+        const memory = await db.memory.findUnique({
+            where: { id },
+            include: { media: true }
+        });
+        
+        if (!memory || memory.userId !== session.user.id) return null;
+        
+        return memory;
+    } catch (error) {
+        console.error("Failed to fetch memory:", error);
+        return null;
+    }
+}
+
+export async function updateMemory(id: string, prevState: any, formData: FormData) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    const rawData = Object.fromEntries(formData.entries());
+    const validatedFields = createMemorySchema.safeParse(rawData);
+
+    if (!validatedFields.success) {
+        return { error: "Invalid fields: " + validatedFields.error.issues.map((i) => i.message).join(", ") };
+    }
+
+    const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes } = validatedFields.data;
+    const parsedDate = new Date(date);
+
+    try {
+        const memory = await db.memory.findUnique({
+             where: { id },
+             select: { userId: true }
+        });
+
+        if (!memory || memory.userId !== session.user.id) {
+             return { error: "Unauthorized or Memory not found" };
+        }
+
+        const emotionsArray = emotions ? emotions.split(",") : [];
+
+        await db.memory.update({
+            where: { id },
+            data: {
+                title,
+                description,
+                date: parsedDate,
+                time,
+                location,
+                emotions: emotionsArray,
+                mood,
+                productId: productId || undefined,
+            }
+        });
+
+        // Add NEW media if provided
+        if (mediaUrls && mediaTypes) {
+             const urls = JSON.parse(mediaUrls) as string[];
+             const types = JSON.parse(mediaTypes) as string[];
+             
+             if (Array.isArray(urls) && Array.isArray(types)) {
+                 for (let i = 0; i < urls.length; i++) {
+                     await db.media.create({
+                        data: {
+                            url: urls[i],
+                            type: types[i],
+                            size: 0,
+                            memoryId: id
+                        }
+                    });
+                }
+             }
+        }
+
+        revalidatePath("/");
+        revalidatePath(`/memory/${id}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Update Error:", error);
+        return { error: error.message };
+    }
+}
+
+export async function deleteMemory(id: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const memory = await db.memory.findUnique({
+            where: { id },
+            select: { userId: true }
+        });
+        if (!memory || memory.userId !== session.user.id) return { error: "Unauthorized" };
+
+        await db.memory.delete({ where: { id } });
+        revalidatePath("/");
+        return { success: true };
+    } catch (error: any) {
+         return { error: error.message };
+    }
+}
