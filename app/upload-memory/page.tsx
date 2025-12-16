@@ -10,61 +10,21 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
-// --- Icons (reused/adapted) ---
-
-function BackIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M15 18L9 12L15 6" stroke="#5B2D7D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-
-function UploadIcon() {
-    return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-white">
-            <path d="M9 17V11L7 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M9 11L11 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M22 10V15C22 20 20 22 15 22H9C4 22 2 20 2 15V9C2 4 4 2 9 2H14" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M22 10H18C15 10 14 9 14 6V2L22 10Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-    )
-}
-
-function CalendarIcon() {
-    return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#5B2D7D]">
-            <path d="M8 2V5" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M16 2V5" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M3.5 9.09H20.5" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M21 8.5V17C21 20 19.5 22 16 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-    )
-}
-
-function ClockIcon() {
-    return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#5B2D7D]">
-             <path d="M22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2C17.52 2 22 6.48 22 12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-             <path d="M15.71 15.18L12.61 13.33C12.07 13.01 11.63 12.24 11.63 11.61V7.51" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-    )
-}
-
-function LocationIcon() {
-     return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#5B2D7D]">
-            <path d="M12 13.43C13.7231 13.43 15.12 12.0331 15.12 10.31C15.12 8.58687 13.7231 7.19 12 7.19C10.2769 7.19 8.88 8.58687 8.88 10.31C8.88 12.0331 10.2769 13.43 12 13.43Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M3.62 8.49C5.59 -0.169998 18.42 -0.159997 20.38 8.5C21.53 13.58 18.37 17.88 15.6 20.54C13.59 22.48 10.41 22.48 8.39 20.54C5.63 17.88 2.47 13.57 3.62 8.49Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-     )
-}
-
-function ImageIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeWidth="2"/><circle cx="8.5" cy="8.5" r="1.5" strokeWidth="2"/><polyline points="21 15 16 10 5 21" strokeWidth="2"/></svg>; }
-function VideoIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><polygon points="23 7 16 12 23 17 23 7" strokeWidth="2"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2" strokeWidth="2"/></svg>; }
-function AudioIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" strokeWidth="2"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" strokeWidth="2"/><line x1="12" y1="19" x2="12" y2="23" strokeWidth="2"/><line x1="8" y1="23" x2="16" y2="23" strokeWidth="2"/></svg>; }
-function TrashIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><polyline points="3 6 5 6 21 6" strokeWidth="2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" strokeWidth="2"/></svg>; }
-function RefreshIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M23 4v6h-6" strokeWidth="2"/><path d="M1 20v-6h6" strokeWidth="2"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" strokeWidth="2"/></svg>}
+import { 
+    ChevronLeft, 
+    Upload, 
+    Calendar, 
+    Clock, 
+    MapPin, 
+    Image as ImageIcon, 
+    Video as VideoIcon, 
+    Mic, 
+    Trash2, 
+    RefreshCw,
+    Feather,
+    ArrowRight,
+    ChevronDown
+} from "lucide-react";
 
 // --- Components ---
 
@@ -216,11 +176,7 @@ export default function MemoryUploadPage() {
                      <div className="flex items-start gap-3">
                          {/* Feather Icon */}
                          <div className="mt-1">
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M7.5 19.5C7.5 19.5 4.5 22.5 2.5 25.5" stroke="#A4C538" strokeWidth="2.5" strokeLinecap="round"/>
-                                <path d="M25.5 2.5C25.5 2.5 12.5 10.5 7.5 19.5C2.5 28.5 7.5 19.5 7.5 19.5" stroke="#5B2D7D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M16.5 7.5C15.8333 9.66667 15.5 14.5 19.5 16.5" stroke="#5B2D7D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                            <Feather className="w-7 h-7 text-[#5B2D7D]" />
                          </div>
                         <div>
                             <h1 className="text-[28px] font-black text-[#5B2D7D] uppercase leading-[0.9] tracking-tight">LET'S SAVE<br/> A MEMORY</h1>
@@ -267,7 +223,7 @@ export default function MemoryUploadPage() {
                         {!hasMedia ? (
                             <div className="border border-dashed border-[#5B2D7D]/20 bg-[#FFF5F0] rounded-[32px] p-6 relative flex flex-col items-center justify-center text-center h-52">
                                 <button type="button" className="w-14 h-14 bg-[#F37B55] rounded-2xl flex items-center justify-center mb-3 shadow-[0_4px_10px_rgba(243,123,85,0.3)] relative z-10 transition-transform active:scale-95">
-                                   <UploadIcon />
+                                   <Upload className="w-8 h-8 text-white" />
                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
                                 </button>
                                 <p className="text-[#5B2D7D] font-semibold text-[15px] mb-1">Upload your file or drag</p>
@@ -275,13 +231,13 @@ export default function MemoryUploadPage() {
                                 
                                 <div className="absolute bottom-5 left-5 right-5 flex justify-center gap-3">
                                      <div className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium">
-                                        <ImageIcon /> Image
+                                        <ImageIcon className="w-4 h-4" /> Image
                                      </div>
                                      <div className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium">
-                                        <VideoIcon /> Video
+                                        <VideoIcon className="w-4 h-4" /> Video
                                      </div>
                                      <div className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium">
-                                        <AudioIcon /> Audio
+                                        <Mic className="w-4 h-4" /> Audio
                                      </div>
                                 </div>
                             </div>
@@ -300,7 +256,7 @@ export default function MemoryUploadPage() {
                                     ))}
                                     <label className="flex-shrink-0 w-24 h-24 rounded-xl border border-dashed border-[#5B2D7D]/30 flex flex-col items-center justify-center gap-1 cursor-pointer bg-white/50 hover:bg-white transition-colors">
                                         <div className="w-8 h-8 rounded-full bg-[#F37B55] flex items-center justify-center shadow-sm">
-                                            <UploadIcon />
+                                            <Upload className="w-5 h-5 text-white" />
                                         </div>
                                         <span className="text-[9px] text-[#5B2D7D] font-medium">Add More</span>
                                         <input type="file" className="hidden" onChange={(e) => {
@@ -333,7 +289,7 @@ export default function MemoryUploadPage() {
                                 className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                             />
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <CalendarIcon />
+                                <Calendar className="w-5 h-5 text-[#5B2D7D]" />
                             </div>
                          </div>
                     </div>
@@ -349,7 +305,7 @@ export default function MemoryUploadPage() {
                                 className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                             />
                              <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <ClockIcon />
+                                <Clock className="w-5 h-5 text-[#5B2D7D]" />
                             </div>
                          </div>
                     </div>
@@ -366,7 +322,7 @@ export default function MemoryUploadPage() {
                                 className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                             />
                              <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                                <LocationIcon />
+                                <MapPin className="w-5 h-5 text-[#5B2D7D]" />
                             </div>
                          </div>
                     </div>
@@ -386,9 +342,7 @@ export default function MemoryUploadPage() {
                                 ))}
                             </select>
                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M6 9L12 15L18 9" stroke="#5B2D7D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
+                                    <ChevronDown className="w-5 h-5 text-[#5B2D7D]" />
                             </div>
                          </div>
                     </div>
@@ -401,9 +355,7 @@ export default function MemoryUploadPage() {
                     >
                         Edit optional fields
                             <motion.div animate={{ rotate: optionalExpanded ? 180 : 0 }}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M19.9201 8.95001L13.4001 15.47C12.6301 16.24 11.3701 16.24 10.6001 15.47L4.08008 8.95001" stroke="#5B2D7D" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                                <ChevronDown className="w-5 h-5 text-[#5B2D7D]" />
                             </motion.div>
                     </button>
 
@@ -482,7 +434,7 @@ export default function MemoryUploadPage() {
                     onClick={() => router.push('/')}
                     className="w-[56px] h-[56px] rounded-full bg-[#FFF5F0] flex items-center justify-center shadow-lg text-[#5B2D7D] flex-shrink-0 active:scale-95 transition-transform"
                 >
-                    <BackIcon />
+                    <ChevronLeft className="w-6 h-6" />
                 </button>
 
                 <button
@@ -492,7 +444,7 @@ export default function MemoryUploadPage() {
                     className="flex-1 bg-[#D4C3D8] text-[#5B2D7D] text-[15px] font-bold h-[56px] rounded-[28px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#C2ADC7] transition-all disabled:opacity-70 active:scale-95 relative"
                 >
                      <span className="">{isUploading ? "Uploading media..." : isPending ? "Saving..." : "Create now"}</span>
-                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.4301 5.92993L20.5001 11.9999L14.4301 18.0699" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M3.5 12H20.33" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                     <ArrowRight className="w-5 h-5" />
                 </button>
              </div>
         </div>

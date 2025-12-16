@@ -19,20 +19,7 @@ function Logo() {
   );
 }
 
-function MenuButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
-    >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <line x1="3" y1="12" x2="21" y2="12" stroke="#5B2D7D" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="3" y1="6" x2="21" y2="6" stroke="#5B2D7D" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="3" y1="18" x2="21" y2="18" stroke="#5B2D7D" strokeWidth="2" strokeLinecap="round"/>
-        </svg>
-    </button>
-  );
-}
+import { Menu, ChevronDown, Check, Sparkles } from "lucide-react";
 
 function StarIcon() {
   return (
@@ -43,94 +30,6 @@ function StarIcon() {
         className="w-full h-full object-contain"
       />
     </div>
-  );
-}
-
-function CharmIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-5 h-5"
-    >
-      <circle cx="12" cy="12" r="4" stroke="#5B2D7D" strokeWidth="2" />
-      <line
-        x1="12"
-        y1="2"
-        x2="12"
-        y2="6"
-        stroke="#5B2D7D"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <line
-        x1="12"
-        y1="18"
-        x2="12"
-        y2="22"
-        stroke="#5B2D7D"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <line
-        x1="2"
-        y1="12"
-        x2="6"
-        y2="12"
-        stroke="#5B2D7D"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <line
-        x1="18"
-        y1="12"
-        x2="22"
-        y2="12"
-        stroke="#5B2D7D"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-4 h-4"
-    >
-      <polyline
-        points="6,9 12,15 18,9"
-        stroke="#5B2D7D"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-4 h-4"
-    >
-      <path
-        d="M5 13L9 17L19 7"
-        stroke="#5B2D7D"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 
@@ -226,7 +125,7 @@ function MenuDropdown({
               onClick={() => setIsCharmDropdownOpen(!isCharmDropdownOpen)}
               className="w-full flex items-center justify-center gap-2 py-2"
             >
-              <CharmIcon />
+              <Sparkles className="w-5 h-5 text-[#5B2D7D]" />
               <span className="text-[#5B2D7D] font-medium">
                 {displayLabel}
               </span>
@@ -234,7 +133,7 @@ function MenuDropdown({
                 animate={{ rotate: isCharmDropdownOpen ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <ChevronDownIcon />
+                <ChevronDown className="w-4 h-4 text-[#5B2D7D]" />
               </motion.div>
             </button>
 
@@ -259,7 +158,7 @@ function MenuDropdown({
                         <span className={!currentCharmId ? "font-medium" : "opacity-70"}>
                             All Charms
                         </span>
-                        {!currentCharmId && <CheckIcon />}
+                        {!currentCharmId && <Check className="w-4 h-4 text-[#5B2D7D]" />}
                     </motion.button>
                   
                     {/* Product List */}
@@ -281,7 +180,7 @@ function MenuDropdown({
                         >
                           {product.name}
                         </span>
-                        {currentCharmId === product.id && <CheckIcon />}
+                        {currentCharmId === product.id && <Check className="w-4 h-4 text-[#5B2D7D]" />}
                       </motion.button>
                     ))}
                     
@@ -367,7 +266,12 @@ export default function AppHeader({ userName }: { userName: string }) {
             <p className="text-[#5B2D7D] font-semibold">Today, {formattedDate}</p>
           </div>
         </div>
-        <MenuButton onClick={() => setIsMenuOpen(true)} />
+        <button
+          onClick={() => setIsMenuOpen(true)}
+          className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
+        >
+            <Menu className="w-6 h-6 text-[#5B2D7D]" />
+        </button>
       </header>
       <MenuDropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </>

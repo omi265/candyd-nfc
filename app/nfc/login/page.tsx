@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { Zap } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { getProductIdFromToken } from "@/app/actions/memories";
@@ -48,9 +49,7 @@ function NFCLoginContent() {
     <div className="min-h-screen flex items-center justify-center bg-[#FDF2EC] font-[Outfit]">
       <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50">
         <div className="w-16 h-16 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-4">
-             <svg className="w-8 h-8 text-[#5B2D7D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-             </svg>
+             <Zap className="w-8 h-8 text-[#5B2D7D]" />
         </div>
         <h2 className="text-xl font-bold text-[#5B2D7D] mb-2">Magic Login</h2>
         <p className="text-[#5B2D7D]/80 animate-pulse font-medium">{status}</p>

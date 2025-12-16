@@ -5,70 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion } from "motion/react";
 import { MemoryDrawer } from "@/components/memory-drawer";
 
-// --- Icons ---
-
-function PlusIcon({ className = "w-6 h-6" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-    >
-      <line
-        x1="12"
-        y1="5"
-        x2="12"
-        y2="19"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="5"
-        y1="12"
-        x2="19"
-        y2="12"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-    return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#5B2D7D]">
-            <circle cx="11.5" cy="11.5" r="9.5" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M18.5 18.5L22 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-    )
-}
-
-function GridIcon() {
-    return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-white">
-            <rect x="3" y="3" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-            <rect x="14" y="3" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-            <rect x="3" y="14" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-            <rect x="14" y="14" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-        </svg>
-    )
-}
-
-function ListIcon() {
-    return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-[#5B2D7D]">
-            <path d="M8 6H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M8 12H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M8 18H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M3 6H3.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M3 12H3.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M3 18H3.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-        </svg>
-    )
-}
+import { Plus, Search, LayoutGrid, List } from "lucide-react";
 
 // --- Data ---
 
@@ -83,7 +20,7 @@ function FilterBar() {
   return (
     <div className="flex items-center gap-3 px-6 py-4 overflow-x-auto no-scrollbar z-10 relative">
       <div className="w-10 h-10 shrink-0 rounded-full bg-white flex items-center justify-center shadow-sm">
-        <SearchIcon />
+        <Search className="w-5 h-5 text-[#5B2D7D]" />
       </div>
       {filters.map((filter) => (
         <button
@@ -153,7 +90,7 @@ function EmptyCard({ isActive, onClick }: { isActive: boolean; onClick: () => vo
                 transition={{ duration: 0.4 }}
              >
                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 shadow-sm ${isActive ? 'bg-[#A4C538]' : 'bg-[#EADDDE]'}`}>
-                    <PlusIcon className="w-8 h-8 text-[#5B2D7D]" />
+                    <Plus className="w-8 h-8 text-[#5B2D7D]" />
                  </div>
                  <span className="text-[#5B2D7D] font-medium font-[Outfit]">Add a Memory</span>
              </motion.div>
@@ -373,10 +310,10 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
             <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none z-20">
                  <div className="flex items-center gap-2 pointer-events-auto bg-[#FDF2EC]/80 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-[#EADDDE]">
                      <button className="w-10 h-10 rounded-full bg-[#5B2D7D] flex items-center justify-center text-white">
-                        <GridIcon />
+                        <LayoutGrid className="w-6 h-6" />
                      </button>
                      <button className="w-10 h-10 rounded-full flex items-center justify-center text-[#5B2D7D]">
-                        <ListIcon />
+                        <List className="w-6 h-6" />
                      </button>
                  </div>
 
@@ -384,7 +321,7 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
                     onClick={handleAddMemory}
                     className="w-14 h-14 rounded-full bg-[#A4C538] flex items-center justify-center shadow-lg hover:bg-[#95b330] transition-colors pointer-events-auto"
                  >
-                    <PlusIcon className="w-7 h-7 text-[#5B2D7D]" />
+                     <Plus className="w-7 h-7 text-[#5B2D7D]" />
                  </button>
             </div>
       </div>

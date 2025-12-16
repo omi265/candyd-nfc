@@ -6,51 +6,19 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
-// --- Icons ---
-function BackIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M15 18L9 12L15 6" stroke="#5B2D7D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-
-function PlusIcon() { return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 18V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-
-function CalendarIcon() {
-    return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#5B2D7D]">
-            <path d="M8 2V5" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M16 2V5" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M3.5 9.09H20.5" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M21 8.5V17C21 20 19.5 22 16 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-    )
-}
-
-function ClockIcon() {
-    return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#5B2D7D]">
-             <path d="M22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2C17.52 2 22 6.48 22 12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-             <path d="M15.71 15.18L12.61 13.33C12.07 13.01 11.63 12.24 11.63 11.61V7.51" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-    )
-}
-
-function LocationIcon() {
-     return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#5B2D7D]">
-            <path d="M12 13.43C13.7231 13.43 15.12 12.0331 15.12 10.31C15.12 8.58687 13.7231 7.19 12 7.19C10.2769 7.19 8.88 8.58687 8.88 10.31C8.88 12.0331 10.2769 13.43 12 13.43Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M3.62 8.49C5.59 -0.169998 18.42 -0.159997 20.38 8.5C21.53 13.58 18.37 17.88 15.6 20.54C13.59 22.48 10.41 22.48 8.39 20.54C5.63 17.88 2.47 13.57 3.62 8.49Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-     )
-}
-
-function ImageIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeWidth="2"/><circle cx="8.5" cy="8.5" r="1.5" strokeWidth="2"/><polyline points="21 15 16 10 5 21" strokeWidth="2"/></svg>; }
-function VideoIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><polygon points="23 7 16 12 23 17 23 7" strokeWidth="2"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2" strokeWidth="2"/></svg>; }
-function AudioIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" strokeWidth="2"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" strokeWidth="2"/><line x1="12" y1="19" x2="12" y2="23" strokeWidth="2"/><line x1="8" y1="23" x2="16" y2="23" strokeWidth="2"/></svg>; }
-function TrashIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><polyline points="3 6 5 6 21 6" strokeWidth="2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" strokeWidth="2"/></svg>; }
-function ArchiveIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><polyline points="21 8 21 21 3 21 3 8" strokeWidth="2"/><rect x="1" y="3" width="22" height="5" strokeWidth="2"/><line x1="10" y1="12" x2="14" y2="12" strokeWidth="2"/></svg>; }
+import { 
+    ChevronLeft, 
+    Plus, 
+    Calendar, 
+    Clock, 
+    MapPin, 
+    Image as ImageIcon, 
+    Video as VideoIcon, 
+    Mic, 
+    Trash2, 
+    Archive,
+    ChevronDown 
+} from "lucide-react";
 
 const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
 const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet"];
@@ -188,7 +156,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                  {/* Header / Nav */}
                  <div className="flex items-center justify-between mb-6 sticky top-0 z-20">
                       <button onClick={handleCancel} className="w-10 h-10 rounded-full bg-[#EADDDE]/50 backdrop-blur-sm flex items-center justify-center">
-                          <BackIcon />
+                          <ChevronLeft className="w-6 h-6 text-[#5B2D7D]" />
                       </button>
                       <div className="text-center">
                           <span className="block text-[#A68CAB] text-[10px] uppercase tracking-wider font-bold">Edit Memory</span>
@@ -233,13 +201,13 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
                           <div className="flex gap-3 mb-4">
                               <button type="button" className="flex-1 bg-[#5B2D7D] text-white py-3 rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold shadow-sm">
-                                  <ImageIcon /> Image
+                                  <ImageIcon className="w-5 h-5" /> Image
                               </button>
                               <button type="button" className="flex-1 bg-[#FFF5F0] border border-[#EADDDE] text-[#5B2D7D] py-3 rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold">
-                                  <VideoIcon /> Video
+                                  <VideoIcon className="w-5 h-5" /> Video
                               </button>
                                <button type="button" className="flex-1 bg-[#FFF5F0] border border-[#EADDDE] text-[#5B2D7D] py-3 rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold">
-                                  <AudioIcon /> Audio
+                                  <Mic className="w-5 h-5" /> Audio
                               </button>
                           </div>
                         
@@ -269,7 +237,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                               {/* Add Button */}
                               <label className="block w-full bg-[#EADDDE]/50 border border-dashed border-[#5B2D7D]/20 rounded-[20px] p-4 text-center cursor-pointer hover:bg-[#EADDDE] transition-colors relative">
                                   <div className="flex flex-col items-center justify-center gap-2 py-6">
-                                      <span className="text-[#5B2D7D] font-bold flex items-center gap-1">Add image <PlusIcon /></span>
+                                      <span className="text-[#5B2D7D] font-bold flex items-center gap-1">Add image <Plus className="w-6 h-6" /></span>
                                   </div>
                                   <input type="file" className="hidden" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
                               </label>
@@ -281,7 +249,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Date<span className="text-[#C27A59]">*</span></label>
                            <div className="relative">
                                 <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] font-medium appearance-none" />
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#5B2D7D]"><CalendarIcon /></div>
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#5B2D7D]"><Calendar className="w-5 h-5" /></div>
                            </div>
                       </div>
 
@@ -290,7 +258,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                            <label className="block text-[#5B2D7D] text-[13px] font-bold mb-2">Time</label>
                            <div className="relative">
                                 <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] font-medium appearance-none" />
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#5B2D7D]"><ClockIcon /></div>
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#5B2D7D]"><Clock className="w-5 h-5" /></div>
                            </div>
                       </div>
 
@@ -299,7 +267,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                            <label className="block text-[#5B2D7D] text-[13px] font-bold mb-2">Location</label>
                            <div className="relative">
                                 <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] font-medium" placeholder="Select location" />
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#5B2D7D]"><LocationIcon /></div>
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#5B2D7D]"><MapPin className="w-5 h-5" /></div>
                            </div>
                       </div>
 
@@ -311,9 +279,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                       >
                         Edit optional fields
                             <motion.div animate={{ rotate: optionalExpanded ? 180 : 0 }}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M19.9201 8.95001L13.4001 15.47C12.6301 16.24 11.3701 16.24 10.6001 15.47L4.08008 8.95001" stroke="#5B2D7D" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                                <ChevronDown className="w-5 h-5 text-[#5B2D7D]" />
                             </motion.div>
                        </button>
 
@@ -389,17 +355,15 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                          <div className="bg-[#EADDDE] rounded-[24px] p-4">
                              <div className="flex items-center justify-between w-full mb-4">
                                   <span className="text-[#5B2D7D] font-bold text-[13px]">Manage Memory</span>
-                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-0">
-                                     <path d="M6 9L12 15L18 9" stroke="#5B2D7D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
+                                  <ChevronDown className="w-6 h-6 text-[#5B2D7D]" />
                              </div>
                              
                              <div className="flex gap-4">
                                   <button onClick={handleDelete} className="flex-1 bg-[#FBE0D6] rounded-xl py-3 flex items-center justify-center gap-2 text-[#C27A59] font-bold text-[11px]">
-                                      <TrashIcon /> Delete memory
+                                      <Trash2 className="w-5 h-5" /> Delete memory
                                   </button>
                                   <button className="flex-1 bg-[#FFF5F0] rounded-xl py-3 flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-[11px]">
-                                      <ArchiveIcon /> Archive memory
+                                      <Archive className="w-5 h-5" /> Archive memory
                                   </button>
                              </div>
                          </div>
