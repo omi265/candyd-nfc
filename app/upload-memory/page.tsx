@@ -7,7 +7,7 @@ import { getCloudinarySignature } from "@/app/actions/upload";
 // Re-importing necessary hooks only to be safe with the replacement context
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 import { 
@@ -36,6 +36,10 @@ export default function MemoryUploadPage() {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [isUploading, setIsUploading] = useState(false);
+
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const videoInputRef = useRef<HTMLInputElement>(null);
+    const audioInputRef = useRef<HTMLInputElement>(null);
 
     // Form State
     const [title, setTitle] = useState("");
@@ -87,6 +91,7 @@ export default function MemoryUploadPage() {
             // 1. Upload Media First
             const uploadedUrls: string[] = [];
             const uploadedTypes: string[] = [];
+            const uploadedSizes: number[] = [];
 
             if (media.length > 0) {
                 console.log("UPLOAD: Starting media upload for", media.length, "files");
@@ -119,6 +124,7 @@ export default function MemoryUploadPage() {
                     console.log("UPLOAD: Cloudinary success", data);
                     uploadedUrls.push(data.secure_url);
                     uploadedTypes.push(data.resource_type);
+                    uploadedSizes.push(data.bytes);
                 }
             } else {
                 console.log("UPLOAD: No media files selected");
@@ -140,6 +146,7 @@ export default function MemoryUploadPage() {
                 if (uploadedUrls.length > 0) {
                     formData.append("mediaUrls", JSON.stringify(uploadedUrls));
                     formData.append("mediaTypes", JSON.stringify(uploadedTypes));
+                    formData.append("mediaSizes", JSON.stringify(uploadedSizes));
                 }
 
                 console.log("UPLOAD: Submitting to createMemory action with URLs", uploadedUrls);
@@ -230,16 +237,19 @@ export default function MemoryUploadPage() {
                                 <p className="text-[#A68CAB] text-[10px]">Supported Format: SVG, JPG, PNG.....</p>
                                 
                                 <div className="absolute bottom-5 left-5 right-5 flex justify-center gap-3">
-                                     <div className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium">
+                                     <button type="button" onClick={() => imageInputRef.current?.click()} className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium hover:bg-[#EADDDE] transition-colors">
                                         <ImageIcon className="w-4 h-4" /> Image
-                                     </div>
-                                     <div className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium">
+                                     </button>
+                                     <button type="button" onClick={() => videoInputRef.current?.click()} className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium hover:bg-[#EADDDE] transition-colors">
                                         <VideoIcon className="w-4 h-4" /> Video
-                                     </div>
-                                     <div className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium">
+                                     </button>
+                                     <button type="button" onClick={() => audioInputRef.current?.click()} className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium hover:bg-[#EADDDE] transition-colors">
                                         <Mic className="w-4 h-4" /> Audio
-                                     </div>
+                                     </button>
                                 </div>
+                                <input type="file" ref={imageInputRef} className="hidden" onChange={handleFileChange} multiple accept="image/*" />
+                                <input type="file" ref={videoInputRef} className="hidden" onChange={handleFileChange} multiple accept="video/*" />
+                                <input type="file" ref={audioInputRef} className="hidden" onChange={handleFileChange} multiple accept="audio/*" />
                             </div>
                         ) : (
                              <div className="bg-[#FFF5F0] rounded-2xl p-3 relative space-y-2 border border-[#E8D1E0]">

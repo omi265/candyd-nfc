@@ -273,11 +273,11 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
       <div className="flex-1 min-h-0 relative flex flex-col justify-end">
             <div 
                 ref={scrollContainerRef}
-                className="w-full overflow-auto snap-both snap-mandatory no-scrollbar touch-pan-x touch-pan-y pb-24"
+                className="w-full overflow-auto snap-both snap-mandatory no-scrollbar touch-pan-x touch-pan-y pb-20"
                 style={{ scrollBehavior: 'smooth' }}
             >
                 <div 
-                    className="grid gap-2 w-max px-[12.5vw]"
+                    className="grid gap-0 w-max px-[8vw]"
                     style={{ 
                         gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
                         gridTemplateRows: `repeat(${gridSize}, minmax(0, 1fr))`

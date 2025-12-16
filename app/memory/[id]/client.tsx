@@ -77,6 +77,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
             // Upload New Media
             const uploadedUrls: string[] = [];
             const uploadedTypes: string[] = [];
+            const uploadedSizes: number[] = [];
 
             if (newMedia.length > 0) {
                 const signatureData = await getCloudinarySignature();
@@ -99,6 +100,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                     const data = await response.json();
                     uploadedUrls.push(data.secure_url);
                     uploadedTypes.push(data.resource_type);
+                    uploadedSizes.push(data.bytes);
                 }
             }
 
@@ -117,6 +119,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                 if (uploadedUrls.length > 0) {
                     formData.append("mediaUrls", JSON.stringify(uploadedUrls));
                     formData.append("mediaTypes", JSON.stringify(uploadedTypes));
+                    formData.append("mediaSizes", JSON.stringify(uploadedSizes));
                 }
 
                 const result = await updateMemory(memory.id, undefined, formData);

@@ -17,6 +17,7 @@ const createMemorySchema = z.object({
   productId: z.string().optional(),
   mediaUrls: z.string().optional(), // JSON string of string[]
   mediaTypes: z.string().optional(), // JSON string of string[]
+  mediaSizes: z.string().optional(), // JSON string of number[]
 });
 
 export async function createMemory(prevState: { error?: string; success?: boolean } | undefined, formData: FormData) {
@@ -38,7 +39,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
   }
 
 
-  const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes } = validatedFields.data;
+  const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes, mediaSizes } = validatedFields.data;
 
   // content-type check for date if needed
   const parsedDate = new Date(date);
@@ -70,6 +71,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
         try {
             const urls = JSON.parse(mediaUrls) as string[];
             const types = JSON.parse(mediaTypes) as string[];
+            const sizes = mediaSizes ? (JSON.parse(mediaSizes) as number[]) : [];
 
             if (Array.isArray(urls) && Array.isArray(types) && urls.length === types.length) {
                 for (let i = 0; i < urls.length; i++) {
@@ -77,7 +79,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
                         data: {
                             url: urls[i],
                             type: types[i], // 'image', 'video'
-                            size: 0, // We don't have size readily available, or we could pass it. Optional.
+                            size: sizes[i] || 0,
                             memoryId: memory.id
                         }
                     });
@@ -190,7 +192,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
         return { error: "Invalid fields: " + validatedFields.error.issues.map((i) => i.message).join(", ") };
     }
 
-    const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes } = validatedFields.data;
+    const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes, mediaSizes } = validatedFields.data;
     const parsedDate = new Date(date);
 
     try {
@@ -223,6 +225,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
         if (mediaUrls && mediaTypes) {
              const urls = JSON.parse(mediaUrls) as string[];
              const types = JSON.parse(mediaTypes) as string[];
+             const sizes = mediaSizes ? (JSON.parse(mediaSizes) as number[]) : [];
              
              if (Array.isArray(urls) && Array.isArray(types)) {
                  for (let i = 0; i < urls.length; i++) {
@@ -230,7 +233,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
                         data: {
                             url: urls[i],
                             type: types[i],
-                            size: 0,
+                            size: sizes[i] || 0,
                             memoryId: id
                         }
                     });
