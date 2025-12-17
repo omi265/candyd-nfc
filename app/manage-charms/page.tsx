@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { getUserProducts } from "@/app/actions/memories";
+import { getUserProducts, deleteProduct } from "@/app/actions/memories";
 
 // --- Icons ---
 import { 
@@ -40,6 +40,24 @@ export default function ManageCharmsPage() {
         }
         loadProducts();
     }, [user]);
+
+    const handleDeleteCharm = async () => {
+        if (!selectedProduct) return;
+        
+        try {
+            const result = await deleteProduct(selectedProduct.id);
+            if (result.error) {
+                console.error(result.error);
+                // toast.error(result.error); // No toast imported?
+            } else {
+                router.push("/"); 
+                // revalidatePath handled in action
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        setIsDeleteModalOpen(false);
+    };
 
     // Mock constants for UI
     const MEMORY_USED = 50;
@@ -213,6 +231,7 @@ export default function ManageCharmsPage() {
                                 <button 
                                     className={`w-full py-4 rounded-full font-bold text-white text-lg transition-colors ${deleteInput.toLowerCase() === 'delete' ? 'bg-[#F44336] hover:bg-[#d63a2f]' : 'bg-[#F44336] opacity-50 cursor-not-allowed'}`}
                                     disabled={deleteInput.toLowerCase() !== 'delete'}
+                                    onClick={handleDeleteCharm}
                                 >
                                     Delete Charm
                                 </button>

@@ -17,8 +17,9 @@ import {
     Mic, 
     Trash2, 
     Archive,
-    ChevronDown 
+    ChevronDown, 
 } from "lucide-react";
+import { toast } from "sonner";
 
 const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
 const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet"];
@@ -73,6 +74,8 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
     const handleSave = async () => {
         setIsUploading(true);
+        const loadingToast = toast.loading("Saving memory...");
+
         try {
             // Upload New Media
             const uploadedUrls: string[] = [];
@@ -128,25 +131,37 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                     setNewMedia([]);
                     setNewMediaPreviews([]);
                     setIsUploading(false);
+                    toast.dismiss(loadingToast);
+                    toast.success("Memory saved successfully!");
                     router.push("/");
                     router.refresh(); 
                 } else {
                     console.error(result?.error);
                     setIsUploading(false);
+                    toast.dismiss(loadingToast);
+                    toast.error(result?.error || "Failed to save memory");
                 }
             });
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Save failed:", error);
             setIsUploading(false);
+            toast.dismiss(loadingToast);
+            toast.error(error.message || "Save failed");
         }
     };
 
     const handleDelete = async () => {
         if (confirm("Are you sure you want to delete this memory?")) {
+             const toastId = toast.loading("Deleting memory...");
              const result = await deleteMemory(memory.id);
              if (result.success) {
+                 toast.dismiss(toastId);
+                 toast.success("Memory deleted successfully");
                  router.push("/");
+             } else {
+                 toast.dismiss(toastId);
+                 toast.error(result.error || "Failed to delete memory");
              }
         }
     };

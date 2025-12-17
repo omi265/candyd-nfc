@@ -1,7 +1,7 @@
 "use client";
 
 import { createMemory, getUserProducts } from "@/app/actions/memories";
-import { getCloudinarySignature } from "@/app/actions/upload";
+import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
 
 // ... (icons remain the same, so imports are fine)
 // Re-importing necessary hooks only to be safe with the replacement context
@@ -23,8 +23,9 @@ import {
     RefreshCw,
     Feather,
     ArrowRight,
-    ChevronDown
+    ChevronDown,
 } from "lucide-react";
+import { toast } from "sonner";
 
 // --- Components ---
 
@@ -49,8 +50,10 @@ export default function MemoryUploadPage() {
     const [location, setLocation] = useState("");
     const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
-    const [media, setMedia] = useState<File[]>([]); 
-    const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
+    const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+    const uploadPromisesRef = useRef<Map<string, Promise<any>>>(new Map());
+    const completedUploadsRef = useRef<Map<string, { url: string, type: string, size: number }>>(new Map());
+
     const [optionalExpanded, setOptionalExpanded] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
@@ -67,15 +70,86 @@ export default function MemoryUploadPage() {
         }
       }, [user, isLoading, router]);
 
+    type MediaItem = {
+        id: string;
+        file: File;
+        previewUrl: string;
+        status: 'pending' | 'uploading' | 'completed' | 'error';
+        cloudData?: { url: string; type: string; size: number };
+    };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const files = Array.from(e.target.files);
-            setMedia(files);
             
-            // Create previews immediately
-            const previews = files.map(file => URL.createObjectURL(file));
-            setMediaPreviews(previews);
+            const newItems: MediaItem[] = files.map(file => ({
+                id: Math.random().toString(36).substring(7),
+                file,
+                previewUrl: URL.createObjectURL(file), // Note: Make sure to revoke these covers eventually if needed, though browsers handle it reasonably well for page lifetime
+                status: 'uploading',
+            }));
+
+            setMediaItems(prev => [...prev, ...newItems]);
+
+            // Start uploads immediately
+            newItems.forEach(item => {
+                uploadFile(item);
+            });
+        }
+    };
+
+    const uploadFile = async (item: MediaItem) => {
+        try {
+            // Store promise in ref to await later if needed
+            const uploadPromise = (async () => {
+                const signatureData = await getCloudinarySignature();
+                const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
+
+                const formData = new FormData();
+                formData.append("file", item.file);
+                formData.append("api_key", apiKey!);
+                formData.append("timestamp", timestamp.toString());
+                formData.append("signature", signature);
+                formData.append("folder", folder);
+
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || "Upload failed");
+                }
+
+                return await response.json();
+            })();
+
+            uploadPromisesRef.current.set(item.id, uploadPromise);
+
+            const data = await uploadPromise;
+
+            completedUploadsRef.current.set(item.id, { 
+                url: data.secure_url, 
+                type: data.resource_type, 
+                size: data.bytes 
+            });
+
+            setMediaItems(prev => prev.map(i => 
+                i.id === item.id 
+                ? { ...i, status: 'completed', cloudData: { url: data.secure_url, type: data.resource_type, size: data.bytes } } 
+                : i
+            ));
+        } catch (error) {
+            console.error("Upload failed for", item.file.name, error);
+            setMediaItems(prev => prev.map(i => 
+                i.id === item.id 
+                ? { ...i, status: 'error' } 
+                : i
+            ));
+            toast.error(`Failed to upload ${item.file.name}`);
+        } finally {
+            uploadPromisesRef.current.delete(item.id);
         }
     };
 
@@ -85,103 +159,202 @@ export default function MemoryUploadPage() {
 
     const handleSubmit = async () => {
         setError(null);
-        setIsUploading(true);
+
+        // Validation
+        const missingFields = [];
+        if (!title.trim()) missingFields.push("Title");
+        if (!description.trim()) missingFields.push("Description");
+        if (mediaItems.length === 0) missingFields.push("Media");
+        
+        if (missingFields.length > 0) {
+            toast.error(`Please fill in the following details: ${missingFields.join(", ")}`);
+            return;
+        }
+
+        setIsUploading(true); // Using this for general "Saving..." state now
 
         try {
-            // 1. Upload Media First
-            const uploadedUrls: string[] = [];
-            const uploadedTypes: string[] = [];
-            const uploadedSizes: number[] = [];
+            // Check for pending uploads
+            const pendingUploads = mediaItems.filter(i => i.status === 'uploading' || i.status === 'pending');
+            const failedUploads = mediaItems.filter(i => i.status === 'error');
 
-            if (media.length > 0) {
-                console.log("UPLOAD: Starting media upload for", media.length, "files");
-                // Get signature once (or per file if safer/needed, but once is fine usually)
-                const signatureData = await getCloudinarySignature();
-                console.log("UPLOAD: Signature received", signatureData);
-                const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
-                
-                for (const file of media) {
-                    console.log("UPLOAD: Uploading file", file.name);
-                    const formData = new FormData();
-                    formData.append("file", file);
-                    formData.append("api_key", apiKey!);
-                    formData.append("timestamp", timestamp.toString());
-                    formData.append("signature", signature);
-                    formData.append("folder", folder);
-
-                    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-                        method: "POST",
-                        body: formData,
-                    });
-
-                    if (!response.ok) {
-                        const err = await response.json();
-                        console.error("UPLOAD: Cloudinary error", err);
-                        throw new Error(err.error?.message || "Upload failed");
-                    }
-
-                    const data = await response.json();
-                    console.log("UPLOAD: Cloudinary success", data);
-                    uploadedUrls.push(data.secure_url);
-                    uploadedTypes.push(data.resource_type);
-                    uploadedSizes.push(data.bytes);
-                }
-            } else {
-                console.log("UPLOAD: No media files selected");
+            if (failedUploads.length > 0) {
+                // Retry failed? Or just block?
+                // For now, block and ask user to remove or retry (we need a retry button really, but let's just ask to remove for MVP speed)
+                toast.error("Some files failed to upload. Please remove them or try again.");
+                setIsUploading(false);
+                return;
             }
 
-            // 2. Submit Memory with URLs
-            startTransition(async () => {
-                const formData = new FormData();
-                formData.append("title", title);
-                formData.append("description", description);
-                formData.append("date", date);
-                formData.append("time", time);
-                formData.append("location", location);
-                formData.append("emotions", selectedEmotions.join(","));
-                if (selectedMood) formData.append("mood", selectedMood);
-                if (selectedProductId) formData.append("productId", selectedProductId);
-                
-                // Pass URLs and Types as JSON strings
-                if (uploadedUrls.length > 0) {
-                    formData.append("mediaUrls", JSON.stringify(uploadedUrls));
-                    formData.append("mediaTypes", JSON.stringify(uploadedTypes));
-                    formData.append("mediaSizes", JSON.stringify(uploadedSizes));
-                }
+            if (pendingUploads.length > 0) {
+               // toast.loading("Finishing uploads..."); // 'sonner' toast.loading returns an ID if we want to dismiss, but here we just wait
+               // Actually better to just show it in the button text or a separate indicator
+            }
 
-                console.log("UPLOAD: Submitting to createMemory action with URLs", uploadedUrls);
-                const result = await createMemory(undefined, formData);
-                console.log("UPLOAD: createMemory result", result);
+            // Wait for all current uploads to finish
+            // We can use the values in uploadPromisesRef
+            await Promise.all(pendingUploads.map(item => uploadPromisesRef.current.get(item.id)).filter(Boolean));
 
-                if (result?.error) {
-                    console.error("UPLOAD: createMemory error", result.error);
-                    setError(result.error);
-                } else if (result?.success) {
-                    console.log("UPLOAD: Success, redirecting...");
-                    router.push("/");
-                }
-                setIsUploading(false); // Reset uploading state
-            });
-
+            // Re-read mediaItems to get the final URLs?
+            // Wait, state updates might not have flushed if we are in the same closure event...
+            // Actually, we need to rely on the *data* we just got or refetch state?
+            // 'mediaItems' here is closed over. 
+            // We can trust that since we awaited the promises, the side-effects (setting state) are queued, 
+            // BUT in this closure 'mediaItems' is STALE.
+            // However, we don't strictly need 'mediaItems' state if we knew the results. 
+            // But we don't have the results easily here without state.
+            
+            // CORRECT APPROACH in React 18+ with async handler:
+            // The state won't update mid-function.
+            // We can use a functional state update to inspect the latest, OR use a ref to track the items data.
+            // Let's use a Ref to track the *latest* mediaItems as well, or just rely on the fact that 
+            // we can wait for the promises and then... wait, how do we get the data?
+            // The promises function returns the data! 
+            
+            // Let's re-gather the data.
+            // We know existing completed items have cloudData.
+            // The ones we just awaited returned data.
+            // But mixing them is tricky.
+            
+            // Alternative: Use a Ref for `mediaItemsRef` that is always kept in sync with state, 
+            // so we can read the latest values here.
         } catch (err: any) {
-            console.error("Upload Error:", err);
-            setError(err.message || "Failed to upload media.");
+            console.error("Wait for upload error", err);
+            toast.error("Error finishing uploads");
             setIsUploading(false);
+            return;
         }
+        
+        // We need to access the LATEST items. 
+        // Let's use a function to get the actual data to submit.
+        // We can't access updated state here easily.
+        // Let's change the strategy slightly: 
+        // We will construct the final arrays by checking if we have cloudData in current state (already done) 
+        // OR by using the result of the promise we just awaited.
+        
+        // But simpler: just use a ref to hold the items data for submission reading.
+        submitWithLatestData();
     };
+    
+    // We need a ref to access latest media items inside the async handleSubmit
+    const mediaItemsRef = useRef<MediaItem[]>(mediaItems);
+    useEffect(() => { mediaItemsRef.current = mediaItems; }, [mediaItems]);
 
-    if (isLoading || !user) return <div className="min-h-screen flex items-center justify-center bg-[#FDF2EC] text-[#5B2D7D]">Loading...</div>;
+    const submitWithLatestData = async () => {
+         // Final check using REF
+         const currentItems = mediaItemsRef.current;
+         const pending = currentItems.filter(i => i.status === 'uploading');
+         const failed = currentItems.filter(i => i.status === 'error');
+         
+         if (failed.length > 0) {
+             toast.error("Some uploads failed. Please remove them.");
+             setIsUploading(false);
+             return;
+         }
 
-    const hasMedia = media.length > 0;
+         if (pending.length > 0) {
+             // We still have pending items? 
+             // If we just awaited them in the previous block... wait, I split the logic.
+             // Let's merge it:
+             
+             // 1. Identify which IDs are pending
+             const pendingIds = pending.map(i => i.id);
+             
+             // 2. Wait for their specific promises
+             try {
+                await Promise.all(pendingIds.map(id => uploadPromisesRef.current.get(id)));
+             } catch (e) {
+                 toast.error("Upload failed.");
+                 setIsUploading(false);
+                 return;
+             }
+         }
+         
+         // 3. NOW check ref again, they should be completed (because the promise resolution splits state update)
+         // Wait, React state updates are batched/async. Even after await, the re-render might not have happened 
+         // on the javascript thread before we continue? 
+         // Actually, if we await a promise, the microtask queue clears. The state setter was called. 
+         // But the component function hasn't re-run to update `mediaItemsRef`.
+         // So `mediaItemsRef.current` MIGHT BE STALE if we rely on useEffect to update it.
+         
+         // Fix: create a dedicated `completedUploads` Map ref that stores the data directly 
+         // as soon as it's available, independent of React state. 
+         // Use that for submission.
+         
+         processSubmission();
+    }
+
+    
+
+    // Update uploadFile to write to this ref
+    // (See uploadFile modification below in the full code)
+
+    const processSubmission = () => {
+        startTransition(async () => {
+            // Get all items from state (just to preserve order and know which ones we want)
+            // But we can't trust state for the *cloudData* if it just finished.
+            // We trust `completedUploadsRef` for the data.
+            
+            const currentItems = mediaItemsRef.current; // access via ref to get somewhat recent, but we mostly care about IDs order
+            
+            const finalUrls: string[] = [];
+            const finalTypes: string[] = [];
+            const finalSizes: number[] = [];
+            
+            for (const item of currentItems) {
+                const data = completedUploadsRef.current.get(item.id);
+                if (!data) {
+                    // Start of function check usually catches this, but concurrent race...
+                    console.error("Missing cloud data for", item.id);
+                    toast.error("Upload incomplete. Please try again.");
+                    setIsUploading(false);
+                    return;
+                }
+                finalUrls.push(data.url);
+                finalTypes.push(data.type);
+                finalSizes.push(data.size);
+            }
+
+             const formData = new FormData();
+            formData.append("title", title);
+            formData.append("description", description);
+            formData.append("date", date);
+            formData.append("time", time);
+            formData.append("location", location);
+            formData.append("emotions", selectedEmotions.join(","));
+            if (selectedMood) formData.append("mood", selectedMood);
+            if (selectedProductId) formData.append("productId", selectedProductId);
+            
+            if (finalUrls.length > 0) {
+                formData.append("mediaUrls", JSON.stringify(finalUrls));
+                formData.append("mediaTypes", JSON.stringify(finalTypes));
+                formData.append("mediaSizes", JSON.stringify(finalSizes));
+            }
+
+            console.log("UPLOAD: Submitting to createMemory action with URLs", finalUrls);
+            const result = await createMemory(undefined, formData);
+
+            if (result?.error) {
+                setError(result.error);
+                toast.error(result.error);
+            } else if (result?.success) {
+                toast.success("Memory created successfully!");
+                router.push("/");
+            }
+            setIsUploading(false);
+        });
+    };
+    
+    // ... inside component ...
+
+    const hasMedia = mediaItems.length > 0;
 
     return (
         <div className="flex flex-col h-full overflow-hidden relative font-[Outfit]">
-            {/* Scrollable Content */}
-            <main className="flex-1 overflow-y-auto no-scrollbar px-6 pb-4 pt-4">
-                {/* Header */}
+            {/* ... Header ... */} 
+             <main className="flex-1 overflow-y-auto no-scrollbar px-6 pb-4 pt-4">
                 <div className="flex items-start justify-between mb-8 mt-2">
                      <div className="flex items-start gap-3">
-                         {/* Feather Icon */}
                          <div className="mt-1">
                             <Feather className="w-7 h-7 text-[#5B2D7D]" />
                          </div>
@@ -192,7 +365,6 @@ export default function MemoryUploadPage() {
                             </p>
                         </div>
                      </div>
-
                 </div>
 
                 <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
@@ -254,33 +426,66 @@ export default function MemoryUploadPage() {
                         ) : (
                              <div className="bg-[#FFF5F0] rounded-2xl p-3 relative space-y-2 border border-[#E8D1E0]">
                                 <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
-                                    {mediaPreviews.map((src, i) => (
-                                        <div key={i} className="flex-shrink-0 w-24 h-24 rounded-xl bg-gray-200 overflow-hidden relative border border-[#E8D1E0]">
-                                           {/* Simple check for video extension or just show as img/video */}
-                                            {media[i]?.type.startsWith("video") ? (
-                                                <video src={src} className="w-full h-full object-cover" muted />
+                                    {mediaItems.map((item, i) => (
+                                        <div key={item.id} className="shrink-0 w-24 h-24 rounded-xl bg-gray-200 overflow-hidden relative border border-[#E8D1E0] group">
+                                           {/* Preview */}
+                                            {item.file.type.startsWith("video") ? (
+                                                <video src={item.previewUrl} className="w-full h-full object-cover" muted />
                                             ) : (
-                                                <img src={src} alt="preview" className="w-full h-full object-cover" />
+                                                <img src={item.previewUrl} alt="preview" className="w-full h-full object-cover" />
                                             )}
+                                            
+                                            {/* Status Indicators */}
+                                            {item.status === 'uploading' && (
+                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                                    <RefreshCw className="w-6 h-6 text-white animate-spin" />
+                                                </div>
+                                            )}
+                                            {item.status === 'error' && (
+                                                <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center">
+                                                    <Trash2 className="w-6 h-6 text-white" />
+                                                </div>
+                                            )}
+                                            
+                                            {/* Remove Button */}
+                                            <button 
+                                                type="button" 
+                                                onClick={() => {
+                                                    if (item.cloudData?.url) {
+                                                        deleteUploadedFile(item.cloudData.url);
+                                                    }
+                                                    setMediaItems(prev => prev.filter(p => p.id !== item.id));
+                                                    uploadPromisesRef.current.delete(item.id);
+                                                    completedUploadsRef.current.delete(item.id);
+                                                }}
+                                                className="absolute top-1 right-1 w-5 h-5 bg-white/80 rounded-full flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                            </button>
                                         </div>
                                     ))}
-                                    <label className="flex-shrink-0 w-24 h-24 rounded-xl border border-dashed border-[#5B2D7D]/30 flex flex-col items-center justify-center gap-1 cursor-pointer bg-white/50 hover:bg-white transition-colors">
+                                    <label className="shrink-0 w-24 h-24 rounded-xl border border-dashed border-[#5B2D7D]/30 flex flex-col items-center justify-center gap-1 cursor-pointer bg-white/50 hover:bg-white transition-colors">
                                         <div className="w-8 h-8 rounded-full bg-[#F37B55] flex items-center justify-center shadow-sm">
                                             <Upload className="w-5 h-5 text-white" />
                                         </div>
                                         <span className="text-[9px] text-[#5B2D7D] font-medium">Add More</span>
-                                        <input type="file" className="hidden" onChange={(e) => {
-                                             if (e.target.files && e.target.files.length > 0) {
-                                                const newFiles = Array.from(e.target.files);
-                                                setMedia(prev => [...prev, ...newFiles]);
-                                                setMediaPreviews(prev => [...prev, ...newFiles.map(f => URL.createObjectURL(f))]);
-                                             }
-                                        }} multiple accept="image/*,video/*,audio/*" />
+                                        <input type="file" className="hidden" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
                                     </label>
                                 </div>
                                 <div className="flex justify-between items-center px-1">
-                                    <span className="text-[11px] text-[#A68CAB] font-medium">{media.length} file{media.length > 1 ? 's' : ''} selected</span>
-                                    <button type="button" onClick={() => { setMedia([]); setMediaPreviews([]); }} className="text-[11px] text-[#C27A59] font-bold hover:underline">
+                                    <span className="text-[11px] text-[#A68CAB] font-medium">
+                                        {mediaItems.length} file{mediaItems.length > 1 ? 's' : ''} selected
+                                        {mediaItems.some(i => i.status === 'uploading') && <span className="text-[#C27A59] ml-2 animate-pulse">Uploading...</span>}
+                                    </span>
+                                    <button type="button" onClick={() => { 
+                                        // Cleanup all completed uploads
+                                        completedUploadsRef.current.forEach((data) => {
+                                            if (data.url) deleteUploadedFile(data.url);
+                                        });
+                                        setMediaItems([]); 
+                                        uploadPromisesRef.current.clear(); 
+                                        completedUploadsRef.current.clear(); 
+                                    }} className="text-[11px] text-[#C27A59] font-bold hover:underline">
                                         Clear all
                                     </button>
                                 </div>
@@ -442,7 +647,7 @@ export default function MemoryUploadPage() {
                 <button
                     type="button"
                     onClick={() => router.push('/')}
-                    className="w-[56px] h-[56px] rounded-full bg-[#FFF5F0] flex items-center justify-center shadow-lg text-[#5B2D7D] flex-shrink-0 active:scale-95 transition-transform"
+                    className="w-[56px] h-[56px] rounded-full bg-[#FFF5F0] flex items-center justify-center shadow-lg text-[#5B2D7D] shrink-0 active:scale-95 transition-transform"
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </button>

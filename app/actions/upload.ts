@@ -2,6 +2,7 @@
 
 import cloudinary from "@/lib/cloudinary";
 import { auth } from "@/auth";
+import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
 
 export async function getCloudinarySignature() {
   const session = await auth();
@@ -27,4 +28,16 @@ export async function getCloudinarySignature() {
     cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
   };
+}
+
+export async function deleteUploadedFile(url: string) {
+  const session = await auth();
+    if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const publicId = extractPublicId(url);
+  if (publicId) {
+    await deleteFromCloudinary([publicId]);
+  }
 }

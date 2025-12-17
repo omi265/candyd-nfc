@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import cloudinary from "@/lib/cloudinary";
+import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
 
 const createMemorySchema = z.object({
   title: z.string().min(1, "Title is required").max(15, "Title too long"),
@@ -257,14 +258,86 @@ export async function deleteMemory(id: string) {
     try {
         const memory = await db.memory.findUnique({
             where: { id },
-            select: { userId: true }
+            select: { userId: true, media: true }
         });
         if (!memory || memory.userId !== session.user.id) return { error: "Unauthorized" };
+
+        // Cloudinary Cleanup
+        if (memory.media && memory.media.length > 0) {
+            const publicIds = memory.media
+                .map(m => extractPublicId(m.url))
+                .filter((id): id is string => id !== null);
+            
+            if (publicIds.length > 0) {
+                await deleteFromCloudinary(publicIds);
+            }
+        }
 
         await db.memory.delete({ where: { id } });
         revalidatePath("/");
         return { success: true };
     } catch (error: any) {
          return { error: error.message };
+    }
+}
+
+export async function deleteProduct(id: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const product = await db.product.findUnique({
+            where: { id },
+            select: { userId: true }
+        });
+
+        if (!product || product.userId !== session.user.id) {
+            return { error: "Unauthorized" };
+        }
+
+        // 1. Gather all media associated with this product's memories
+        const memories = await db.memory.findMany({
+            where: { productId: id },
+            select: { 
+                id: true,
+                media: true 
+            }
+        });
+
+        const publicIds: string[] = [];
+        for (const mem of memories) {
+            if (mem.media) {
+                mem.media.forEach(m => {
+                    const pid = extractPublicId(m.url);
+                    if (pid) publicIds.push(pid);
+                });
+            }
+        }
+
+        // 2. Delete from Cloudinary
+        if (publicIds.length > 0) {
+            await deleteFromCloudinary(publicIds);
+        }
+
+        // 3. Delete Product (Cascades to memories usually, but we can be explicit if needed)
+        // Assuming DB cascade is set up, deleting product deletes memories?
+        // Let's verify: Prisma usually handles cascade if defined in schema.
+        // Even if not, we can delete memories manually first to be safe or just let product deletion handle it.
+        // To be safe and explicit:
+        await db.memory.deleteMany({
+            where: { productId: id }
+        });
+
+        await db.product.delete({
+            where: { id }
+        });
+
+        revalidatePath("/manage-charms");
+        revalidatePath("/");
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Delete Product Error:", error);
+        return { error: error.message };
     }
 }

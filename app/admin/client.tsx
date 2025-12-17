@@ -3,9 +3,10 @@
 import { useTransition, useState } from "react";
 import { createProduct } from "@/app/actions/admin";
 
+import { toast } from "sonner";
+
 export function AdminDashboardClient() {
   const [isPending, startTransition] = useTransition();
-  const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
   const handleSubmit = (formData: FormData) => {
     const email = formData.get("email") as string;
@@ -14,9 +15,9 @@ export function AdminDashboardClient() {
     startTransition(async () => {
       const result = await createProduct(email, productName);
       if (result.error) {
-        setMessage({ text: result.error, type: 'error' });
+        toast.error(result.error);
       } else {
-        setMessage({ text: "Product created successfully!", type: 'success' });
+        toast.success("Product created successfully!");
         // Optional: clear form
         const form = document.getElementById("create-product-form") as HTMLFormElement;
         form?.reset();
@@ -47,11 +48,6 @@ export function AdminDashboardClient() {
         />
       </div>
       
-      {message && (
-        <div className={`text-sm p-2 rounded ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {message.text}
-        </div>
-      )}
 
       <button 
         type="submit" 

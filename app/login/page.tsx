@@ -1,14 +1,21 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authenticate } from "@/app/actions/auth";
 import { useFormStatus } from "react-dom";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [errorMessage, dispatch] = useActionState(authenticate, undefined);
   const router = useRouter();
+
+  useEffect(() => {
+    if (errorMessage) {
+      toast.error(errorMessage);
+    }
+  }, [errorMessage]);
   
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 font-[family-name:var(--font-outfit)]">
