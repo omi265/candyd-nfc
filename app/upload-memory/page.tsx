@@ -26,6 +26,7 @@ import {
     ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import AudioPlayer from "@/app/components/AudioPlayer";
 
 // --- Components ---
 
@@ -74,6 +75,7 @@ export default function MemoryUploadPage() {
         id: string;
         file: File;
         previewUrl: string;
+        type?: string; // Added for audio override
         status: 'pending' | 'uploading' | 'completed' | 'error';
         cloudData?: { url: string; type: string; size: number };
     };
@@ -131,13 +133,13 @@ export default function MemoryUploadPage() {
 
             completedUploadsRef.current.set(item.id, { 
                 url: data.secure_url, 
-                type: data.resource_type, 
+                type: item.file.type.startsWith('audio') ? 'audio' : data.resource_type, 
                 size: data.bytes 
             });
 
             setMediaItems(prev => prev.map(i => 
                 i.id === item.id 
-                ? { ...i, status: 'completed', cloudData: { url: data.secure_url, type: data.resource_type, size: data.bytes } } 
+                ? { ...i, status: 'completed', cloudData: { url: data.secure_url, type: item.file.type.startsWith('audio') ? 'audio' : data.resource_type, size: data.bytes } } 
                 : i
             ));
         } catch (error) {
@@ -427,22 +429,28 @@ export default function MemoryUploadPage() {
                              <div className="bg-[#FFF5F0] rounded-2xl p-3 relative space-y-2 border border-[#E8D1E0]">
                                 <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
                                     {mediaItems.map((item, i) => (
-                                        <div key={item.id} className="shrink-0 w-24 h-24 rounded-xl bg-gray-200 overflow-hidden relative border border-[#E8D1E0] group">
+                                        <div key={item.id} className={`shrink-0 rounded-xl bg-gray-200 overflow-hidden relative border border-[#E8D1E0] group ${
+                                            (item.file.type.startsWith("audio") || item.type?.startsWith("audio")) ? "w-64 h-24" : "w-24 h-24"
+                                        }`}>
                                            {/* Preview */}
                                             {item.file.type.startsWith("video") ? (
                                                 <video src={item.previewUrl} className="w-full h-full object-cover" muted />
+                                            ) : (item.file.type.startsWith("audio") || item.type?.startsWith("audio")) ? (
+                                                <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
+                                                     <AudioPlayer src={item.previewUrl} className="w-full h-full bg-transparent! p-2!" />
+                                                </div>
                                             ) : (
                                                 <img src={item.previewUrl} alt="preview" className="w-full h-full object-cover" />
                                             )}
                                             
                                             {/* Status Indicators */}
                                             {item.status === 'uploading' && (
-                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
                                                     <RefreshCw className="w-6 h-6 text-white animate-spin" />
                                                 </div>
                                             )}
                                             {item.status === 'error' && (
-                                                <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center">
+                                                <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center z-10">
                                                     <Trash2 className="w-6 h-6 text-white" />
                                                 </div>
                                             )}
@@ -458,7 +466,7 @@ export default function MemoryUploadPage() {
                                                     uploadPromisesRef.current.delete(item.id);
                                                     completedUploadsRef.current.delete(item.id);
                                                 }}
-                                                className="absolute top-1 right-1 w-5 h-5 bg-white/80 rounded-full flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute top-1 right-1 w-5 h-5 bg-white/80 rounded-full flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-20"
                                             >
                                                 <Trash2 className="w-3 h-3" />
                                             </button>

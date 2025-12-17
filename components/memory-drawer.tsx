@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 
 // --- Icons (reused) ---
 import { Edit2, Heart, Plus, Image as ImageIcon, Play } from "lucide-react";
+import AudioPlayer from "@/app/components/AudioPlayer";
 
 
 interface MemoryDrawerProps {
@@ -101,21 +102,8 @@ export function MemoryDrawer({ memory, open, onOpenChange }: MemoryDrawerProps) 
                                     )}
 
                                     {media.type.startsWith('audio') && (
-                                        <div className="bg-[#FFF5F0] p-6 rounded-[24px] flex items-center gap-4 shadow-sm border border-[#EADDDE]">
-                                            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#5B2D7D]/10 text-[#5B2D7D]">
-                                                <Play className="w-3.5 h-4 ml-0.5 fill-current" />
-                                            </button>
-                                            <div className="flex-1 h-8 flex items-center gap-0.5 opacity-60">
-                                                {/* Fake Waveform Visual */}
-                                                {Array.from({ length: 24 }).map((_, i) => (
-                                                    <div 
-                                                        key={i} 
-                                                        className="w-1 bg-[#5B2D7D] rounded-full"
-                                                        style={{ height: `${Math.max(20, Math.random() * 100)}%` }}
-                                                    ></div>
-                                                ))}
-                                            </div>
-                                            <audio src={media.url} className="hidden" />
+                                        <div className="bg-[#FFF5F0] p-4 rounded-[24px] shadow-sm border border-[#EADDDE]">
+                                             <AudioPlayer src={media.url} className="w-full p-0! shadow-none bg-transparent!" />
                                         </div>
                                     )}
                                 </div>

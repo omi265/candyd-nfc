@@ -20,6 +20,7 @@ import {
     ChevronDown, 
 } from "lucide-react";
 import { toast } from "sonner";
+import AudioPlayer from "@/app/components/AudioPlayer";
 
 const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
 const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet"];
@@ -70,7 +71,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
             const newItems = files.map(file => ({
                 id: `temp-${Date.now()}-${Math.random()}`,
                 url: URL.createObjectURL(file),
-                type: file.type.startsWith('video') ? 'video' : 'image',
+                type: file.type.startsWith('video') ? 'video' : file.type.startsWith('audio') ? 'audio' : 'image',
                 isNew: true,
                 file: file
             }));
@@ -118,7 +119,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                     finalMediaItems.push({
                         ...item,
                         url: data.secure_url,
-                        type: data.resource_type,
+                        type: (item.type === 'audio' || item.file?.type.startsWith('audio')) ? 'audio' : data.resource_type,
                         size: data.bytes,
                         isNew: true // Mark as new for DB creation
                     });
@@ -248,9 +249,22 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                           <div className="space-y-3">
                               <Reorder.Group axis="y" values={mediaItems} onReorder={setMediaItems} className="space-y-3">
                                   {mediaItems.map((item, index) => (
-                                      <Reorder.Item key={item.id} value={item} className="relative rounded-[20px] overflow-hidden bg-gray-200 cursor-grab active:cursor-grabbing touch-none select-none">
+                                      <Reorder.Item key={item.id} value={item} className={`relative rounded-[20px] overflow-hidden bg-gray-200 cursor-grab active:cursor-grabbing touch-none select-none ${
+                                          item.type === 'audio' ? 'h-24' : ''
+                                      }`}>
                                           {item.type.includes('video') ? (
                                                <video src={item.url} className="w-full h-48 object-cover pointer-events-none" />
+                                          ) : item.type === 'audio' ? (
+                                                <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0] p-2 pointer-events-none">
+                                                    {/* Pointer events none on container for drag, but we might want play controls? 
+                                                        Reorder.Item usually grabs everything. 
+                                                        We might need a drag handle or disable drag on the player controls.
+                                                        For now, let's allow drag on the whole thing, but maybe `pointer-events-auto` on the player?
+                                                     */}
+                                                    <div className="w-full pointer-events-auto" onPointerDown={(e) => e.stopPropagation()}>
+                                                        <AudioPlayer src={item.url} className="w-full bg-transparent! p-0! shadow-none" />
+                                                    </div>
+                                                </div>
                                           ) : (
                                                <img src={item.url} alt="media" className="w-full h-auto object-cover pointer-events-none" />
                                           )}

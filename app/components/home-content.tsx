@@ -5,12 +5,12 @@ import { useEffect, useState, useRef } from "react";
 import { motion } from "motion/react";
 import { MemoryDrawer } from "@/components/memory-drawer";
 
-import { Plus, Search, LayoutGrid, List } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, Mic, Music } from "lucide-react";
 
 // --- Data ---
 
 type GridItemType = 
-  | { type: 'memory', id: string, image: string, title: string, date: string }
+  | { type: 'memory', id: string, mediaUrl: string, mediaType: 'image' | 'video' | 'audio', title: string, date: string }
   | { type: 'empty', id: string };
 
 // --- Components ---
@@ -47,11 +47,30 @@ function MemoryCard({ item, isActive, onClick }: { item: Extract<GridItemType, {
             whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
         >
-             {/* Background Image */}
+             {/* Background Media */}
              <div className="absolute inset-0">
-                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+                {item.mediaType === 'audio' ? (
+                    <div className="w-full h-full bg-[#FFF5F0] flex flex-col items-center justify-center relative overflow-hidden">
+                        {/* Decorative circles */}
+                        <div className="absolute w-64 h-64 rounded-full bg-[#5B2D7D]/5 blur-3xl -top-10 -right-10"></div>
+                        <div className="absolute w-64 h-64 rounded-full bg-[#F37B55]/10 blur-3xl -bottom-10 -left-10"></div>
+                        
+                        <div className="w-20 h-20 rounded-full bg-[#5B2D7D]/10 flex items-center justify-center mb-4 relative z-10">
+                            <Mic className="w-10 h-10 text-[#5B2D7D]" />
+                        </div>
+                        {/* Simple bars visualization */}
+                        <div className="flex items-end gap-1 h-8 mb-8 opacity-50">
+                             {[40, 70, 50, 80, 60, 90, 40].map((h, i) => (
+                                 <div key={i} className="w-1 bg-[#5B2D7D] rounded-full" style={{ height: `${h}%` }}></div>
+                             ))}
+                        </div>
+                    </div>
+                ) : (
+                    <img src={item.mediaUrl} alt={item.title} className="w-full h-full object-cover" />
+                )}
+                
+                {/* Gradient Overlay (darker for images, lighter for audio?) */}
+                <div className={`absolute inset-0 ${item.mediaType === 'audio' ? 'bg-linear-to-t from-[#5B2D7D]/40 via-transparent to-transparent' : 'bg-linear-to-t from-black/60 via-black/10 to-transparent'}`}></div>
              </div>
 
              {/* Content */}
@@ -60,8 +79,8 @@ function MemoryCard({ item, isActive, onClick }: { item: Extract<GridItemType, {
                 animate={{ opacity: isActive ? 1 : 0 }} 
                 transition={{ duration: 0.3 }}
             >
-                 <h3 className="text-white text-2xl font-bold font-[Outfit]">{item.title}</h3>
-                 <p className="text-white/80 text-sm mt-1">{item.date}</p>
+                 <h3 className={`text-2xl font-bold font-[Outfit] ${item.mediaType === 'audio' ? 'text-[#5B2D7D]' : 'text-white'}`}>{item.title}</h3>
+                 <p className={`text-sm mt-1 ${item.mediaType === 'audio' ? 'text-[#5B2D7D]/70' : 'text-white/80'}`}>{item.date}</p>
              </motion.div>
         </motion.div>
     )
@@ -154,13 +173,20 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
         const dateObj = new Date(memory.date);
         const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
         
-        let imageUrl = 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&w=800&q=80';
+        let mediaUrl = 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&w=800&q=80';
+        let mediaType: 'image' | 'video' | 'audio' = 'image';
+
         if (memory.media && memory.media.length > 0) {
             const firstMedia = memory.media[0];
-            if (firstMedia.type === 'video') {
-                    imageUrl = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+            if (firstMedia.type.startsWith('video')) {
+                    mediaUrl = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                    mediaType = 'video';
+            } else if (firstMedia.type.startsWith('audio')) {
+                    mediaUrl = firstMedia.url;
+                    mediaType = 'audio';
             } else {
-                    imageUrl = firstMedia.url;
+                    mediaUrl = firstMedia.url;
+                    mediaType = 'image';
             }
         }
 
@@ -169,7 +195,8 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
             id: memory.id,
             title: memory.title,
             date: dateStr,
-            image: imageUrl 
+            mediaUrl,
+            mediaType
         };
     });
     return newGrid;
@@ -193,13 +220,20 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
             const dateObj = new Date(memory.date);
             const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             
-            let imageUrl = 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&w=800&q=80';
+            let mediaUrl = 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&w=800&q=80';
+            let mediaType: 'image' | 'video' | 'audio' = 'image';
+
             if (memory.media && memory.media.length > 0) {
                 const firstMedia = memory.media[0];
-                if (firstMedia.type === 'video') {
-                     imageUrl = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                if (firstMedia.type.startsWith('video')) {
+                     mediaUrl = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                     mediaType = 'video';
+                } else if (firstMedia.type.startsWith('audio')) {
+                     mediaUrl = firstMedia.url;
+                     mediaType = 'audio';
                 } else {
-                     imageUrl = firstMedia.url;
+                     mediaUrl = firstMedia.url;
+                     mediaType = 'image';
                 }
             }
 
@@ -208,7 +242,8 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
                 id: memory.id,
                 title: memory.title,
                 date: dateStr,
-                image: imageUrl
+                mediaUrl,
+                mediaType
             };
         });
         setGridData(newGrid);
