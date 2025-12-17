@@ -4,7 +4,7 @@ import { updateMemory, deleteMemory } from "@/app/actions/memories";
 import { getCloudinarySignature } from "@/app/actions/upload";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, Reorder } from "motion/react";
 
 import { 
     ChevronLeft, 
@@ -47,20 +47,34 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     const [selectedMood, setSelectedMood] = useState<string | null>(memory.mood || null);
     const [selectedProductId, setSelectedProductId] = useState<string>(memory.productId || "");
 
-    // New Media State
-    const [newMedia, setNewMedia] = useState<File[]>([]); 
-    const [newMediaPreviews, setNewMediaPreviews] = useState<string[]>([]);
-    
-    // Existing Media (Display Only for now)
-    const existingMedia = memory.media || [];
+    // Unified Media State
+    const [mediaItems, setMediaItems] = useState<{
+        id: string;
+        url: string;
+        type: string;
+        isNew: boolean;
+        file?: File;
+        size?: number;
+    }[]>(() => {
+        return (memory.media || []).map((m: any) => ({
+            id: m.id,
+            url: m.url,
+            type: m.type,
+            isNew: false
+        }));
+    });
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const files = Array.from(e.target.files);
-            setNewMedia(prev => [...prev, ...files]);
-            
-            const previews = files.map(file => URL.createObjectURL(file));
-            setNewMediaPreviews(prev => [...prev, ...previews]);
+            const newItems = files.map(file => ({
+                id: `temp-${Date.now()}-${Math.random()}`,
+                url: URL.createObjectURL(file),
+                type: file.type.startsWith('video') ? 'video' : 'image',
+                isNew: true,
+                file: file
+            }));
+            setMediaItems(prev => [...prev, ...newItems]);
         }
     };
 
@@ -77,18 +91,17 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         const loadingToast = toast.loading("Saving memory...");
 
         try {
-            // Upload New Media
-            const uploadedUrls: string[] = [];
-            const uploadedTypes: string[] = [];
-            const uploadedSizes: number[] = [];
+            // Process Media Items (Upload new ones)
+            const finalMediaItems: typeof mediaItems = [];
+            
+            const signatureData = await getCloudinarySignature();
+            const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
 
-            if (newMedia.length > 0) {
-                const signatureData = await getCloudinarySignature();
-                const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
-
-                for (const file of newMedia) {
+            for (const item of mediaItems) {
+                if (item.isNew && item.file) {
+                    // Upload
                     const formData = new FormData();
-                    formData.append("file", file);
+                    formData.append("file", item.file);
                     formData.append("api_key", apiKey!);
                     formData.append("timestamp", timestamp.toString());
                     formData.append("signature", signature);
@@ -99,11 +112,18 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                         body: formData,
                     });
 
-                    if (!response.ok) throw new Error("Upload failed");
+                    if (!response.ok) throw new Error("Upload failed for one or more files");
                     const data = await response.json();
-                    uploadedUrls.push(data.secure_url);
-                    uploadedTypes.push(data.resource_type);
-                    uploadedSizes.push(data.bytes);
+                    
+                    finalMediaItems.push({
+                        ...item,
+                        url: data.secure_url,
+                        type: data.resource_type,
+                        size: data.bytes,
+                        isNew: true // Mark as new for DB creation
+                    });
+                } else {
+                    finalMediaItems.push(item);
                 }
             }
 
@@ -119,17 +139,12 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                 if (selectedMood) formData.append("mood", selectedMood);
                 if (selectedProductId) formData.append("productId", selectedProductId);
                 
-                if (uploadedUrls.length > 0) {
-                    formData.append("mediaUrls", JSON.stringify(uploadedUrls));
-                    formData.append("mediaTypes", JSON.stringify(uploadedTypes));
-                    formData.append("mediaSizes", JSON.stringify(uploadedSizes));
-                }
+                // Send ordered list
+                formData.append("orderedMedia", JSON.stringify(finalMediaItems));
 
                 const result = await updateMemory(memory.id, undefined, formData);
                 
                 if (result?.success) {
-                    setNewMedia([]);
-                    setNewMediaPreviews([]);
                     setIsUploading(false);
                     toast.dismiss(loadingToast);
                     toast.success("Memory saved successfully!");
@@ -229,28 +244,33 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                               </button>
                           </div>
                         
-                          {/* Grid of Existing + New Media */}
+                          {/* Reorder List */}
                           <div className="space-y-3">
-                              {/* Existing */}
-                              {existingMedia.map((m: any) => (
-                                  <div key={m.id} className="relative rounded-[20px] overflow-hidden bg-gray-200">
-                                      {m.type.startsWith('video') ? (
-                                           <video src={m.url} className="w-full h-48 object-cover" controls />
-                                      ) : (
-                                           <img src={m.url} alt="media" className="w-full h-auto object-cover" />
-                                      )}
-                                  </div>
-                              ))}
-                              
-                               {/* New Previews */}
-                               {newMediaPreviews.map((src, i) => (
-                                  <div key={i} className="relative rounded-[20px] overflow-hidden bg-gray-200 border-2 border-[#A4C538]">
-                                      <img src={src} alt="new preview" className="w-full h-auto object-cover opacity-80" />
-                                       <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="bg-[#A4C538] text-[#5B2D7D] text-xs px-2 py-1 rounded-full font-bold">New</span>
-                                       </div>
-                                  </div>
-                              ))}
+                              <Reorder.Group axis="y" values={mediaItems} onReorder={setMediaItems} className="space-y-3">
+                                  {mediaItems.map((item, index) => (
+                                      <Reorder.Item key={item.id} value={item} className="relative rounded-[20px] overflow-hidden bg-gray-200 cursor-grab active:cursor-grabbing touch-none select-none">
+                                          {item.type.includes('video') ? (
+                                               <video src={item.url} className="w-full h-48 object-cover pointer-events-none" />
+                                          ) : (
+                                               <img src={item.url} alt="media" className="w-full h-auto object-cover pointer-events-none" />
+                                          )}
+                                          
+                                          {/* Indicators */}
+                                          <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start">
+                                              {index === 0 && (
+                                                  <span className="bg-[#5B2D7D] text-[#A4C538] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                                                      COVER
+                                                  </span>
+                                              )}
+                                              {item.isNew && (
+                                                  <span className={`bg-[#A4C538] text-[#5B2D7D] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm ${index === 0 ? 'ml-auto' : ''}`}>
+                                                      NEW
+                                                  </span>
+                                              )}
+                                          </div>
+                                      </Reorder.Item>
+                                  ))}
+                              </Reorder.Group>
 
                               {/* Add Button */}
                               <label className="block w-full bg-[#EADDDE]/50 border border-dashed border-[#5B2D7D]/20 rounded-[20px] p-4 text-center cursor-pointer hover:bg-[#EADDDE] transition-colors relative">

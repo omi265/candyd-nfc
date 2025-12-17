@@ -61,4 +61,5 @@ model Media {
   memory    Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now())
+  orderIndex Int      @default(0)
 }

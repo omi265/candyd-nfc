@@ -19,6 +19,7 @@ const createMemorySchema = z.object({
   mediaUrls: z.string().optional(), // JSON string of string[]
   mediaTypes: z.string().optional(), // JSON string of string[]
   mediaSizes: z.string().optional(), // JSON string of number[]
+  orderedMedia: z.string().optional(), // JSON string of { id?: string, url: string, type: string, size: number, isNew: boolean }[]
 });
 
 export async function createMemory(prevState: { error?: string; success?: boolean } | undefined, formData: FormData) {
@@ -76,12 +77,13 @@ export async function createMemory(prevState: { error?: string; success?: boolea
 
             if (Array.isArray(urls) && Array.isArray(types) && urls.length === types.length) {
                 for (let i = 0; i < urls.length; i++) {
-                     await db.media.create({
+                    await db.media.create({
                         data: {
                             url: urls[i],
                             type: types[i], // 'image', 'video'
                             size: sizes[i] || 0,
-                            memoryId: memory.id
+                            memoryId: memory.id,
+                            orderIndex: i // Set initial order
                         }
                     });
                 }
@@ -170,7 +172,13 @@ export async function getMemory(id: string) {
     try {
         const memory = await db.memory.findUnique({
             where: { id },
-            include: { media: true }
+            include: { 
+                media: {
+                    orderBy: {
+                        orderIndex: 'asc'
+                    }
+                } 
+            }
         });
         
         if (!memory || memory.userId !== session.user.id) return null;
@@ -193,7 +201,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
         return { error: "Invalid fields: " + validatedFields.error.issues.map((i) => i.message).join(", ") };
     }
 
-    const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes, mediaSizes } = validatedFields.data;
+    const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes, mediaSizes, orderedMedia } = validatedFields.data;
     const parsedDate = new Date(date);
 
     try {
@@ -222,11 +230,52 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
             }
         });
 
-        // Add NEW media if provided
-        if (mediaUrls && mediaTypes) {
+        // Handle Ordered Media (Consolidated New + Existing)
+        if (orderedMedia) {
+             const items = JSON.parse(orderedMedia);
+             
+             // Process sequentially to ensure orderIndex is correct
+             for (let i = 0; i < items.length; i++) {
+                 const item = items[i];
+                 
+                 if (item.isNew) {
+                     // Create new media with correct index
+                     await db.media.create({
+                        data: {
+                            url: item.url,
+                            type: item.type,
+                            size: item.size || 0,
+                            memoryId: id,
+                            orderIndex: i
+                        }
+                    });
+                 } else if (item.id) {
+                     // Update existing media index
+                     // We use updateMany or try/catch to avoid errors if media doesn't exist (though it should)
+                     // Using update instead to ensure it exists
+                     try {
+                        await db.media.update({
+                            where: { id: item.id },
+                            data: { orderIndex: i }
+                        });
+                     } catch (e) {
+                         console.error(`Failed to update media order for ${item.id}`, e);
+                     }
+                 }
+             }
+        }
+        // Fallback: Add NEW media if provided via old method (only if orderedMedia not present)
+        else if (mediaUrls && mediaTypes) {
              const urls = JSON.parse(mediaUrls) as string[];
              const types = JSON.parse(mediaTypes) as string[];
              const sizes = mediaSizes ? (JSON.parse(mediaSizes) as number[]) : [];
+             
+             // Get current media count to append correctly? or just append.
+             // For now just appending with arbitrary orderIndex might be tricky if we mix methods.
+             // We'll just append using 0-based index or maybe 100+ to be safe?
+             // Actually, simplest is to just start at 0 if we don't care, or better: 
+             // find max index? Too complex for fallback. 
+             // Let's assume standard creation logic.
              
              if (Array.isArray(urls) && Array.isArray(types)) {
                  for (let i = 0; i < urls.length; i++) {
@@ -235,7 +284,8 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
                             url: urls[i],
                             type: types[i],
                             size: sizes[i] || 0,
-                            memoryId: id
+                            memoryId: id,
+                            orderIndex: 1000 + i // Append to end roughly
                         }
                     });
                 }
