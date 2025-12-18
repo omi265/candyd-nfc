@@ -4,7 +4,7 @@ import { updateMemory, deleteMemory } from "@/app/actions/memories";
 import { getCloudinarySignature } from "@/app/actions/upload";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { motion, AnimatePresence, Reorder } from "motion/react";
+import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
 
 import { 
     ChevronLeft, 
@@ -17,13 +17,60 @@ import {
     Mic, 
     Trash2, 
     Archive,
-    ChevronDown, 
+    ChevronDown,
+    Pencil,
+    Check
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
 
 const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
 const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet"];
+
+interface DraggableMediaItemProps {
+    item: any;
+    index: number;
+    isReordering: boolean;
+}
+
+const DraggableMediaItem = ({ item, index, isReordering }: DraggableMediaItemProps) => {
+    return (
+        <Reorder.Item
+            value={item}
+            dragListener={isReordering}
+            className={`relative rounded-[20px] overflow-hidden bg-gray-200 select-none ${
+                item.type === 'audio' ? 'h-24' : ''
+            } ${isReordering ? "cursor-grab active:cursor-grabbing touch-none ring-2 ring-[#5B2D7D] ring-offset-2 ring-offset-[#FDF2EC]" : "cursor-default"}`}
+            style={{ touchAction: isReordering ? "none" : "pan-y" }} 
+        >
+              {item.type.includes('video') ? (
+                   <video src={item.url} className="w-full h-48 object-cover pointer-events-none" />
+              ) : item.type === 'audio' ? (
+                    <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0] p-2 pointer-events-none">
+                        <div className="w-full pointer-events-auto" onPointerDown={(e) => e.stopPropagation()}>
+                            <AudioPlayer src={item.url} className="w-full bg-transparent! p-0! shadow-none" />
+                        </div>
+                    </div>
+              ) : (
+                   <img src={item.url} alt="media" className="w-full h-auto object-cover pointer-events-none" />
+              )}
+              
+              {/* Indicators */}
+              <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start pointer-events-none">
+                  {index === 0 && (
+                      <span className="bg-[#5B2D7D] text-[#A4C538] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                          COVER
+                      </span>
+                  )}
+                  {item.isNew && (
+                      <span className={`bg-[#A4C538] text-[#5B2D7D] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm ${index === 0 ? 'ml-auto' : ''}`}>
+                          NEW
+                      </span>
+                  )}
+              </div>
+        </Reorder.Item>
+    );
+};
 
 interface MemoryClientPageProps {
     memory: any;
@@ -36,6 +83,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [isUploading, setIsUploading] = useState(false);
+    const [isReordering, setIsReordering] = useState(false);
     const [optionalExpanded, setOptionalExpanded] = useState(false);
 
     // Form State
@@ -230,66 +278,46 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
                       {/* Media Section */}
                       <div>
-                          <label className="block text-[#C27A59] text-[13px] font-bold mb-1">Media<span className="text-[#C27A59]">*</span></label>
+                          <div className="flex items-center justify-between mb-1">
+                                <label className="block text-[#C27A59] text-[13px] font-bold">Media<span className="text-[#C27A59]">*</span></label>
+                                {mediaItems.length > 1 && (
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsReordering(!isReordering)}
+                                        className={`text-[11px] font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${
+                                            isReordering 
+                                            ? "bg-[#A4C538] text-[#5B2D7D]" 
+                                            : "bg-[#EADDDE] text-[#5B2D7D]"
+                                        }`}
+                                    >
+                                        {isReordering ? (
+                                            <>
+                                                <Check className="w-3 h-3" /> Done
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Pencil className="w-3 h-3" /> Reorder
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                          </div>
                           <p className="text-[#A68CAB] text-[10px] mb-3 ml-1">You can add and edit media later.</p>
 
-                          <div className="flex gap-3 mb-4">
-                              <button type="button" className="flex-1 bg-[#5B2D7D] text-white py-3 rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold shadow-sm">
-                                  <ImageIcon className="w-5 h-5" /> Image
-                              </button>
-                              <button type="button" className="flex-1 bg-[#FFF5F0] border border-[#EADDDE] text-[#5B2D7D] py-3 rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold">
-                                  <VideoIcon className="w-5 h-5" /> Video
-                              </button>
-                               <button type="button" className="flex-1 bg-[#FFF5F0] border border-[#EADDDE] text-[#5B2D7D] py-3 rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold">
-                                  <Mic className="w-5 h-5" /> Audio
-                              </button>
-                          </div>
+
                         
                           {/* Reorder List */}
                           <div className="space-y-3">
                               <Reorder.Group axis="y" values={mediaItems} onReorder={setMediaItems} className="space-y-3">
                                   {mediaItems.map((item, index) => (
-                                      <Reorder.Item key={item.id} value={item} className={`relative rounded-[20px] overflow-hidden bg-gray-200 cursor-grab active:cursor-grabbing touch-none select-none ${
-                                          item.type === 'audio' ? 'h-24' : ''
-                                      }`}>
-                                          {item.type.includes('video') ? (
-                                               <video src={item.url} className="w-full h-48 object-cover pointer-events-none" />
-                                          ) : item.type === 'audio' ? (
-                                                <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0] p-2 pointer-events-none">
-                                                    {/* Pointer events none on container for drag, but we might want play controls? 
-                                                        Reorder.Item usually grabs everything. 
-                                                        We might need a drag handle or disable drag on the player controls.
-                                                        For now, let's allow drag on the whole thing, but maybe `pointer-events-auto` on the player?
-                                                     */}
-                                                    <div className="w-full pointer-events-auto" onPointerDown={(e) => e.stopPropagation()}>
-                                                        <AudioPlayer src={item.url} className="w-full bg-transparent! p-0! shadow-none" />
-                                                    </div>
-                                                </div>
-                                          ) : (
-                                               <img src={item.url} alt="media" className="w-full h-auto object-cover pointer-events-none" />
-                                          )}
-                                          
-                                          {/* Indicators */}
-                                          <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start">
-                                              {index === 0 && (
-                                                  <span className="bg-[#5B2D7D] text-[#A4C538] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
-                                                      COVER
-                                                  </span>
-                                              )}
-                                              {item.isNew && (
-                                                  <span className={`bg-[#A4C538] text-[#5B2D7D] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm ${index === 0 ? 'ml-auto' : ''}`}>
-                                                      NEW
-                                                  </span>
-                                              )}
-                                          </div>
-                                      </Reorder.Item>
+                                      <DraggableMediaItem key={item.id} item={item} index={index} isReordering={isReordering} />
                                   ))}
                               </Reorder.Group>
 
                               {/* Add Button */}
                               <label className="block w-full bg-[#EADDDE]/50 border border-dashed border-[#5B2D7D]/20 rounded-[20px] p-4 text-center cursor-pointer hover:bg-[#EADDDE] transition-colors relative">
                                   <div className="flex flex-col items-center justify-center gap-2 py-6">
-                                      <span className="text-[#5B2D7D] font-bold flex items-center gap-1">Add image <Plus className="w-6 h-6" /></span>
+                                      <span className="text-[#5B2D7D] font-bold flex items-center gap-1">Add Media <Plus className="w-6 h-6" /></span>
                                   </div>
                                   <input type="file" className="hidden" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
                               </label>

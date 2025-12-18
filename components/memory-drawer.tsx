@@ -122,7 +122,7 @@ export function MemoryDrawer({ memory, open, onOpenChange }: MemoryDrawerProps) 
                             onClick={handleEdit}
                             className="w-full bg-[#A4C538] py-4 rounded-full flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
                         >
-                             Add more media <Plus className="w-4 h-4 text-[#5B2D7D]" />
+                             Edit Memory <Plus className="w-4 h-4 text-[#5B2D7D]" />
                          </button>
                      </DrawerFooter>
                  </div>

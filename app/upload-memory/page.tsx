@@ -402,15 +402,17 @@ export default function MemoryUploadPage() {
                         <p className="text-[#A68CAB] text-[10px] mb-3 ml-1">You can add and edit media later.</p>
                         
                         {!hasMedia ? (
-                            <div className="border border-dashed border-[#5B2D7D]/20 bg-[#FFF5F0] rounded-[32px] p-6 relative flex flex-col items-center justify-center text-center h-52">
-                                <button type="button" className="w-14 h-14 bg-[#F37B55] rounded-2xl flex items-center justify-center mb-3 shadow-[0_4px_10px_rgba(243,123,85,0.3)] relative z-10 transition-transform active:scale-95">
-                                   <Upload className="w-8 h-8 text-white" />
-                                   <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
-                                </button>
-                                <p className="text-[#5B2D7D] font-semibold text-[15px] mb-1">Upload your file or drag</p>
-                                <p className="text-[#A68CAB] text-[10px]">Supported Format: SVG, JPG, PNG.....</p>
+                            <div className="border border-dashed border-[#5B2D7D]/20 bg-[#FFF5F0] rounded-[32px] p-6 flex flex-col items-center justify-center text-center min-h-[250px] gap-4">
+                                <div>
+                                    <button type="button" className="w-14 h-14 bg-[#F37B55] rounded-2xl flex items-center justify-center mb-3 shadow-[0_4px_10px_rgba(243,123,85,0.3)] mx-auto relative z-10 transition-transform active:scale-95">
+                                    <Upload className="w-8 h-8 text-white" />
+                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
+                                    </button>
+                                    <p className="text-[#5B2D7D] font-semibold text-[15px] mb-1">Upload your file or drag</p>
+                                    <p className="text-[#A68CAB] text-[10px]">Supported Format: SVG, JPG, PNG.....</p>
+                                </div>
                                 
-                                <div className="absolute bottom-5 left-5 right-5 flex justify-center gap-3">
+                                <div className="flex justify-center gap-3 w-full">
                                      <button type="button" onClick={() => imageInputRef.current?.click()} className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium hover:bg-[#EADDDE] transition-colors">
                                         <ImageIcon className="w-4 h-4" /> Image
                                      </button>
