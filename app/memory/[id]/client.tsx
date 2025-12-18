@@ -21,7 +21,8 @@ import {
     ChevronDown,
     Pencil,
     Check,
-    RefreshCw
+    RefreshCw,
+    GripVertical
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
@@ -33,17 +34,74 @@ interface DraggableMediaItemProps {
     item: any;
     index: number;
     isReordering: boolean;
+    scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const DraggableMediaItem = ({ item, index, isReordering }: DraggableMediaItemProps) => {
+const DraggableMediaItem = ({ item, index, isReordering, scrollContainerRef }: DraggableMediaItemProps) => {
+    const contextControls = useDragControls();
+    
+    // Auto-scroll logic
+    const autoScrollId = useRef<number | null>(null);
+    const pointerY = useRef<number>(0);
+    const isDragging = useRef(false);
+
+    const checkAutoScroll = () => {
+        if (!isDragging.current || !scrollContainerRef.current) return;
+
+        const container = scrollContainerRef.current;
+        const { top, bottom } = container.getBoundingClientRect();
+        const y = pointerY.current;
+
+        const zoneHeight = 80; // slightly smaller zone
+        let scrollSpeed = 0;
+
+        if (y < top + zoneHeight) {
+             const dist = Math.max(0, (top + zoneHeight) - y);
+             // smoother easing?
+             scrollSpeed = -Math.min(dist * 0.3, 15); 
+        } else if (y > bottom - zoneHeight) {
+             const dist = Math.max(0, y - (bottom - zoneHeight));
+             scrollSpeed = Math.min(dist * 0.3, 15);
+        }
+
+        if (scrollSpeed !== 0) {
+            container.scrollTop += scrollSpeed;
+        }
+        
+        autoScrollId.current = requestAnimationFrame(checkAutoScroll);
+    };
+    
+    // We only want to allow drag if isReordering is true
+    // But dragControls.start(e) must be called from pointer down
+    
     return (
         <Reorder.Item
             value={item}
-            dragListener={isReordering}
+            dragListener={false}
+            dragControls={contextControls}
+            dragMomentum={false} 
+            onDragStart={() => {
+                isDragging.current = true;
+                autoScrollId.current = requestAnimationFrame(checkAutoScroll);
+            }}
+            onDrag={(e, info) => {
+                pointerY.current = info.point.y;
+            }}
+            onDragEnd={() => {
+                isDragging.current = false;
+                if (autoScrollId.current) {
+                    cancelAnimationFrame(autoScrollId.current);
+                    autoScrollId.current = null;
+                }
+            }}
             className={`relative rounded-[20px] overflow-hidden bg-gray-200 select-none ${
                 item.type === 'audio' ? 'h-24' : ''
-            } ${isReordering ? "cursor-grab active:cursor-grabbing touch-none ring-2 ring-[#5B2D7D] ring-offset-2 ring-offset-[#FDF2EC]" : "cursor-default"}`}
-            style={{ touchAction: isReordering ? "none" : "pan-y" }} 
+            } ${isReordering ? "ring-2 ring-[#5B2D7D] ring-offset-2 ring-offset-[#FDF2EC]" : ""}`}
+            style={{ 
+                touchAction: "pan-y", 
+                WebkitUserSelect: "none",
+                WebkitTouchCallout: "none"
+            }} 
         >
               {item.type?.includes('video') ? (
                    <video src={item.url} className="w-full h-48 object-cover pointer-events-none" />
@@ -70,7 +128,7 @@ const DraggableMediaItem = ({ item, index, isReordering }: DraggableMediaItemPro
              )}
 
               {/* Indicators */}
-              <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start pointer-events-none z-10">
+              <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start pointer-events-none z-10 transition-opacity duration-200">
                   {index === 0 && (
                       <span className="bg-[#5B2D7D] text-[#A4C538] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
                           COVER
@@ -82,6 +140,25 @@ const DraggableMediaItem = ({ item, index, isReordering }: DraggableMediaItemPro
                       </span>
                   )}
               </div>
+              
+              {/* Drag Handle Overlay */}
+              <AnimatePresence>
+                {isReordering && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-30 flex items-center justify-end pr-4 bg-black/10 backdrop-blur-[1px]"
+                    >
+                        <div 
+                            className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
+                            onPointerDown={(e) => contextControls.start(e)}
+                        >
+                            <GripVertical className="w-6 h-6 text-[#5B2D7D]" />
+                        </div>
+                    </motion.div>
+                )}
+              </AnimatePresence>
         </Reorder.Item>
     );
 };
@@ -109,6 +186,8 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     const [selectedEmotions, setSelectedEmotions] = useState<string[]>(memory.emotions || []);
     const [selectedMood, setSelectedMood] = useState<string | null>(memory.mood || null);
     const [selectedProductId, setSelectedProductId] = useState<string>(memory.productId || "");
+    
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Unified Media State
     // We add 'status' to track upload progress
@@ -375,7 +454,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         <div className="flex flex-col h-full bg-[#FDF2EC] font-[Outfit] relative">
              <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#FDF2EC] to-transparent z-10 pointer-events-none"></div>
 
-             <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-32">
+             <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-32" ref={scrollContainerRef}>
                  {/* Header / Nav */}
                  <div className="flex items-center justify-between mb-6 sticky top-0 z-20">
                       <button onClick={handleCancel} className="w-10 h-10 rounded-full bg-[#EADDDE]/50 backdrop-blur-sm flex items-center justify-center">
@@ -449,9 +528,20 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                         
                           {/* Reorder List */}
                           <div className="space-y-3">
-                              <Reorder.Group axis="y" values={mediaItems} onReorder={setMediaItems} className="space-y-3">
+                              <Reorder.Group 
+                                axis="y" 
+                                values={mediaItems} 
+                                onReorder={setMediaItems} 
+                                className="space-y-3"
+                              >
                                   {mediaItems.map((item, index) => (
-                                      <DraggableMediaItem key={item.id} item={item} index={index} isReordering={isReordering} />
+                                      <DraggableMediaItem 
+                                        key={item.id} 
+                                        item={item} 
+                                        index={index} 
+                                        isReordering={isReordering}
+                                        scrollContainerRef={scrollContainerRef}
+                                      />
                                   ))}
                               </Reorder.Group>
 
