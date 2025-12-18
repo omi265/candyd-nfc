@@ -1,7 +1,8 @@
 "use client";
 
+import { useRef } from "react";
 import { updateMemory, deleteMemory } from "@/app/actions/memories";
-import { getCloudinarySignature } from "@/app/actions/upload";
+import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
@@ -19,7 +20,8 @@ import {
     Archive,
     ChevronDown,
     Pencil,
-    Check
+    Check,
+    RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
@@ -43,7 +45,7 @@ const DraggableMediaItem = ({ item, index, isReordering }: DraggableMediaItemPro
             } ${isReordering ? "cursor-grab active:cursor-grabbing touch-none ring-2 ring-[#5B2D7D] ring-offset-2 ring-offset-[#FDF2EC]" : "cursor-default"}`}
             style={{ touchAction: isReordering ? "none" : "pan-y" }} 
         >
-              {item.type.includes('video') ? (
+              {item.type?.includes('video') ? (
                    <video src={item.url} className="w-full h-48 object-cover pointer-events-none" />
               ) : item.type === 'audio' ? (
                     <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0] p-2 pointer-events-none">
@@ -55,8 +57,20 @@ const DraggableMediaItem = ({ item, index, isReordering }: DraggableMediaItemPro
                    <img src={item.url} alt="media" className="w-full h-auto object-cover pointer-events-none" />
               )}
               
+             {/* Upload Status */}
+             {item.status === 'uploading' && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
+                    <RefreshCw className="w-8 h-8 text-white animate-spin" />
+                </div>
+             )}
+             {item.status === 'error' && (
+                <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center z-20">
+                    <span className="text-white text-xs font-bold px-2">Upload Failed</span>
+                </div>
+             )}
+
               {/* Indicators */}
-              <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start pointer-events-none">
+              <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start pointer-events-none z-10">
                   {index === 0 && (
                       <span className="bg-[#5B2D7D] text-[#A4C538] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
                           COVER
@@ -97,6 +111,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     const [selectedProductId, setSelectedProductId] = useState<string>(memory.productId || "");
 
     // Unified Media State
+    // We add 'status' to track upload progress
     const [mediaItems, setMediaItems] = useState<{
         id: string;
         url: string;
@@ -104,26 +119,110 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         isNew: boolean;
         file?: File;
         size?: number;
+        status: 'pending' | 'uploading' | 'completed' | 'error';
+        cloudData?: { url: string; type: string; size: number };
     }[]>(() => {
         return (memory.media || []).map((m: any) => ({
             id: m.id,
             url: m.url,
             type: m.type,
-            isNew: false
+            isNew: false,
+            status: 'completed',
+            cloudData: { url: m.url, type: m.type, size: 0 } // Mock size for existing
         }));
     });
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadPromisesRef = useRef<Map<string, Promise<any>>>(new Map());
+    const completedUploadsRef = useRef<Map<string, { url: string, type: string, size: number }>>(
+        new Map((memory.media || []).map((m: any) => [m.id, { url: m.url, type: m.type, size: 0 }]))
+    );
+
+    // Keep a ref to mediaItems for safe access in async callbacks if needed, 
+    // though for the final submission we will rely on completedUploadsRef + current state IDs order
+    const mediaItemsRef = useRef(mediaItems);
+    useEffect(() => { mediaItemsRef.current = mediaItems; }, [mediaItems]);
+
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const files = Array.from(e.target.files);
+            
             const newItems = files.map(file => ({
-                id: `temp-${Date.now()}-${Math.random()}`,
-                url: URL.createObjectURL(file),
+                id: `temp-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                url: URL.createObjectURL(file), // Preview URL
                 type: file.type.startsWith('video') ? 'video' : file.type.startsWith('audio') ? 'audio' : 'image',
                 isNew: true,
-                file: file
+                file: file,
+                status: 'uploading' as const,
             }));
+
             setMediaItems(prev => [...prev, ...newItems]);
+
+             // Start uploads immediately
+             newItems.forEach(item => {
+                uploadFile(item);
+            });
+        }
+    };
+
+    const uploadFile = async (item: any) => {
+        const processingPromise = (async () => {
+            const signatureData = await getCloudinarySignature();
+            const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
+
+            const formData = new FormData();
+            formData.append("file", item.file);
+            formData.append("api_key", apiKey!);
+            formData.append("timestamp", timestamp.toString());
+            formData.append("signature", signature);
+            formData.append("folder", folder);
+
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error?.message || "Upload failed");
+            }
+
+            const data = await response.json();
+
+            // Determine final type
+            const finalType = (item.type === 'audio' || item.file?.type.startsWith('audio')) ? 'audio' : data.resource_type;
+
+            const cloudData = { 
+                url: data.secure_url, 
+                type: finalType, 
+                size: data.bytes 
+            };
+
+            completedUploadsRef.current.set(item.id, cloudData);
+
+            setMediaItems(prev => prev.map(i => 
+                i.id === item.id 
+                ? { ...i, status: 'completed', cloudData, url: data.secure_url, type: finalType } 
+                : i
+            ));
+            
+            return data;
+        })();
+
+        uploadPromisesRef.current.set(item.id, processingPromise);
+
+        try {
+            await processingPromise;
+        } catch (error) {
+            console.error("Upload failed for", item.file?.name, error);
+            setMediaItems(prev => prev.map(i => 
+                i.id === item.id 
+                ? { ...i, status: 'error' } 
+                : i
+            ));
+            toast.error(`Failed to upload ${item.file?.name || "file"}`);
+        } finally {
+            uploadPromisesRef.current.delete(item.id);
         }
     };
 
@@ -137,46 +236,73 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
     const handleSave = async () => {
         setIsUploading(true);
+        // Clean errors first?
+        const failed = mediaItemsRef.current.filter(i => i.status === 'error');
+        if (failed.length > 0) {
+            toast.error("Some files failed to upload. Please remove them or try again.");
+            setIsUploading(false);
+            return;
+        }
+
         const loadingToast = toast.loading("Saving memory...");
 
         try {
-            // Process Media Items (Upload new ones)
-            const finalMediaItems: typeof mediaItems = [];
+            // Check for pending uploads
+            // We use the Ref to get the LATEST list of items that are supposedly in the list
+            // But we need to wait for their specific promises if they are still uploading
+            const pendingIds = mediaItemsRef.current.filter(i => i.status === 'uploading').map(i => i.id);
             
-            const signatureData = await getCloudinarySignature();
-            const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
-
-            for (const item of mediaItems) {
-                if (item.isNew && item.file) {
-                    // Upload
-                    const formData = new FormData();
-                    formData.append("file", item.file);
-                    formData.append("api_key", apiKey!);
-                    formData.append("timestamp", timestamp.toString());
-                    formData.append("signature", signature);
-                    formData.append("folder", folder);
-
-                    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-                        method: "POST",
-                        body: formData,
-                    });
-
-                    if (!response.ok) throw new Error("Upload failed for one or more files");
-                    const data = await response.json();
-                    
-                    finalMediaItems.push({
-                        ...item,
-                        url: data.secure_url,
-                        type: (item.type === 'audio' || item.file?.type.startsWith('audio')) ? 'audio' : data.resource_type,
-                        size: data.bytes,
-                        isNew: true // Mark as new for DB creation
-                    });
-                } else {
-                    finalMediaItems.push(item);
-                }
+            if (pendingIds.length > 0) {
+                 // Wait for them
+                 await Promise.all(pendingIds.map(id => uploadPromisesRef.current.get(id)).filter(Boolean));
             }
 
-            // Update Memory
+            // Re-check for failures after waiting
+            // We need to look at the 'completedUploadsRef' or check if any promises threw?
+            // The uploadFile catches errors and updates state to 'error'.
+            // So we should check mediaItems state again? 
+            // Wait, state update inside uploadFile might not be reflected in 'mediaItems' var here immediately if we are in the same closure.
+            // But 'mediaItemsRef' is updated via useEffect, which runs AFTER render. 
+            // We are in an async function, so by the time we await, React might have re-rendered? 
+            // Potentially yes, but safer to trust `completedUploadsRef`.
+            // If an item ID is in `mediaItemsRef` but NOT in `completedUploadsRef`, it failed or is missing.
+            
+            // Actually, let's just use the ids from mediaItemsRef (to preserve order) and pull data from completedUploadsRef
+            const finalMediaItems: any[] = [];
+            const currentItems = mediaItemsRef.current; // Get list of items user wants to save in order
+
+            for (const item of currentItems) {
+                // If it was an error item, we shouldn't be here (checked start), but if it failed DURATION waiting:
+                // We need to check if we have data.
+                if (item.status === 'error') {
+                     throw new Error("One or more files failed to upload.");
+                }
+
+                // If it was existing, it's in completedUploadsRef init.
+                // If it was new and finished, it's in completedUploadsRef.
+                const cloudData = completedUploadsRef.current.get(item.id);
+                
+                if (!cloudData) {
+                    // This might happen if it failed silently or logic gap
+                    throw new Error("Upload incomplete for one or more files.");
+                }
+
+                finalMediaItems.push({
+                    id: item.isNew ? undefined : item.id, // If new, don't send ID (or send temp ID and backend ignores? usually backend wants no ID for new)
+                    // Actually existing updateMemory logic tracks by ID? 
+                    // If we send an object with NO id, Prisma usually treats as create or we handle in backend.
+                    // The existing code: 
+                    // "id: m.id, url: m.url, type: m.type, isNew: false"
+                    // And previously: "finalMediaItems.push({ ...item, isNew: true })"
+                    // The backend `updateMemory` probably replaces the list or diffs it?
+                    // Let's check `updateMemory` implementation if we were unsure, but assuming standard "send all items" approach:
+                    url: cloudData.url,
+                    type: cloudData.type,
+                    // Backend expects { url, type } mostly?
+                });
+            }
+
+             // Update Memory
             startTransition(async () => {
                 const formData = new FormData();
                 formData.append("title", title);
@@ -189,7 +315,21 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                 if (selectedProductId) formData.append("productId", selectedProductId);
                 
                 // Send ordered list
-                formData.append("orderedMedia", JSON.stringify(finalMediaItems));
+                // We need to match the structure the backend expects. 
+                // Previously: "formData.append("orderedMedia", JSON.stringify(finalMediaItems));"
+                // And items had { id, url, type, isNew ... }
+                // Let's map it to exactly what we had before plus/minus logic
+                const payloadMedia = currentItems.map(item => {
+                    const data = completedUploadsRef.current.get(item.id);
+                    return {
+                        id: item.isNew ? undefined : item.id, // Send ID only if existing
+                        url: data?.url,
+                        type: data?.type,
+                        isNew: item.isNew // Helper for backend if it uses it
+                    };
+                });
+                
+                formData.append("orderedMedia", JSON.stringify(payloadMedia));
 
                 const result = await updateMemory(memory.id, undefined, formData);
                 
@@ -206,6 +346,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                     toast.error(result?.error || "Failed to save memory");
                 }
             });
+
 
         } catch (error: any) {
             console.error("Save failed:", error);
@@ -425,10 +566,10 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                         <button
                             type="button" 
                             onClick={handleSave} 
-                            disabled={isPending || isUploading}
+                            disabled={isPending || (isUploading && mediaItems.length === 0)}
                             className="w-full bg-[#A4C538] text-[#5B2D7D] text-[15px] font-bold h-[56px] rounded-[28px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#95b330] transition-all disabled:opacity-70 active:scale-95"
                         >
-                            {isUploading ? "Uploading..." : isPending ? "Saving..." : "Save"}
+                            {isUploading ? "Uploading & Saving..." : isPending ? "Saving..." : "Save"}
                         </button>
 
                          {/* Manage Memory */}
