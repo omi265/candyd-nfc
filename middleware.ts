@@ -20,6 +20,13 @@ export default auth((req) => {
       return NextResponse.redirect(new URL("/", req.nextUrl));
   }
 
+  // Guest restriction: Guests cannot access main app routes (like /)
+  // They can only access /guest*, /upload-memory, and maybe some shared public resources if any.
+  // We already defined publicRoutes, but guests are special "authenticated" users that have restricted access.
+  if (isGuest && !req.nextUrl.pathname.startsWith("/guest") && !req.nextUrl.pathname.startsWith("/upload-memory")) {
+       return NextResponse.redirect(new URL("/guest/memories", req.nextUrl));
+  }
+
   return NextResponse.next();
 });
 

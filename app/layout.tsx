@@ -32,18 +32,25 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+import { cookies } from "next/headers";
+
+// ... existing imports ...
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const isGuest = cookieStore.has("guest_session");
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
       >
         <AuthProvider>
-          <ClientLayout>{children}</ClientLayout>
+          <ClientLayout isGuest={isGuest}>{children}</ClientLayout>
           <Toaster />
         </AuthProvider>
       </body>

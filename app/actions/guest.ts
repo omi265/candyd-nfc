@@ -59,7 +59,7 @@ export async function getGuestSession() {
 
 export async function logoutGuest() {
     (await cookies()).delete(GUEST_COOKIE);
-    redirect("/");
+    redirect("/guest/login");
 }
 
 export async function createGuestMemory(prevState: any, formData: FormData) {
