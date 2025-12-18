@@ -1,6 +1,7 @@
 "use client";
 
 import { createMemory, getUserProducts } from "@/app/actions/memories";
+import { createGuestMemory, getGuestSession } from "@/app/actions/guest";
 import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
 
 // ... (icons remain the same, so imports are fine)
@@ -60,16 +61,31 @@ export default function MemoryUploadPage() {
     const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
     const [selectedProductId, setSelectedProductId] = useState<string>("");
 
+    // Guest Mode State
+    const [isGuest, setIsGuest] = useState(false);
+    const [guestName, setGuestName] = useState("");
+    const [isLoadingGuest, setIsLoadingGuest] = useState(true);
+
     useEffect(() => {
+        // Check for guest session
+        getGuestSession().then(guestId => {
+            if (guestId) {
+                setIsGuest(true);
+                // Guest doesn't select product, it's fixed.
+            }
+            setIsLoadingGuest(false);
+        });
+
+        // Fetch products only if not guest (or maybe we don't need to fetch if guest)
         getUserProducts().then(setProducts);
     }, []);
 
     // Initial check for auth
      useEffect(() => {
-        if (!isLoading && !user) {
+        if (!isLoadingGuest && !isGuest && !isLoading && !user) {
           router.push("/login");
         }
-      }, [user, isLoading, router]);
+      }, [user, isLoading, isGuest, isLoadingGuest, router]);
 
     type MediaItem = {
         id: string;
@@ -167,6 +183,7 @@ export default function MemoryUploadPage() {
         if (!title.trim()) missingFields.push("Title");
         if (!description.trim()) missingFields.push("Description");
         if (mediaItems.length === 0) missingFields.push("Media");
+        if (!isGuest && !selectedProductId) missingFields.push("Charm Link");
         
         if (missingFields.length > 0) {
             toast.error(`Please fill in the following details: ${missingFields.join(", ")}`);
@@ -293,11 +310,8 @@ export default function MemoryUploadPage() {
 
     const processSubmission = () => {
         startTransition(async () => {
-            // Get all items from state (just to preserve order and know which ones we want)
-            // But we can't trust state for the *cloudData* if it just finished.
-            // We trust `completedUploadsRef` for the data.
-            
-            const currentItems = mediaItemsRef.current; // access via ref to get somewhat recent, but we mostly care about IDs order
+            // Get all items from state
+            const currentItems = mediaItemsRef.current;
             
             const finalUrls: string[] = [];
             const finalTypes: string[] = [];
@@ -306,7 +320,6 @@ export default function MemoryUploadPage() {
             for (const item of currentItems) {
                 const data = completedUploadsRef.current.get(item.id);
                 if (!data) {
-                    // Start of function check usually catches this, but concurrent race...
                     console.error("Missing cloud data for", item.id);
                     toast.error("Upload incomplete. Please try again.");
                     setIsUploading(false);
@@ -325,7 +338,6 @@ export default function MemoryUploadPage() {
             formData.append("location", location);
             formData.append("emotions", selectedEmotions.join(","));
             if (selectedMood) formData.append("mood", selectedMood);
-            if (selectedProductId) formData.append("productId", selectedProductId);
             
             if (finalUrls.length > 0) {
                 formData.append("mediaUrls", JSON.stringify(finalUrls));
@@ -333,15 +345,24 @@ export default function MemoryUploadPage() {
                 formData.append("mediaSizes", JSON.stringify(finalSizes));
             }
 
-            console.log("UPLOAD: Submitting to createMemory action with URLs", finalUrls);
-            const result = await createMemory(undefined, formData);
+            let result;
+            
+            if (isGuest) {
+                console.log("UPLOAD: Submitting GUEST memory");
+                if (guestName) formData.append("guestName", guestName);
+                result = await createGuestMemory(undefined, formData);
+            } else {
+                if (selectedProductId) formData.append("productId", selectedProductId);
+                console.log("UPLOAD: Submitting USER memory");
+                result = await createMemory(undefined, formData);
+            }
 
             if (result?.error) {
                 setError(result.error);
                 toast.error(result.error);
             } else if (result?.success) {
                 toast.success("Memory created successfully!");
-                router.push("/");
+                router.push(isGuest ? "/guest/memories" : "/");
             }
             setIsUploading(false);
         });
@@ -370,6 +391,21 @@ export default function MemoryUploadPage() {
                 </div>
 
                 <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                    
+                    {/* Guest Name Input */}
+                    {isGuest && (
+                        <div>
+                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Your Name<span className="text-[#C27A59]">*</span></label>
+                            <input
+                                type="text"
+                                value={guestName}
+                                onChange={(e) => setGuestName(e.target.value)}
+                                placeholder="Enter your name"
+                                className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
+                            />
+                        </div>
+                    )}
+
                     {/* Title */}
                     <div>
                         <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Title<span className="text-[#C27A59]">*</span></label>
@@ -552,25 +588,27 @@ export default function MemoryUploadPage() {
                          </div>
                     </div>
 
-                    {/* Charm Selector */}
-                    <div className="mb-6">
-                         <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Link to Charm (Optional)</label>
-                         <div className="relative">
-                            <select
-                                value={selectedProductId}
-                                onChange={(e) => setSelectedProductId(e.target.value)}
-                                className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pr-10 text-[#5B2D7D] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium appearance-none"
-                            >
-                                <option value="">Select a charm...</option>
-                                {products.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                            </select>
-                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <ChevronDown className="w-5 h-5 text-[#5B2D7D]" />
+                    {/* Charm Selector - Hide if Guest */}
+                    {!isGuest && (
+                        <div className="mb-6">
+                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Link to Charm<span className="text-[#C27A59]">*</span></label>
+                            <div className="relative">
+                                <select
+                                    value={selectedProductId}
+                                    onChange={(e) => setSelectedProductId(e.target.value)}
+                                    className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pr-10 text-[#5B2D7D] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium appearance-none"
+                                >
+                                    <option value="">Select a charm...</option>
+                                    {products.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                        <ChevronDown className="w-5 h-5 text-[#5B2D7D]" />
+                                </div>
                             </div>
-                         </div>
-                    </div>
+                        </div>
+                    )}
 
                     {/* Optional Fields Toggle */}
                     <button
@@ -656,7 +694,7 @@ export default function MemoryUploadPage() {
              <div className="absolute bottom-6 left-6 right-6 z-20 flex items-center gap-3">
                 <button
                     type="button"
-                    onClick={() => router.push('/')}
+                    onClick={() => router.push(isGuest ? '/guest/memories' : '/')}
                     className="w-[56px] h-[56px] rounded-full bg-[#FFF5F0] flex items-center justify-center shadow-lg text-[#5B2D7D] shrink-0 active:scale-95 transition-transform"
                 >
                     <ChevronLeft className="w-6 h-6" />

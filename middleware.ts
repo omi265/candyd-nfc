@@ -5,13 +5,14 @@ import { NextResponse } from "next/server";
 const { auth } = NextAuth(authConfig);
 
 // Define public routes that don't need authentication
-const publicRoutes = ["/login", "/register", "/api/auth", "/nfc/login"];
+const publicRoutes = ["/login", "/register", "/api/auth", "/nfc/login", "/guest"];
 
 export default auth((req) => {
   const needsAuth = !publicRoutes.some((route) => req.nextUrl.pathname.startsWith(route));
   const isLoggedIn = !!req.auth;
+  const isGuest = req.cookies.has("guest_session");
 
-  if (needsAuth && !isLoggedIn) {
+  if (needsAuth && !isLoggedIn && !isGuest) {
      return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
   

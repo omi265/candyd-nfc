@@ -47,12 +47,14 @@ export async function createProduct(email: string, productName: string) {
 
   // Generate a unique token
   const token = crypto.randomUUID();
+  const guestToken = crypto.randomUUID();
 
   try {
     const product = await db.product.create({
       data: {
         name: productName,
         token,
+        guestToken,
         userId: user.id,
       },
     });
@@ -85,5 +87,18 @@ export async function getProducts() {
     },
   });
 
-  return products;
+  // Lazy backfill for existing products
+  const productsWithGuestToken = await Promise.all(products.map(async (p) => {
+    if (!p.guestToken) {
+        const guestToken = crypto.randomUUID();
+        return await db.product.update({
+            where: { id: p.id },
+            data: { guestToken },
+            include: { user: { select: { email: true, name: true } } }
+        });
+    }
+    return p;
+  }));
+
+  return productsWithGuestToken;
 }

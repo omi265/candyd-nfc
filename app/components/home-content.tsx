@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
-import { motion, useMotionValue, animate, useTransform, MotionValue } from "motion/react";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { motion, useMotionValue, animate, useTransform, MotionValue, AnimatePresence } from "motion/react";
 import { MemoryDrawer } from "@/components/memory-drawer";
 
-import { Plus, Search, LayoutGrid, List, Mic, Music } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, Mic, Music, X } from "lucide-react";
 
 // --- Data ---
 
@@ -15,24 +15,70 @@ type GridItemType =
 
 // --- Components ---
 
-function FilterBar() {
-  const filters = ["Evening", "Party", "Road Trip", "Birthday", "Concert", "Dinner"];
-  return (
-    <div className="flex items-center gap-3 px-6 py-4 overflow-x-auto no-scrollbar z-10 relative">
-      <div className="w-10 h-10 shrink-0 rounded-full bg-white flex items-center justify-center shadow-sm">
-        <Search className="w-5 h-5 text-[#5B2D7D]" />
+  // --- Components ---
+  
+  interface FilterBarProps {
+      tags: string[];
+      selectedFilter: string | null;
+      onSelectFilter: (filter: string | null) => void;
+      searchQuery: string;
+      setSearchQuery: (q: string) => void;
+      isSearchOpen: boolean;
+      setIsSearchOpen: (open: boolean) => void;
+  }
+  
+  function FilterBar({ tags, selectedFilter, onSelectFilter, searchQuery, setSearchQuery, isSearchOpen, setIsSearchOpen }: FilterBarProps) {
+    const inputRef = useRef<HTMLInputElement>(null);
+  
+    useEffect(() => {
+        if (isSearchOpen && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isSearchOpen]);
+  
+    return (
+      <div className="flex items-center gap-3 px-6 py-4 overflow-x-auto no-scrollbar z-10 relative">
+        <div className={`shrink-0 rounded-full bg-white shadow-sm flex items-center transition-all duration-300 overflow-hidden h-10 ${isSearchOpen ? 'w-60 px-4' : 'w-10 justify-center'}`}>
+           {isSearchOpen ? (
+               <>
+                  <input 
+                      ref={inputRef}
+                      type="text" 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search..."
+                      className="w-full h-full bg-transparent outline-none text-[#5B2D7D] text-base placeholder-[#5B2D7D]/40 min-w-0"
+                      onBlur={() => !searchQuery && setIsSearchOpen(false)}
+                  />
+                  {searchQuery ? (
+                       <button onClick={() => setSearchQuery("")} className="ml-2">
+                          <X className="w-4 h-4 text-[#5B2D7D]/60" />
+                       </button>
+                  ) : null}
+               </>
+           ) : (
+              <button onClick={() => setIsSearchOpen(true)} className="w-full h-full flex items-center justify-center">
+                  <Search className="w-5 h-5 text-[#5B2D7D]" />
+              </button>
+           )}
+        </div>
+        
+        {tags.map((tag) => (
+          <button
+            key={tag}
+            onClick={() => onSelectFilter(selectedFilter === tag ? null : tag)}
+            className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap shadow-sm transition-colors ${
+                selectedFilter === tag 
+                ? 'bg-[#5B2D7D] text-white' 
+                : 'bg-[#EADDDE] text-[#5B2D7D] hover:bg-[#EADDDE]/80'
+            }`}
+          >
+            {tag}
+          </button>
+        ))}
       </div>
-      {filters.map((filter) => (
-        <button
-          key={filter}
-          className="px-4 py-2 rounded-full bg-[#EADDDE] text-[#5B2D7D] font-medium text-sm whitespace-nowrap shadow-sm"
-        >
-          {filter}
-        </button>
-      ))}
-    </div>
-  );
-}
+    );
+  }
 
 
 // --- Helper for Distance Calculation ---
@@ -238,41 +284,93 @@ function getCenterOutOrder(n: number): number[] {
 interface HomeContentProps {
   initialMemories?: any[];
   user?: any;
+  isGuest?: boolean;
+  forcedViewMode?: 'grid' | 'list';
 }
 
-export default function HomeContent({ initialMemories, user }: HomeContentProps) {
+export default function HomeContent({ initialMemories, user, isGuest = false, forcedViewMode }: HomeContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const charmId = searchParams.get('charmId');
 
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // No longer needed
-  // const [activeCellIndex, setActiveCellIndex] = useState(4);
   const [selectedMemory, setSelectedMemory] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(forcedViewMode || 'grid');
+  
   const [cellSize, setCellSize] = useState({ width: 0, height: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   
-  // Track start of drag index
   const dragStartRef = useRef<{col: number, row: number} | null>(null);
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  // Determine grid size based on initial memories
-  const memoryCount = initialMemories ? initialMemories.length : 0;
+  // --- Filters & Search State ---
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+
+  // Extract unique tags (Emotions + Moods)
+  const uniqueTags = useMemo(() => {
+     if (!initialMemories) return [];
+     const tags = new Set<string>();
+     initialMemories.forEach(mem => {
+         if (mem.emotions && Array.isArray(mem.emotions)) {
+             mem.emotions.forEach((e: string) => tags.add(e.trim()));
+         } else if (mem.emotions && typeof mem.emotions === 'string') {
+             mem.emotions.split(',').forEach((e: string) => tags.add(e.trim()));
+         }
+         if (mem.mood) tags.add(mem.mood.trim());
+     });
+     return Array.from(tags).sort();
+  }, [initialMemories]);
+
+  // Filter Memories
+  const filteredMemories = useMemo(() => {
+      if (!initialMemories) return [];
+      
+      return initialMemories.filter(mem => {
+          // Search Filter
+          if (searchQuery) {
+              const q = searchQuery.toLowerCase();
+              const titleMatch = mem.title?.toLowerCase().includes(q);
+              const descMatch = mem.description?.toLowerCase().includes(q);
+              if (!titleMatch && !descMatch) return false;
+          }
+
+          // Tag Filter
+          if (selectedFilter) {
+              const hasMood = mem.mood === selectedFilter;
+              let hasEmotion = false;
+              if (Array.isArray(mem.emotions)) {
+                  hasEmotion = mem.emotions.includes(selectedFilter);
+              } else if (typeof mem.emotions === 'string') {
+                   hasEmotion = mem.emotions.split(',').map((e: string) => e.trim()).includes(selectedFilter);
+              }
+              
+              if (!hasMood && !hasEmotion) return false;
+          }
+
+          return true;
+      });
+  }, [initialMemories, searchQuery, selectedFilter]);
+
+  // Determine grid size based on FILTERED memories
+  const memoryCount = filteredMemories.length;
   const gridSize = Math.max(3, Math.ceil(Math.sqrt(memoryCount)));
 
-  // Initialize grid
+  // Initialize grid (using filteredMemories to start)
+  const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(initialMemories?.length || 0)));
   const [gridData, setGridData] = useState<GridItemType[]>(() => {
-    const totalCells = gridSize * gridSize;
+    const totalCells = currentGridSize * currentGridSize;
     const initialGrid: GridItemType[] = Array(totalCells).fill(null).map((_, i) => ({ type: 'empty', id: `e${i}` }));
 
     if (!initialMemories || initialMemories.length === 0) return initialGrid;
     
+    // Initial mapping (using initialMemories for first render to avoid mismatch, 
+    // though filteredMemories is likely same unless default search exists)
     const newGrid = [...initialGrid];
-    const FILL_ORDER = getCenterOutOrder(gridSize);
+    const FILL_ORDER = getCenterOutOrder(currentGridSize);
     const memoriesToMap = initialMemories.slice(0, totalCells);
 
     memoriesToMap.forEach((memory: any, index: number) => {
@@ -288,14 +386,14 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
         if (memory.media && memory.media.length > 0) {
             const firstMedia = memory.media[0];
             if (firstMedia.type.startsWith('video')) {
-                    mediaUrl = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
-                    mediaType = 'video';
+                     mediaUrl = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                     mediaType = 'video';
             } else if (firstMedia.type.startsWith('audio')) {
-                    mediaUrl = firstMedia.url;
-                    mediaType = 'audio';
+                     mediaUrl = firstMedia.url;
+                     mediaType = 'audio';
             } else {
-                    mediaUrl = firstMedia.url;
-                    mediaType = 'image';
+                     mediaUrl = firstMedia.url;
+                     mediaType = 'image';
             }
         }
 
@@ -310,9 +408,6 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
     });
     return newGrid;
   });
-
-  // Visual offset to account for bottom buttons (push grid up slightly)
-
 
   // Measure cell size on mount/resize
   useEffect(() => {
@@ -336,15 +431,50 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Update Grid Data on props change
+  // Visual offset to account for bottom buttons (push grid up slightly)
+  const VISUAL_Y_OFFSET = 60;
+
+  // Set Initial Position (Centering)
   useEffect(() => {
-    if (initialMemories) {
-        const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(initialMemories.length)));
+    if (cellSize.width === 0 || containerSize.width === 0) return;
+    
+    // Find grid center
+    // We want to center the FIRST memory (index 0 of memories) which is placed at FILL_ORDER[0]
+    const centerIndex = getCenterOutOrder(gridSize)[0];
+    // If invalid grid, fallback
+    if (centerIndex === undefined) return;
+
+    const row = Math.floor(centerIndex / gridSize);
+    const col = centerIndex % gridSize;
+
+    // Calculate offsets to center the item relative to container
+    // formula: x = (ContainerW - CellW)/2 - Col * CellW
+    const initialX = (containerSize.width - cellSize.width) / 2 - col * cellSize.width;
+    const initialY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - row * cellSize.height;
+
+    // Use jump to avoid animation on initial load if desired, but set is fine
+    x.set(initialX);
+    y.set(initialY);
+    
+  }, [cellSize, containerSize, gridSize, x, y]);
+
+  // --- Grid Logic updates to use filteredMemories ---
+  
+  // Determine grid size based on FILTERED memories (or keep it based on initial? 
+  // Usually better to shrink grid if specific search, but for masonry feel, re-calculating is better)
+  // Let's re-calculate grid size for filtered results to avoid too many empty spaces.
+  // If we have 0 memories matching search, size 3 is fine for empty state.
+
+  // Update Grid Data
+  useEffect(() => {
+        // Use filteredMemories instead of initialMemories
+        // Always reconstruct grid when filteredMemories changes
+        const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(filteredMemories.length)));
         const totalCells = currentGridSize * currentGridSize;
         const initialGrid: GridItemType[] = Array(totalCells).fill(null).map((_, i) => ({ type: 'empty', id: `e${i}` }));
         
         const newGrid = [...initialGrid];
-        const memoriesToMap = initialMemories.slice(0, totalCells);
+        const memoriesToMap = filteredMemories.slice(0, totalCells);
         const FILL_ORDER = getCenterOutOrder(currentGridSize);
 
         memoriesToMap.forEach((memory: any, index: number) => {
@@ -381,37 +511,13 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
             };
         });
         setGridData(newGrid);
-    }
-  }, [initialMemories]);
-
-  // Visual offset to account for bottom buttons (push grid up slightly)
-  const VISUAL_Y_OFFSET = 60;
-
-  // Set Initial Position (Centering)
-  useEffect(() => {
-    if (cellSize.width === 0 || containerSize.width === 0) return;
-    
-    // Find grid center
-    const centerIndex = getCenterOutOrder(gridSize)[0];
-    const row = Math.floor(centerIndex / gridSize);
-    const col = centerIndex % gridSize;
-
-    // Calculate offsets to center the item relative to container
-    // formula: x = (ContainerW - CellW)/2 - Col * CellW
-    const initialX = (containerSize.width - cellSize.width) / 2 - col * cellSize.width;
-    const initialY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - row * cellSize.height;
-
-    x.set(initialX);
-    y.set(initialY);
-    
-    // activeCellIndex is removed, animations handled by useTransform
-  }, [cellSize, containerSize, gridSize, x, y]);
-
-  // Sync Motion Values Effect Removed
+  }, [filteredMemories]); // Depend on filteredMemories
 
 
 
   const handleAddMemory = () => {
+    // If guest, router push will handle "upload-memory" which logic inside will handle isGuest 
+    // OR we can explicit redirect. "upload-memory" logic handles guest.
     router.push("/upload-memory");
   };
 
@@ -422,14 +528,20 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
       }
   };
 
-
-
   return (
     <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden"> 
       <div className="shrink-0 pt-2 pb-2 z-30 relative pointer-events-none">
           {/* Allow pointer events only on the filter bar itself if needed, or wrap it */}
           <div className="pointer-events-auto">
-             <FilterBar />
+             <FilterBar 
+                tags={uniqueTags}
+                selectedFilter={selectedFilter}
+                onSelectFilter={setSelectedFilter}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                isSearchOpen={isSearchOpen}
+                setIsSearchOpen={setIsSearchOpen}
+             />
           </div>
       </div>
 
@@ -611,34 +723,42 @@ export default function HomeContent({ initialMemories, user }: HomeContentProps)
 
        {/* Bottom Controls */}
        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none z-20">
-             <div className="flex items-center gap-2 pointer-events-auto bg-[#FDF2EC]/80 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-[#EADDDE]">
+             {!forcedViewMode && (
+                 <div className="flex items-center gap-2 pointer-events-auto bg-[#FDF2EC]/80 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-[#EADDDE]">
+                     <button 
+                        onClick={() => setViewMode('grid')}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D] hover:bg-[#5B2D7D]/10'}`}
+                     >
+                        <LayoutGrid className="w-6 h-6" />
+                     </button>
+                     <button 
+                        onClick={() => setViewMode('list')}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D] hover:bg-[#5B2D7D]/10'}`}
+                     >
+                        <List className="w-6 h-6" />
+                     </button>
+                 </div>
+             )}
+             
+             {/* If forced view mode, we might want to shift the plus button or keep it right aligned. 
+                 If the left side is missing, justify-between pushes it to the right which is fine. 
+             */}
+             <div className={forcedViewMode ? "ml-auto pointer-events-auto" : ""}>
                  <button 
-                    onClick={() => setViewMode('grid')}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D] hover:bg-[#5B2D7D]/10'}`}
-                 >
-                    <LayoutGrid className="w-6 h-6" />
-                 </button>
-                 <button 
-                    onClick={() => setViewMode('list')}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D] hover:bg-[#5B2D7D]/10'}`}
-                 >
-                    <List className="w-6 h-6" />
+                    onClick={handleAddMemory}
+                    className="w-14 h-14 rounded-full bg-[#A4C538] flex items-center justify-center shadow-lg hover:bg-[#95b330] transition-colors pointer-events-auto"
+                >
+                     <Plus className="w-7 h-7 text-[#5B2D7D]" />
                  </button>
              </div>
-
-             <button 
-                onClick={handleAddMemory}
-                className="w-14 h-14 rounded-full bg-[#A4C538] flex items-center justify-center shadow-lg hover:bg-[#95b330] transition-colors pointer-events-auto"
-             >
-                 <Plus className="w-7 h-7 text-[#5B2D7D]" />
-             </button>
         </div>
       
       {/* Memory Drawer as an overlay on Home */}
       <MemoryDrawer 
         memory={selectedMemory} 
         open={!!selectedMemory} 
-        onOpenChange={(open) => !open && setSelectedMemory(null)} 
+        onOpenChange={(open) => !open && setSelectedMemory(null)}
+        isGuest={isGuest}
       />
     </div>
   );

@@ -47,11 +47,12 @@ export default async function AdminPage() {
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Product Name</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Assigned To</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Token Link</th>
+                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Guest Link</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Created</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {products.map((product: { id: Key | null | undefined; name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; user: { name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; email: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }; token: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; createdAt: string | number | Date; }) => (
+                      {products.map((product: any) => (
                         <tr key={product.id} className="group hover:bg-white/50 transition-colors">
                           <td className="py-3 pr-4 text-[#5B2D7D]">{product.name}</td>
                           <td className="py-3 pr-4">
@@ -64,6 +65,14 @@ export default async function AdminPage() {
                                     /nfc/login?token={product.token}
                                 </code>
                                 <CopyButton token={product.token as string} />
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-2">
+                                <code className="font-mono text-xs text-[#5B2D7D]/80 truncate max-w-[150px] bg-white/50 px-2 py-1 rounded">
+                                    /guest/login?token={product.guestToken || "N/A"}
+                                </code>
+                                {product.guestToken && <CopyButton token={product.guestToken as string} isGuest />}
                             </div>
                           </td>
                           <td className="py-3 text-sm text-[#5B2D7D]/60">

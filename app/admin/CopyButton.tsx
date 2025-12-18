@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 
-export function CopyButton({ token }: { token: string }) {
+export function CopyButton({ token, isGuest = false }: { token: string; isGuest?: boolean }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    const link = `${window.location.origin}/nfc/login?token=${token}`;
+    const baseUrl = isGuest ? "/guest/login?token=" : "/nfc/login?token=";
+    const link = `${window.location.origin}${baseUrl}${token}`;
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);

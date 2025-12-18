@@ -19,9 +19,10 @@ interface MemoryDrawerProps {
     memory: any | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    isGuest?: boolean;
 }
 
-export function MemoryDrawer({ memory, open, onOpenChange }: MemoryDrawerProps) {
+export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false }: MemoryDrawerProps) {
     const router = useRouter();
 
     if (!memory) return null;
@@ -62,9 +63,11 @@ export function MemoryDrawer({ memory, open, onOpenChange }: MemoryDrawerProps) 
                                  </div>
                              </div>
                              <div className="flex gap-3 shrink-0">
-                                 <button onClick={handleEdit} className="w-12 h-12 rounded-full bg-[#EADDDE] flex items-center justify-center hover:bg-[#D4C3D8] transition-colors">
-                                     <Edit2 className="w-6 h-6 text-[#5B2D7D]" />
-                                 </button>
+                                 {!isGuest && (
+                                     <button onClick={handleEdit} className="w-12 h-12 rounded-full bg-[#EADDDE] flex items-center justify-center hover:bg-[#D4C3D8] transition-colors">
+                                         <Edit2 className="w-6 h-6 text-[#5B2D7D]" />
+                                     </button>
+                                 )}
                                  <button className="w-12 h-12 rounded-full bg-[#FFF5F0] border border-[#EADDDE] flex items-center justify-center">
                                      <Heart className="w-6 h-6 text-[#F37B55]" />
                                  </button>
@@ -118,12 +121,14 @@ export function MemoryDrawer({ memory, open, onOpenChange }: MemoryDrawerProps) 
 
                      <DrawerFooter className="px-6 mt-6 pb-8">
                          {/* 'Add' Button (simplified as per design) */}
-                         <button 
-                            onClick={handleEdit}
-                            className="w-full bg-[#A4C538] py-4 rounded-full flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
-                        >
-                             Edit Memory <Plus className="w-4 h-4 text-[#5B2D7D]" />
-                         </button>
+                         {!isGuest && (
+                             <button 
+                                onClick={handleEdit}
+                                className="w-full bg-[#A4C538] py-4 rounded-full flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
+                            >
+                                 Edit Memory <Plus className="w-4 h-4 text-[#5B2D7D]" />
+                             </button>
+                         )}
                      </DrawerFooter>
                  </div>
             </DrawerContent>
