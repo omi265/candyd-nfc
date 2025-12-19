@@ -25,6 +25,8 @@ import {
     Feather,
     ArrowRight,
     ChevronDown,
+    Plus,
+    X,
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
@@ -32,6 +34,7 @@ import AudioPlayer from "@/app/components/AudioPlayer";
 // --- Components ---
 
 const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
+const EVENTS = ["Pre Wedding Celebrations", "Haldi", "Sangeet", "Mehendi", "Wedding"];
 const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet"];
 
 export default function MemoryUploadPage() {
@@ -50,8 +53,17 @@ export default function MemoryUploadPage() {
     const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [time, setTime] = useState(() => new Date().toTimeString().slice(0, 5));
     const [location, setLocation] = useState("");
+    const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+    const [customEventInput, setCustomEventInput] = useState("");
+    const [showCustomEvent, setShowCustomEvent] = useState(false);
+    
     const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
+    const [customEmotionInput, setCustomEmotionInput] = useState("");
+    const [showCustomEmotion, setShowCustomEmotion] = useState(false);
+
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
+    const [customMoodInput, setCustomMoodInput] = useState("");
+    const [showCustomMood, setShowCustomMood] = useState(false);
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const uploadPromisesRef = useRef<Map<string, Promise<any>>>(new Map());
     const completedUploadsRef = useRef<Map<string, { url: string, type: string, size: number }>>(new Map());
@@ -174,6 +186,57 @@ export default function MemoryUploadPage() {
     const toggleEmotion = (emotion: string) => {
         setSelectedEmotions(prev => prev.includes(emotion) ? prev.filter(e => e !== emotion) : [...prev, emotion]);
     };
+    
+    const addCustomEmotion = () => {
+        if (customEmotionInput.trim()) {
+            const val = customEmotionInput.trim();
+            // Capitalize first letter strictly? Or keep user input? Let's Title case it nicely.
+            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+            if (!selectedEmotions.includes(formatted)) {
+                setSelectedEmotions(prev => [...prev, formatted]);
+            }
+            setCustomEmotionInput("");
+            setShowCustomEmotion(false);
+        } else {
+             setShowCustomEmotion(false);
+        }
+    };
+
+    const toggleEvent = (event: string) => {
+        setSelectedEvents(prev => prev.includes(event) ? prev.filter(e => e !== event) : [...prev, event]);
+    };
+
+    const addCustomEvent = () => {
+        if (customEventInput.trim()) {
+            const val = customEventInput.trim();
+            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+            if (!selectedEvents.includes(formatted)) {
+                setSelectedEvents(prev => [...prev, formatted]);
+            }
+            setCustomEventInput("");
+            setShowCustomEvent(false);
+        } else {
+            setShowCustomEvent(false);
+        }
+    };
+    
+    const handleMoodSelect = (mood: string) => {
+        setSelectedMood(mood);
+        setShowCustomMood(false);
+        setCustomMoodInput("");
+    }
+
+    const addCustomMood = () => {
+         if (customMoodInput.trim()) {
+            const val = customMoodInput.trim();
+            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+            setSelectedMood(formatted);
+            setCustomMoodInput("");
+            setShowCustomMood(false);
+        } else {
+             setShowCustomMood(false);
+        }
+    }
 
     const handleSubmit = async () => {
         setError(null);
@@ -337,6 +400,7 @@ export default function MemoryUploadPage() {
             formData.append("time", time);
             formData.append("location", location);
             formData.append("emotions", selectedEmotions.join(","));
+            formData.append("events", selectedEvents.join(",")); // Add events
             if (selectedMood) formData.append("mood", selectedMood);
             
             if (finalUrls.length > 0) {
@@ -612,6 +676,62 @@ export default function MemoryUploadPage() {
                             </div>
                         )}
 
+                        {/* Events */}
+                        <div className="mb-6">
+                            <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Event</label>
+                            <p className="text-[#A68CAB] text-[10px] mb-3">Which event does this memory belong to?</p>
+                            <div className="flex flex-wrap gap-2">
+                                {EVENTS.map(event => (
+                                    <button
+                                        type="button"
+                                        key={event}
+                                        onClick={() => toggleEvent(event)}
+                                        className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
+                                            selectedEvents.includes(event)
+                                            ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
+                                            : 'bg-[#FFF5F0] text-[#5B2D7D] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                        }`}
+                                    >
+                                        {event}
+                                    </button>
+                                ))}
+                                
+                                {/* Custom Events Display */}
+                                {selectedEvents.filter(e => !EVENTS.includes(e)).map(event => (
+                                     <button
+                                        type="button"
+                                        key={event}
+                                        onClick={() => toggleEvent(event)}
+                                        className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                    >
+                                        {event}
+                                        <X className="w-3 h-3 text-white/70" />
+                                    </button>
+                                ))}
+
+                                {showCustomEvent ? (
+                                    <input 
+                                        type="text"
+                                        autoFocus
+                                        value={customEventInput}
+                                        onChange={(e) => setCustomEventInput(e.target.value)}
+                                        onBlur={addCustomEvent}
+                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEvent())}
+                                        placeholder="Type event..."
+                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[100px]"
+                                    />
+                                ) : (
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowCustomEvent(true)}
+                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                    >
+                                        Other <Plus className="w-3 h-3" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Optional Fields Toggle */}
                         <button
                             type="button"
@@ -652,10 +772,40 @@ export default function MemoryUploadPage() {
                                                     {emotion}
                                                 </button>
                                             ))}
-                                            {/* Other Button style */}
-                                            <div className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6]">
-                                                Other
-                                            </div>
+                                            
+                                            {/* Custom Emotions Display */}
+                                            {selectedEmotions.filter(e => !EMOTIONS.includes(e)).map(emotion => (
+                                                <button
+                                                    type="button"
+                                                    key={emotion}
+                                                    onClick={() => toggleEmotion(emotion)}
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                                >
+                                                    {emotion}
+                                                    <X className="w-3 h-3 text-white/70" />
+                                                </button>
+                                            ))}
+
+                                            {showCustomEmotion ? (
+                                                <input 
+                                                    type="text"
+                                                    autoFocus
+                                                    value={customEmotionInput}
+                                                    onChange={(e) => setCustomEmotionInput(e.target.value)}
+                                                    onBlur={addCustomEmotion}
+                                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEmotion())}
+                                                    placeholder="Type..."
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[80px]"
+                                                />
+                                            ) : (
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setShowCustomEmotion(true)}
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                                >
+                                                    Other <Plus className="w-3 h-3" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
 
@@ -668,7 +818,7 @@ export default function MemoryUploadPage() {
                                                 <button
                                                     type="button"
                                                     key={mood}
-                                                    onClick={() => setSelectedMood(mood)}
+                                                    onClick={() => handleMoodSelect(mood)}
                                                     className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                         selectedMood === mood
                                                         ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
@@ -678,9 +828,41 @@ export default function MemoryUploadPage() {
                                                     {mood}
                                                 </button>
                                             ))}
-                                            <div className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6]">
-                                                Other
-                                            </div>
+                                            
+                                            {/* Custom Mood Display - if selectedMood is not in MOODS */}
+                                            {selectedMood && !MOODS.includes(selectedMood) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedMood(null)}
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                                >
+                                                    {selectedMood}
+                                                    <X className="w-3 h-3 text-white/70" />
+                                                </button>
+                                            )}
+
+                                            {showCustomMood ? (
+                                                 <input 
+                                                    type="text"
+                                                    autoFocus
+                                                    value={customMoodInput}
+                                                    onChange={(e) => setCustomMoodInput(e.target.value)}
+                                                    onBlur={addCustomMood}
+                                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomMood())}
+                                                    placeholder="Type mood..."
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[100px]"
+                                                />
+                                            ) : (
+                                                !selectedMood || MOODS.includes(selectedMood) ? (
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setShowCustomMood(true)}
+                                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                                    >
+                                                        Other <Plus className="w-3 h-3" />
+                                                    </button>
+                                                ) : null
+                                            )}
                                         </div>
                                     </div>
                                 </motion.div>

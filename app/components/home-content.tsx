@@ -320,6 +320,13 @@ export default function HomeContent({ initialMemories, user, isGuest = false, fo
          } else if (mem.emotions && typeof mem.emotions === 'string') {
              mem.emotions.split(',').forEach((e: string) => tags.add(e.trim()));
          }
+         
+         if (mem.events && Array.isArray(mem.events)) {
+             mem.events.forEach((e: string) => tags.add(e.trim()));
+         } else if (mem.events && typeof mem.events === 'string') {
+             mem.events.split(',').forEach((e: string) => tags.add(e.trim()));
+         }
+
          if (mem.mood) tags.add(mem.mood.trim());
      });
      return Array.from(tags).sort();
@@ -347,8 +354,15 @@ export default function HomeContent({ initialMemories, user, isGuest = false, fo
               } else if (typeof mem.emotions === 'string') {
                    hasEmotion = mem.emotions.split(',').map((e: string) => e.trim()).includes(selectedFilter);
               }
+
+              let hasEvent = false;
+              if (Array.isArray(mem.events)) {
+                  hasEvent = mem.events.includes(selectedFilter);
+              } else if (typeof mem.events === 'string') {
+                   hasEvent = mem.events.split(',').map((e: string) => e.trim()).includes(selectedFilter);
+              }
               
-              if (!hasMood && !hasEmotion) return false;
+              if (!hasMood && !hasEmotion && !hasEvent) return false;
           }
 
           return true;

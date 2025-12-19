@@ -14,6 +14,7 @@ const createMemorySchema = z.object({
   time: z.string().optional(),
   location: z.string().optional(),
   emotions: z.string().optional(), // Comma separated or JSON string
+  events: z.string().optional(), // Comma separated or JSON string
   mood: z.string().optional(),
   productId: z.string().optional(),
   mediaUrls: z.string().optional(), // JSON string of string[]
@@ -41,7 +42,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
   }
 
 
-  const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes, mediaSizes } = validatedFields.data;
+  const { title, description, date, time, location, emotions, events, mood, productId, mediaUrls, mediaTypes, mediaSizes } = validatedFields.data;
 
   // content-type check for date if needed
   const parsedDate = new Date(date);
@@ -53,6 +54,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
   try {
     // 1. Create Memory
     const emotionsArray = emotions ? emotions.split(",") : [];
+    const eventsArray = events ? events.split(",") : [];
     
     const memory = await db.memory.create({
       data: {
@@ -62,6 +64,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
         time,
         location,
         emotions: emotionsArray,
+        events: eventsArray,
         mood,
         userId: session.user.id,
         productId: productId || undefined,
@@ -201,7 +204,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
         return { error: "Invalid fields: " + validatedFields.error.issues.map((i) => i.message).join(", ") };
     }
 
-    const { title, description, date, time, location, emotions, mood, productId, mediaUrls, mediaTypes, mediaSizes, orderedMedia } = validatedFields.data;
+    const { title, description, date, time, location, emotions, events, mood, productId, mediaUrls, mediaTypes, mediaSizes, orderedMedia } = validatedFields.data;
     const parsedDate = new Date(date);
 
     try {
@@ -215,6 +218,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
         }
 
         const emotionsArray = emotions ? emotions.split(",") : [];
+        const eventsArray = events ? events.split(",") : [];
 
         await db.memory.update({
             where: { id },
@@ -225,6 +229,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
                 time,
                 location,
                 emotions: emotionsArray,
+                events: eventsArray,
                 mood,
                 productId: productId || undefined,
             }
