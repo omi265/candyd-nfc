@@ -3,7 +3,7 @@
 import { loginGuest } from "@/app/actions/guest";
 import { Zap } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 
 function GuestLoginContent() {
   const searchParams = useSearchParams();
@@ -11,11 +11,16 @@ function GuestLoginContent() {
   const router = useRouter();
   const [status, setStatus] = useState("Checking guest access...");
 
+  const hasattemptedLogin = useRef(false);
+
   useEffect(() => {
     if (!token) {
       setStatus("Invalid link. No access token provided.");
       return;
     }
+
+    if (hasattemptedLogin.current) return;
+    hasattemptedLogin.current = true;
 
     const login = async () => {
       try {
@@ -24,17 +29,13 @@ function GuestLoginContent() {
         if (result?.error) {
             setStatus("Invalid or expired guest link.");
         } else {
-            setStatus("Welcome! Redirecting to upload...");
-            // Redirect to upload page
-            // We use window.location to ensure full reload/state reset if needed, 
-            // but router.push is fine since we set a cookie.
-            // router.refresh() might be needed to pick up the cookie in server components? 
-            // Yes, better to force refresh or use router.refresh() then push.
-            router.refresh();
-            router.push("/upload-memory");
+            // Force a full page reload to ensure the cookie is picked up by the server actions and middleware
+            // This is safer than router.push for login flows involving cookies
+            window.location.href = "/upload-memory";
         }
       } catch (error) {
         setStatus("An error occurred. Please try again.");
+        hasattemptedLogin.current = false; // Allow retry on error
       }
     };
 
