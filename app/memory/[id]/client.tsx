@@ -455,6 +455,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
              <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#FDF2EC] to-transparent z-10 pointer-events-none"></div>
 
              <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-32" ref={scrollContainerRef}>
+                <div className="max-w-xl mx-auto w-full">
                  {/* Header / Nav */}
                  <div className="flex items-center justify-between mb-6 sticky top-0 z-20">
                       <button onClick={handleCancel} className="w-10 h-10 rounded-full bg-[#EADDDE]/50 backdrop-blur-sm flex items-center justify-center">
@@ -679,7 +680,9 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                              </div>
                          </div>
                  </div>
+                 </div>
              </div>
         </div>
     )
 }
+

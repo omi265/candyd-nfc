@@ -412,16 +412,26 @@ export default function HomeContent({ initialMemories, user, isGuest = false, fo
   // Measure cell size on mount/resize
   useEffect(() => {
     const updateSize = () => {
-        // Based on CSS: w-[75vw] h-[60vh]
-        setCellSize({
-            width: window.innerWidth * 0.75,
-            height: window.innerHeight * 0.60
-        });
-
+        // Use container width if available, fallback to window.
+        // Cap width at 400px for desktop sanity
         if (containerRef.current) {
-            setContainerSize({
-                width: containerRef.current.offsetWidth,
-                height: containerRef.current.offsetHeight
+            const containerW = containerRef.current.offsetWidth;
+            const containerH = containerRef.current.offsetHeight;
+            
+            // Standard mobile: 75% width
+            // Desktop: cap at 380px (enough for good content)
+            const w = Math.min(containerW * 0.75, 380);
+            
+            // Height: 60% of container or window, cap at 600px
+            const h = Math.min(containerH * 0.60, 550);
+
+            setCellSize({ width: w, height: h });
+            setContainerSize({ width: containerW, height: containerH });
+        } else {
+             // Fallback
+             setCellSize({
+                width: Math.min(window.innerWidth * 0.75, 380),
+                height: Math.min(window.innerHeight * 0.60, 550)
             });
         }
     };
@@ -662,7 +672,7 @@ export default function HomeContent({ initialMemories, user, isGuest = false, fo
       ) : (
         /* List View */
         <div className="flex-1 min-h-0 w-full relative overflow-y-auto overflow-x-hidden pt-4 px-4 pb-24 no-scrollbar">
-            <div className="columns-2 gap-4 w-full">
+            <div className="columns-2 md:columns-3 lg:columns-4 gap-4 w-full max-w-7xl mx-auto">
                 {/* Render only actual memories, skipping empty slots for the list view */}
                 {initialMemories?.map((memory) => {
                      // Need to map memory to strictly typed object or reuse logic? 

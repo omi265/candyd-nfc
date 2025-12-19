@@ -33,7 +33,7 @@ export default function ClientLayout({
 
   // Authenticated Layout (User or Guest)
   return (
-    <div className="h-dvh bg-[#FDF2EC] flex flex-col max-w-md mx-auto relative shadow-2xl overflow-hidden">
+    <div className="h-dvh bg-[#FDF2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-2xl overflow-hidden">
       {!isGuest && (
         <div className="shrink-0 z-50 relative bg-[#FDF2EC]">
             <AppHeader userName={user?.name || "User"} />

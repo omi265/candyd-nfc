@@ -376,6 +376,7 @@ export default function MemoryUploadPage() {
         <div className="flex flex-col h-full overflow-hidden relative font-[Outfit]">
             {/* ... Header ... */} 
              <main className="flex-1 overflow-y-auto no-scrollbar px-6 pb-4 pt-4">
+                <div className="max-w-xl mx-auto w-full">
                 <div className="flex items-start justify-between mb-8 mt-2">
                      <div className="flex items-start gap-3">
                          <div className="mt-1">
@@ -688,10 +689,12 @@ export default function MemoryUploadPage() {
                     {/* Spacer for bottom bar */}
                     <div className="h-24"></div>
                 </form>
+                </div>
             </main>
             
             {/* Sticky Bottom Bar */}
-             <div className="absolute bottom-6 left-6 right-6 z-20 flex items-center gap-3">
+             <div className="absolute bottom-6 left-0 right-0 z-20 flex justify-center pointer-events-none">
+                 <div className="w-full max-w-xl px-6 flex items-center gap-3 pointer-events-auto">
                 <button
                     type="button"
                     onClick={() => router.push(isGuest ? '/guest/memories' : '/')}
@@ -709,6 +712,7 @@ export default function MemoryUploadPage() {
                      <span className="">{isUploading ? "Uploading media..." : isPending ? "Saving..." : "Create now"}</span>
                      <ArrowRight className="w-5 h-5" />
                 </button>
+                 </div>
              </div>
         </div>
     );
