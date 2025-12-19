@@ -9,11 +9,12 @@ import {
   DrawerFooter,
 } from "@/components/ui/drawer";
 import { useRouter } from "next/navigation";
-
-// --- Icons (reused) ---
-import { Edit2, Heart, Plus, Image as ImageIcon, Play } from "lucide-react";
+import { useRef, useState } from "react";
+import { addGuestMedia } from "@/app/actions/guest";
+import { getCloudinarySignature } from "@/app/actions/upload";
+import { toast } from "sonner";
+import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload } from "lucide-react";
 import AudioPlayer from "@/app/components/AudioPlayer";
-
 
 interface MemoryDrawerProps {
     memory: any | null;
@@ -24,16 +25,76 @@ interface MemoryDrawerProps {
 
 export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false }: MemoryDrawerProps) {
     const router = useRouter();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     if (!memory) return null;
 
     const dateStr = new Date(memory.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     const hasMedia = memory.media && memory.media.length > 0;
-    const featuredMedia = hasMedia ? memory.media[0] : null;
 
     const handleEdit = () => {
-        // Navigate to edit page
         router.push(`/memory/${memory.id}`);
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        setIsUploading(true);
+        const files = Array.from(e.target.files);
+        const uploadedMedia: { url: string; type: string; size: number }[] = [];
+
+        try {
+            // 1. Upload to Cloudinary
+            const signatureData = await getCloudinarySignature();
+            const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
+
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("api_key", apiKey!);
+                formData.append("timestamp", timestamp.toString());
+                formData.append("signature", signature);
+                formData.append("folder", folder);
+
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) throw new Error("Upload failed");
+                const data = await response.json();
+                
+                uploadedMedia.push({
+                    url: data.secure_url,
+                    type: file.type.startsWith('audio') ? 'audio' : data.resource_type,
+                    size: data.bytes
+                });
+            }
+
+            // 2. Save to DB via Server Action
+            const result = await addGuestMedia(memory.id, uploadedMedia);
+
+            if (result.error) {
+                toast.error(result.error);
+            } else {
+                toast.success("Media added successfully!");
+                // Close drawer or refresh? Drawer usually updates if parent updates.
+                // We should probably close it to see the refresh or keep it open if the parent re-renders and passes new memory prop.
+                // Since we used revalidatePath in action, the parent page will refresh.
+                // However, the 'memory' prop here is likely from a list.
+                // If the parent list refreshes, this drawer might close or update.
+                // Let's keep it simple:
+                onOpenChange(false); 
+                router.refresh();
+            }
+        } catch (error) {
+            console.error("Upload error", error);
+            toast.error("Failed to upload media");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
     };
 
     return (
@@ -121,13 +182,35 @@ export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false }: Me
 
                      <DrawerFooter className="px-6 mt-6 pb-8">
                          {/* 'Add' Button (simplified as per design) */}
-                         {!isGuest && (
+                         {!isGuest ? (
                              <button 
                                 onClick={handleEdit}
                                 className="w-full bg-[#A4C538] py-4 rounded-full flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
                             >
                                  Edit Memory <Plus className="w-4 h-4 text-[#5B2D7D]" />
-                             </button>
+                            </button>
+                         ) : (
+                            <>
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    className="w-full bg-[#F37B55] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#e06a45] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                     {isUploading ? (
+                                        <>Uploading <Loader2 className="w-4 h-4 animate-spin" /></>
+                                     ) : (
+                                        <>Add Media <Upload className="w-4 h-4" /></>
+                                     )}
+                                </button>
+                                <input 
+                                    type="file" 
+                                    ref={fileInputRef} 
+                                    className="hidden" 
+                                    multiple 
+                                    accept="image/*,video/*,audio/*"
+                                    onChange={handleFileUpload}
+                                />
+                            </>
                          )}
                      </DrawerFooter>
                  </div>

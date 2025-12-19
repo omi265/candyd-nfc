@@ -168,3 +168,47 @@ export async function getGuestMemories() {
         return [];
     }
 }
+
+export async function addGuestMedia(memoryId: string, mediaItems: { url: string; type: string; size: number }[]) {
+    const productId = await getGuestSession();
+    if (!productId) {
+        return { error: "Unauthorized guest session" };
+    }
+
+    try {
+        // Verify memory belongs to this product
+        const memory = await db.memory.findUnique({
+            where: { id: memoryId },
+            select: { productId: true }
+        });
+
+        if (!memory || memory.productId !== productId) {
+            return { error: "Unauthorized: Memory does not belong to this guest session" };
+        }
+
+        // Get current max order index to append correctly
+        const lastMedia = await db.media.findFirst({
+            where: { memoryId },
+            orderBy: { orderIndex: 'desc' }
+        });
+        let nextIndex = (lastMedia?.orderIndex ?? -1) + 1;
+
+        for (const item of mediaItems) {
+             await db.media.create({
+                data: {
+                    url: item.url,
+                    type: item.type,
+                    size: item.size,
+                    memoryId,
+                    orderIndex: nextIndex++
+                }
+            });
+        }
+
+        revalidatePath(`/guest/memories`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Add Guest Media Error:", error);
+        return { error: "Failed to add media" };
+    }
+}
