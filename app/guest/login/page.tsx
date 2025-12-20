@@ -31,7 +31,8 @@ function GuestLoginContent() {
         } else {
             // Force a full page reload to ensure the cookie is picked up by the server actions and middleware
             // This is safer than router.push for login flows involving cookies
-            window.location.href = "/upload-memory";
+            // ALSO pass the token explicitly as a fallback for browsers that block 3rd party cookies/strict modes
+            window.location.href = `/upload-memory?guest_token=${token}`;
         }
       } catch (error) {
         setStatus("An error occurred. Please try again.");

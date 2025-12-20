@@ -77,6 +77,7 @@ export default function MemoryUploadPage() {
     const [isGuest, setIsGuest] = useState(false);
     const [guestName, setGuestName] = useState("");
     const [isLoadingGuest, setIsLoadingGuest] = useState(true);
+    const guestTokenRef = useRef<string | null>(null);
 
     useEffect(() => {
         // Check for guest session
@@ -87,6 +88,15 @@ export default function MemoryUploadPage() {
             }
             setIsLoadingGuest(false);
         });
+
+        // Use searchParams to get token if passed from login redirect (Exhaustive fallback)
+        const params = new URLSearchParams(window.location.search);
+        const tokenFromUrl = params.get("guest_token");
+        if (tokenFromUrl) {
+            // Store it in a ref or state to send with submission
+            guestTokenRef.current = tokenFromUrl;
+            setIsGuest(true); // If we have a token, we are effectively a guest
+        }
 
         // Fetch products only if not guest (or maybe we don't need to fetch if guest)
         getUserProducts().then(setProducts);
@@ -414,6 +424,7 @@ export default function MemoryUploadPage() {
             if (isGuest) {
                 console.log("UPLOAD: Submitting GUEST memory");
                 if (guestName) formData.append("guestName", guestName);
+                if (guestTokenRef.current) formData.append("guestToken", guestTokenRef.current);
                 result = await createGuestMemory(undefined, formData);
             } else {
                 if (selectedProductId) formData.append("productId", selectedProductId);
@@ -426,7 +437,12 @@ export default function MemoryUploadPage() {
                 toast.error(result.error);
             } else if (result?.success) {
                 toast.success("Memory created successfully!");
-                router.push(isGuest ? "/guest/memories" : "/");
+                if (isGuest) {
+                    const token = guestTokenRef.current;
+                    router.push(token ? `/guest/memories?guest_token=${token}` : "/guest/memories");
+                } else {
+                    router.push("/");
+                }
             }
             setIsUploading(false);
         });

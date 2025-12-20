@@ -285,10 +285,11 @@ interface HomeContentProps {
   initialMemories?: any[];
   user?: any;
   isGuest?: boolean;
+  guestToken?: string;
   forcedViewMode?: 'grid' | 'list';
 }
 
-export default function HomeContent({ initialMemories, user, isGuest = false, forcedViewMode }: HomeContentProps) {
+export default function HomeContent({ initialMemories, user, isGuest = false, guestToken, forcedViewMode }: HomeContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const charmId = searchParams.get('charmId');
@@ -542,7 +543,13 @@ export default function HomeContent({ initialMemories, user, isGuest = false, fo
   const handleAddMemory = () => {
     // If guest, router push will handle "upload-memory" which logic inside will handle isGuest 
     // OR we can explicit redirect. "upload-memory" logic handles guest.
-    router.push("/upload-memory");
+    // OR we can explicit redirect. "upload-memory" logic handles guest.
+    // If we have a guest token, pass it back to upload
+    if (isGuest && guestToken) {
+        router.push(`/upload-memory?guest_token=${guestToken}`);
+    } else {
+        router.push("/upload-memory");
+    }
   };
 
   const handleMemoryClick = (id: string) => {
@@ -783,6 +790,7 @@ export default function HomeContent({ initialMemories, user, isGuest = false, fo
         open={!!selectedMemory} 
         onOpenChange={(open) => !open && setSelectedMemory(null)}
         isGuest={isGuest}
+        guestToken={guestToken}
       />
     </div>
   );

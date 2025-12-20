@@ -20,6 +20,7 @@ const createGuestMemorySchema = z.object({
   mediaTypes: z.string().optional(),
   mediaSizes: z.string().optional(),
   guestName: z.string().optional(),
+  guestToken: z.string().optional(),
 });
 
 export async function loginGuest(token: string) {
@@ -36,7 +37,8 @@ export async function loginGuest(token: string) {
   // But generally works in simple server actions.
   (await cookies()).set(GUEST_COOKIE, product.id, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: true, // Always secure for modern browsers (this app likely runs on https in prod/vercel)
+    sameSite: "lax", // Fix for mobile browsers dropping cookies
     maxAge: 60 * 60 * 24 * 7, // 1 week
     path: "/",
   });
@@ -63,7 +65,19 @@ export async function logoutGuest() {
 }
 
 export async function createGuestMemory(prevState: any, formData: FormData) {
-    const productId = await getGuestSession();
+    let productId = await getGuestSession();
+    const guestToken = formData.get("guestToken") as string | null;
+
+    if (!productId && guestToken) {
+        // Fallback: Validate token directly if cookie is missing
+        const product = await db.product.findUnique({
+            where: { guestToken: guestToken },
+        });
+        if (product) {
+            productId = product.id;
+        }
+    }
+
     if (!productId) {
         return { error: "Unauthorized guest session" };
     }
@@ -169,8 +183,18 @@ export async function getGuestMemories() {
     }
 }
 
-export async function addGuestMedia(memoryId: string, mediaItems: { url: string; type: string; size: number }[]) {
-    const productId = await getGuestSession();
+export async function addGuestMedia(memoryId: string, mediaItems: { url: string; type: string; size: number }[], guestToken?: string) {
+    let productId = await getGuestSession();
+    
+    if (!productId && guestToken) {
+         const product = await db.product.findUnique({
+            where: { guestToken: guestToken },
+        });
+        if (product) {
+            productId = product.id;
+        }
+    }
+
     if (!productId) {
         return { error: "Unauthorized guest session" };
     }

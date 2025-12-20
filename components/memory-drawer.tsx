@@ -13,7 +13,7 @@ import { useRef, useState } from "react";
 import { addGuestMedia } from "@/app/actions/guest";
 import { getCloudinarySignature } from "@/app/actions/upload";
 import { toast } from "sonner";
-import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload } from "lucide-react";
+import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles } from "lucide-react";
 import AudioPlayer from "@/app/components/AudioPlayer";
 
 interface MemoryDrawerProps {
@@ -21,9 +21,10 @@ interface MemoryDrawerProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     isGuest?: boolean;
+    guestToken?: string;
 }
 
-export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false }: MemoryDrawerProps) {
+export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false, guestToken }: MemoryDrawerProps) {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -73,7 +74,7 @@ export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false }: Me
             }
 
             // 2. Save to DB via Server Action
-            const result = await addGuestMedia(memory.id, uploadedMedia);
+            const result = await addGuestMedia(memory.id, uploadedMedia, guestToken);
 
             if (result.error) {
                 toast.error(result.error);
@@ -112,15 +113,28 @@ export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false }: Me
                                  <h1 className="text-[#5B2D7D] text-3xl font-bold leading-tight mb-2">{memory.title || "Untitled Memory"}</h1>
                                  <p className="text-[#5B2D7D]/80 text-sm leading-relaxed max-h-24 overflow-y-auto">{memory.description}</p>
                                  
-                                 <div className="flex flex-wrap gap-2 mt-4">
+                                   <div className="flex flex-wrap gap-2 mt-4">
                                     <div className="bg-[#D4C3D8]/40 px-3 py-1.5 rounded-lg text-[#5B2D7D] text-xs font-bold">
                                         {dateStr}
                                     </div>
                                     {memory.location && (
-                                        <div className="bg-[#EADDDE] px-3 py-1.5 rounded-lg text-[#5B2D7D] text-xs font-bold">
+                                        <div className="bg-[#EADDDE] px-3 py-1.5 rounded-lg text-[#5B2D7D] text-xs font-bold flex items-center gap-1.5">
+                                            <MapPin className="w-3 h-3" />
                                             {memory.location}
                                         </div>
                                     )}
+                                    {(memory.isGuest || memory.guestName) && (
+                                        <div className="bg-[#EADDDE] px-3 py-1.5 rounded-lg text-[#5B2D7D] text-xs font-bold flex items-center gap-1.5">
+                                            <User className="w-3 h-3" />
+                                            By {memory.guestName || "Guest"}
+                                        </div>
+                                    )}
+                                    {memory.events && Array.isArray(memory.events) && memory.events.map((event: string, i: number) => (
+                                        <div key={`event-${i}`} className="bg-[#EADDDE] px-3 py-1.5 rounded-lg text-[#5B2D7D] text-xs font-bold flex items-center gap-1.5">
+                                            <Sparkles className="w-3 h-3" />
+                                            {event}
+                                        </div>
+                                    ))}
                                  </div>
                              </div>
                              <div className="flex gap-3 shrink-0">

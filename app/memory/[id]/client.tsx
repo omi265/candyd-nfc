@@ -22,12 +22,14 @@ import {
     Pencil,
     Check,
     RefreshCw,
-    GripVertical
+    GripVertical,
+    X
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
 
 const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
+const EVENTS = ["Pre Wedding Celebrations", "Haldi", "Sangeet", "Mehendi", "Wedding"];
 const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet"];
 
 interface DraggableMediaItemProps {
@@ -183,8 +185,18 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     const [date, setDate] = useState(() => new Date(memory.date).toISOString().split('T')[0]);
     const [time, setTime] = useState(memory.time || "");
     const [location, setLocation] = useState(memory.location || "");
+    
+    const [selectedEvents, setSelectedEvents] = useState<string[]>(memory.events || []);
+    const [customEventInput, setCustomEventInput] = useState("");
+    const [showCustomEvent, setShowCustomEvent] = useState(false);
+
     const [selectedEmotions, setSelectedEmotions] = useState<string[]>(memory.emotions || []);
+    const [customEmotionInput, setCustomEmotionInput] = useState("");
+    const [showCustomEmotion, setShowCustomEmotion] = useState(false);
+
     const [selectedMood, setSelectedMood] = useState<string | null>(memory.mood || null);
+    const [customMoodInput, setCustomMoodInput] = useState("");
+    const [showCustomMood, setShowCustomMood] = useState(false);
     const [selectedProductId, setSelectedProductId] = useState<string>(memory.productId || "");
     
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -309,6 +321,56 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         setSelectedEmotions(prev => prev.includes(emotion) ? prev.filter(e => e !== emotion) : [...prev, emotion]);
     };
 
+    const addCustomEmotion = () => {
+        if (customEmotionInput.trim()) {
+            const val = customEmotionInput.trim();
+            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+            if (!selectedEmotions.includes(formatted)) {
+                setSelectedEmotions(prev => [...prev, formatted]);
+            }
+            setCustomEmotionInput("");
+            setShowCustomEmotion(false);
+        } else {
+             setShowCustomEmotion(false);
+        }
+    };
+
+    const toggleEvent = (event: string) => {
+        setSelectedEvents(prev => prev.includes(event) ? prev.filter(e => e !== event) : [...prev, event]);
+    };
+
+    const addCustomEvent = () => {
+        if (customEventInput.trim()) {
+            const val = customEventInput.trim();
+            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+            if (!selectedEvents.includes(formatted)) {
+                setSelectedEvents(prev => [...prev, formatted]);
+            }
+            setCustomEventInput("");
+            setShowCustomEvent(false);
+        } else {
+            setShowCustomEvent(false);
+        }
+    };
+    
+    const handleMoodSelect = (mood: string) => {
+        setSelectedMood(mood);
+        setShowCustomMood(false);
+        setCustomMoodInput("");
+    }
+
+    const addCustomMood = () => {
+         if (customMoodInput.trim()) {
+            const val = customMoodInput.trim();
+            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+            setSelectedMood(formatted);
+            setCustomMoodInput("");
+            setShowCustomMood(false);
+        } else {
+             setShowCustomMood(false);
+        }
+    }
+
     const handleCancel = () => {
         router.push("/");
     };
@@ -390,6 +452,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                 formData.append("time", time);
                 formData.append("location", location);
                 formData.append("emotions", selectedEmotions.join(","));
+                formData.append("events", selectedEvents.join(","));
                 if (selectedMood) formData.append("mood", selectedMood);
                 if (selectedProductId) formData.append("productId", selectedProductId);
                 
@@ -583,6 +646,62 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                            </div>
                       </div>
 
+                       {/* Events */}
+                        <div className="mb-6">
+                            <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Event</label>
+                            <p className="text-[#A68CAB] text-[10px] mb-3">Which event does this memory belong to?</p>
+                            <div className="flex flex-wrap gap-2">
+                                {EVENTS.map(event => (
+                                    <button
+                                        type="button"
+                                        key={event}
+                                        onClick={() => toggleEvent(event)}
+                                        className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
+                                            selectedEvents.includes(event)
+                                            ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
+                                            : 'bg-[#FFF5F0] text-[#5B2D7D] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                        }`}
+                                    >
+                                        {event}
+                                    </button>
+                                ))}
+                                
+                                {/* Custom Events Display */}
+                                {selectedEvents.filter(e => !EVENTS.includes(e)).map(event => (
+                                     <button
+                                        type="button"
+                                        key={event}
+                                        onClick={() => toggleEvent(event)}
+                                        className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                    >
+                                        {event}
+                                        <X className="w-3 h-3 text-white/70" />
+                                    </button>
+                                ))}
+
+                                {showCustomEvent ? (
+                                    <input 
+                                        type="text"
+                                        autoFocus
+                                        value={customEventInput}
+                                        onChange={(e) => setCustomEventInput(e.target.value)}
+                                        onBlur={addCustomEvent}
+                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEvent())}
+                                        placeholder="Type event..."
+                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[100px]"
+                                    />
+                                ) : (
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowCustomEvent(true)}
+                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                    >
+                                        Other <Plus className="w-3 h-3" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
                       {/* Optional Fields Button */}
                       <button
                         type="button"
@@ -623,7 +742,40 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 {emotion}
                                             </button>
                                         ))}
-                                        <div className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6]">Other</div>
+                                        
+                                        {/* Custom Emotions Display */}
+                                        {selectedEmotions.filter(e => !EMOTIONS.includes(e)).map(emotion => (
+                                            <button
+                                                type="button"
+                                                key={emotion}
+                                                onClick={() => toggleEmotion(emotion)}
+                                                className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                            >
+                                                {emotion}
+                                                <X className="w-3 h-3 text-white/70" />
+                                            </button>
+                                        ))}
+
+                                        {showCustomEmotion ? (
+                                            <input 
+                                                type="text"
+                                                autoFocus
+                                                value={customEmotionInput}
+                                                onChange={(e) => setCustomEmotionInput(e.target.value)}
+                                                onBlur={addCustomEmotion}
+                                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEmotion())}
+                                                placeholder="Type..."
+                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[80px]"
+                                            />
+                                        ) : (
+                                            <button 
+                                                type="button"
+                                                onClick={() => setShowCustomEmotion(true)}
+                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                            >
+                                                Other <Plus className="w-3 h-3" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -636,7 +788,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                             <button
                                                 type="button"
                                                 key={mood}
-                                                onClick={() => setSelectedMood(mood)}
+                                                onClick={() => handleMoodSelect(mood)}
                                                 className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                     selectedMood === mood
                                                     ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
@@ -646,7 +798,41 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 {mood}
                                             </button>
                                         ))}
-                                        <div className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6]">Other</div>
+                                        
+                                        {/* Custom Mood Display - if selectedMood is not in MOODS */}
+                                        {selectedMood && !MOODS.includes(selectedMood) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedMood(null)}
+                                                className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                            >
+                                                {selectedMood}
+                                                <X className="w-3 h-3 text-white/70" />
+                                            </button>
+                                        )}
+
+                                        {showCustomMood ? (
+                                                <input 
+                                                type="text"
+                                                autoFocus
+                                                value={customMoodInput}
+                                                onChange={(e) => setCustomMoodInput(e.target.value)}
+                                                onBlur={addCustomMood}
+                                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomMood())}
+                                                placeholder="Type mood..."
+                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[100px]"
+                                            />
+                                        ) : (
+                                            !selectedMood || MOODS.includes(selectedMood) ? (
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setShowCustomMood(true)}
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                                >
+                                                    Other <Plus className="w-3 h-3" />
+                                                </button>
+                                            ) : null
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
