@@ -698,7 +698,7 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
         <div className="flex-1 min-h-0 w-full relative overflow-y-auto overflow-x-hidden pt-4 px-4 pb-24 no-scrollbar">
             <div className="columns-2 md:columns-3 lg:columns-4 gap-4 w-full max-w-7xl mx-auto">
                 {/* Render only actual memories, skipping empty slots for the list view */}
-                {initialMemories?.map((memory) => {
+                {filteredMemories?.map((memory) => {
                      // Need to map memory to strictly typed object or reuse logic? 
                      // Let's reuse the logic we used for Grid but simpler since we iterate directly.
                      
