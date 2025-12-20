@@ -170,7 +170,7 @@ export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false, gues
 
                                     {media.type.startsWith('video') && (
                                         <div className="bg-white p-3 rounded-[32px] shadow-sm">
-                                            <div className="relative aspect-square rounded-[24px] overflow-hidden bg-[#000]">
+                                            <div className="relative aspect-square rounded-[24px] overflow-hidden bg-black">
                                                 <video 
                                                     src={getOptimizedUrl(media.url, 'video', 600)} 
                                                     className="w-full h-full object-cover" 
