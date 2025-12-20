@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
+import { getOptimizedUrl } from "@/lib/cloudinary-helper";
 
 const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
 const EVENTS = ["Pre Wedding Celebrations", "Haldi", "Sangeet", "Mehendi", "Wedding"];
@@ -106,7 +107,7 @@ const DraggableMediaItem = ({ item, index, isReordering, scrollContainerRef }: D
             }} 
         >
               {item.type?.includes('video') ? (
-                   <video src={item.url} className="w-full h-48 object-cover pointer-events-none" />
+                   <video src={getOptimizedUrl(item.url, 'video', 1080)} className="w-full h-48 object-cover pointer-events-none" />
               ) : item.type === 'audio' ? (
                     <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0] p-2 pointer-events-none">
                         <div className="w-full pointer-events-auto" onPointerDown={(e) => e.stopPropagation()}>
@@ -114,7 +115,7 @@ const DraggableMediaItem = ({ item, index, isReordering, scrollContainerRef }: D
                         </div>
                     </div>
               ) : (
-                   <img src={item.url} alt="media" className="w-full h-auto object-cover pointer-events-none" />
+                   <img src={getOptimizedUrl(item.url, 'image', 1080)} alt="media" className="w-full h-auto object-cover pointer-events-none" />
               )}
               
              {/* Upload Status */}

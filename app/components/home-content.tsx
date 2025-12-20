@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, useMotionValue, animate, useTransform, MotionValue, AnimatePresence } from "motion/react";
 import { MemoryDrawer } from "@/components/memory-drawer";
+import { getOptimizedUrl } from "@/lib/cloudinary-helper";
 
 import { Plus, Search, LayoutGrid, List, Mic, Music, X } from "lucide-react";
 
@@ -401,13 +402,14 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
         if (memory.media && memory.media.length > 0) {
             const firstMedia = memory.media[0];
             if (firstMedia.type.startsWith('video')) {
-                     mediaUrl = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                     const videoAsImage = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                     mediaUrl = getOptimizedUrl(videoAsImage, 'image', 400);
                      mediaType = 'video';
             } else if (firstMedia.type.startsWith('audio')) {
                      mediaUrl = firstMedia.url;
                      mediaType = 'audio';
             } else {
-                     mediaUrl = firstMedia.url;
+                     mediaUrl = getOptimizedUrl(firstMedia.url, 'image', 400);
                      mediaType = 'image';
             }
         }
@@ -515,13 +517,14 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
             if (memory.media && memory.media.length > 0) {
                 const firstMedia = memory.media[0];
                 if (firstMedia.type.startsWith('video')) {
-                     mediaUrl = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                     const videoAsImage = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                     mediaUrl = getOptimizedUrl(videoAsImage, 'image', 400);
                      mediaType = 'video';
                 } else if (firstMedia.type.startsWith('audio')) {
                      mediaUrl = firstMedia.url;
                      mediaType = 'audio';
                 } else {
-                     mediaUrl = firstMedia.url;
+                     mediaUrl = getOptimizedUrl(firstMedia.url, 'image', 400);
                      mediaType = 'image';
                 }
             }
@@ -708,13 +711,14 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
                      if (memory.media && memory.media.length > 0) {
                          const firstMedia = memory.media[0];
                          if (firstMedia.type.startsWith('video')) {
-                                 mediaUrl = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                                 const videoAsImage = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                                 mediaUrl = getOptimizedUrl(videoAsImage, 'image', 400);
                                  mediaType = 'video';
                          } else if (firstMedia.type.startsWith('audio')) {
                                  mediaUrl = firstMedia.url;
                                  mediaType = 'audio';
                          } else {
-                                 mediaUrl = firstMedia.url;
+                                 mediaUrl = getOptimizedUrl(firstMedia.url, 'image', 400);
                                  mediaType = 'image';
                          }
                      }

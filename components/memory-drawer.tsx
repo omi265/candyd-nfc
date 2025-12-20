@@ -15,6 +15,7 @@ import { getCloudinarySignature } from "@/app/actions/upload";
 import { toast } from "sonner";
 import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles } from "lucide-react";
 import AudioPlayer from "@/app/components/AudioPlayer";
+import { getOptimizedUrl } from "@/lib/cloudinary-helper";
 
 interface MemoryDrawerProps {
     memory: any | null;
@@ -159,7 +160,7 @@ export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false, gues
                                         <div className="bg-white p-3 rounded-[32px] shadow-sm">
                                             <div className="relative aspect-square rounded-[24px] overflow-hidden bg-[#FDF2EC]">
                                                 <img 
-                                                    src={media.url} 
+                                                    src={getOptimizedUrl(media.url, 'image', 600)} 
                                                     alt="Memory" 
                                                     className="w-full h-full object-cover" 
                                                 />
@@ -171,7 +172,7 @@ export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false, gues
                                         <div className="bg-white p-3 rounded-[32px] shadow-sm">
                                             <div className="relative aspect-square rounded-[24px] overflow-hidden bg-[#000]">
                                                 <video 
-                                                    src={media.url} 
+                                                    src={getOptimizedUrl(media.url, 'video', 600)} 
                                                     className="w-full h-full object-cover" 
                                                     controls 
                                                 />
