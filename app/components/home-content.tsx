@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, useMotionValue, animate, useTransform, MotionValue, AnimatePresence } from "motion/react";
 import { MemoryDrawer } from "@/components/memory-drawer";
-import { getOptimizedUrl } from "@/lib/cloudinary-helper";
+import { getOptimizedUrl } from "@/lib/media-helper";
 
 import { Plus, Search, LayoutGrid, List, Mic, Music, X } from "lucide-react";
 

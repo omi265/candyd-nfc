@@ -15,7 +15,7 @@ import { getCloudinarySignature } from "@/app/actions/upload";
 import { toast } from "sonner";
 import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles } from "lucide-react";
 import AudioPlayer from "@/app/components/AudioPlayer";
-import { getOptimizedUrl } from "@/lib/cloudinary-helper";
+import { getOptimizedUrl } from "@/lib/media-helper";
 
 interface MemoryDrawerProps {
     memory: any | null;
