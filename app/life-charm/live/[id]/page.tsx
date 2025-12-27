@@ -124,8 +124,8 @@ export default function MarkAsLivedPage() {
       const index = media.length;
 
       try {
-        // Get signature
-        const signatureData = await getCloudinarySignature();
+        // Get signature with specific folder
+        const signatureData = await getCloudinarySignature("candyd/experiences");
         if (!signatureData || !signatureData.apiKey || !signatureData.cloudName) {
           throw new Error("Failed to get upload signature");
         }
