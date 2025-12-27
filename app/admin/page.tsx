@@ -25,6 +25,7 @@ export default async function AdminPage() {
           <StatCard title="Total Charms" value={stats.productCount} />
           <StatCard title="Memory Charms" value={stats.memoryCharmCount} color="purple" />
           <StatCard title="Life Charms" value={stats.lifeCharmCount} color="green" />
+          <StatCard title="Habit Charms" value={stats.habitCharmCount} color="orange" />
           <StatCard title="Memories" value={stats.memoryCount} />
           <StatCard title="Life Lists" value={stats.lifeListCount} />
           <StatCard title="List Items" value={stats.lifeListItemCount} />

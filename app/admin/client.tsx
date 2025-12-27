@@ -13,7 +13,7 @@ const CHARM_TYPES: Array<{
 }> = [
   { id: "MEMORY", label: "Memory Charm", description: "For storing memories with photos/videos" },
   { id: "LIFE", label: "Life Charm", description: "For bucket lists and experiences" },
-  { id: "HABIT", label: "Habit Charm", description: "For habit tracking (coming soon)", disabled: true },
+  { id: "HABIT", label: "Habit Charm", description: "For habit tracking and focus areas" },
 ];
 
 export function AdminDashboardClient() {

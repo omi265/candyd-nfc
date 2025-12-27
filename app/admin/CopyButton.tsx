@@ -9,6 +9,7 @@ export function CopyButton({ token, isGuest = false }: { token: string; isGuest?
   const handleCopy = async () => {
     const baseUrl = isGuest ? "/guest/login?token=" : "/nfc/login?token=";
     const link = `${window.location.origin}${baseUrl}${token}`;
+    console.log("Product Link:", link);
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);

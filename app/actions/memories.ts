@@ -160,7 +160,8 @@ export async function getUserProducts() {
                             }
                         }
                     }
-                }
+                },
+                habits: true
             },
             orderBy: {
                 createdAt: "desc",

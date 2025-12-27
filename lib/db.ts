@@ -14,3 +14,5 @@ declare global {
 export const db = global.prisma || new PrismaClient({ adapter });
 
 if (process.env.NODE_ENV !== "production") global.prisma = db;
+
+// Force reload for new models

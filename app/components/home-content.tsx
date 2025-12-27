@@ -7,13 +7,14 @@ import { MemoryDrawer } from "@/components/memory-drawer";
 import { LifeCharmDrawer } from "@/components/life-charm-drawer";
 import { getOptimizedUrl } from "@/lib/media-helper";
 
-import { Plus, Search, LayoutGrid, List, Mic, Music, X, GraduationCap } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, Mic, Music, X, GraduationCap, Flame, Zap } from "lucide-react";
 
 // --- Data ---
 
 type GridItemType = 
   | { type: 'memory', id: string, mediaUrl: string, mediaType: 'image' | 'video' | 'audio', title: string, date: string }
   | { type: 'life-charm', id: string, title: string, charmId: string, status?: string, stats: { total: number, lived: number }, coverImage?: string }
+  | { type: 'habit-charm', id: string, title: string, charmId: string, status?: string, stats: { streak: number, target: number }, focusArea?: string }
   | { type: 'empty', id: string };
 
 // --- Components ---
@@ -400,6 +401,208 @@ function LifeCharmCard({
 
 }
 
+
+
+function HabitCharmCard({ 
+
+    item, 
+
+    onClick,
+
+    x, y, row, col, cellSize, containerSize, visualYOffset
+
+}: { 
+
+    item: Extract<GridItemType, { type: 'habit-charm' }>; 
+
+    onClick: () => void;
+
+    x: MotionValue<number>;
+
+    y: MotionValue<number>;
+
+    row: number;
+
+    col: number;
+
+    cellSize: { width: number, height: number };
+
+    containerSize: { width: number, height: number };
+
+    visualYOffset: number;
+
+}) {
+
+    const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
+
+    
+
+    const scale = useTransform(dist, [0, 400], [1, 0.85]);
+
+    const opacity = useTransform(dist, [0, 400], [1, 0.6]);
+
+    const contentOpacity = useTransform(dist, [0, 200], [1, 0]);
+
+
+
+    const percentage = item.stats.target > 0 ? Math.round((item.stats.streak / item.stats.target) * 100) : 0;
+
+
+
+    return (
+
+        <motion.div 
+
+            onClick={onClick}
+
+            className="w-full h-full relative flex flex-col justify-end shadow-xl rounded-[32px] overflow-hidden group origin-center cursor-pointer bg-[#1A1A1A]"
+
+            style={{ 
+
+                scale,
+
+                opacity,
+
+                willChange: "transform, opacity",
+
+                touchAction: "none",
+
+                transform: "translate3d(0,0,0)",
+
+                backfaceVisibility: "hidden"
+
+            }}
+
+            whileTap={{ scale: 0.98 }}
+
+        >
+
+             {/* Decorative Gradient Background */}
+
+             <div className="absolute inset-0 bg-gradient-to-br from-[#1A1A1A] to-[#2E1640]">
+
+                <div className="absolute top-0 right-0 w-48 h-48 bg-[#F37B55]/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10"></div>
+
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#5B2D7D]/20 rounded-full blur-3xl transform -translate-x-10 translate-y-10"></div>
+
+             </div>
+
+
+
+             {/* Top Badge */}
+
+             <div className="absolute top-4 left-4 z-20">
+
+                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10">
+
+                    <div className="text-xs">
+
+                        {item.focusArea === 'energy' && '⚡'}
+
+                        {item.focusArea === 'movement' && '🏃'}
+
+                        {item.focusArea === 'rest' && '🌙'}
+
+                        {item.focusArea === 'mind' && '🧠'}
+
+                        {item.focusArea === 'connection' && '❤️'}
+
+                        {!item.focusArea && <Zap className="w-4 h-4 text-white" />}
+
+                    </div>
+
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Habit Charm</span>
+
+                 </div>
+
+             </div>
+
+
+
+             {/* Main Content (Bottom Aligned) */}
+
+             <motion.div 
+
+                className="relative z-10 px-8 pb-24 flex flex-col w-full"
+
+                style={{ opacity: contentOpacity }}
+
+             >
+
+                 {item.status === 'GRADUATED' && (
+
+                    <div className="self-start mb-4 px-3 py-1 bg-[#F37B55] rounded-lg shadow-lg transform -rotate-2">
+
+                        <span className="text-white text-xs font-black uppercase tracking-widest">Graduated</span>
+
+                    </div>
+
+                 )}
+
+
+
+                 <h3 className="text-4xl font-black font-[Outfit] text-white leading-[0.9] mb-6 drop-shadow-2xl line-clamp-3 tracking-tighter uppercase">
+
+                    {item.title}
+
+                 </h3>
+
+                 
+
+                 {/* Stats Row */}
+
+                 <div className="flex items-baseline gap-3">
+
+                    <div className="flex items-center gap-2">
+
+                        <Flame className="w-8 h-8 text-[#F37B55] fill-[#F37B55]" />
+
+                        <span className="text-8xl font-black text-[#F37B55] leading-none tracking-tighter drop-shadow-xl">
+
+                            {item.stats.streak}
+
+                        </span>
+
+                    </div>
+
+                    <div className="flex flex-col">
+
+                        <span className="text-3xl font-black text-white/30 leading-none">/ {item.stats.target}</span>
+
+                        <span className="text-[#F37B55] text-[10px] font-black uppercase tracking-[0.3em] mt-1">Day Streak</span>
+
+                    </div>
+
+                 </div>
+
+             </motion.div>
+
+
+
+             {/* Detached, Thick, Gradient Progress Bar */}
+
+             <div className="absolute bottom-8 left-8 right-8 h-6 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm border border-white/5">
+
+                <motion.div 
+
+                    className="h-full bg-gradient-to-r from-[#F37B55] to-[#FF9D7E] shadow-[0_0_30px_rgba(243,123,85,0.4)] rounded-full" 
+
+                    initial={{ width: 0 }}
+
+                    animate={{ width: `${percentage}%` }}
+
+                    transition={{ duration: 1.5, ease: [0.34, 1.56, 0.64, 1] }}
+
+                />
+
+             </div>
+
+        </motion.div>
+
+    )
+
+}
+
 function EmptyCard({ 
     onClick,
     x, y, row, col, cellSize, containerSize, visualYOffset
@@ -507,6 +710,42 @@ function ListLifeCharmCard({ item, onClick }: { item: Extract<GridItemType, { ty
     )
 }
 
+function ListHabitCard({ item, onClick }: { item: Extract<GridItemType, { type: 'habit-charm' }>; onClick: () => void }) {
+    return (
+        <div 
+            onClick={onClick}
+            className="w-full mb-4 break-inside-avoid relative rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-br from-[#1A1A1A] to-[#2E1640] aspect-[4/5] flex flex-col items-center justify-center text-center p-6"
+        >
+             <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-4 backdrop-blur-sm border border-white/20">
+                <div className="text-2xl">
+                    {item.focusArea === 'energy' && '⚡'}
+                    {item.focusArea === 'movement' && '🏃'}
+                    {item.focusArea === 'rest' && '🌙'}
+                    {item.focusArea === 'mind' && '🧠'}
+                    {item.focusArea === 'connection' && '❤️'}
+                    {!item.focusArea && <Zap className="w-7 h-7 text-white" />}
+                </div>
+             </div>
+             
+             <h3 className="text-2xl font-black font-[Outfit] text-white leading-tight mb-3 uppercase tracking-tighter">
+                {item.title}
+             </h3>
+
+             <div className="flex flex-col items-center mb-4">
+                <div className="flex items-center gap-1">
+                    <Flame className="w-5 h-5 text-[#F37B55] fill-[#F37B55]" />
+                    <span className="text-4xl font-black text-[#F37B55] leading-none">{item.stats.streak}</span>
+                </div>
+                <span className="text-[#F37B55] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Day Streak</span>
+             </div>
+             
+             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10">
+                <span className="text-[10px] font-medium text-white/90 uppercase tracking-wide">Habit Charm</span>
+             </div>
+        </div>
+    )
+}
+
 
 function getCenterOutOrder(n: number): number[] {
     const center = (n - 1) / 2;
@@ -527,6 +766,7 @@ function getCenterOutOrder(n: number): number[] {
 interface HomeContentProps {
   initialMemories?: any[];
   lifeCharms?: any[]; // Products with type='LIFE'
+  habitCharms?: any[]; // Products with type='HABIT'
   people?: any[];
   user?: any;
   isGuest?: boolean;
@@ -534,7 +774,7 @@ interface HomeContentProps {
   forcedViewMode?: 'grid' | 'list';
 }
 
-export default function HomeContent({ initialMemories, lifeCharms = [], people = [], user, isGuest = false, guestToken, forcedViewMode }: HomeContentProps) {
+export default function HomeContent({ initialMemories, lifeCharms = [], habitCharms = [], people = [], user, isGuest = false, guestToken, forcedViewMode }: HomeContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const charmId = searchParams.get('charmId');
@@ -673,7 +913,25 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
         };
     });
 
-    const allItems = [...lifeCharmItems, ...filteredMemories];
+    // Map Habit Charms to GridItemType
+    const habitCharmItems: GridItemType[] = habitCharms.map(hc => {
+        const activeHabit = hc.habits?.find((h: any) => h.isActive);
+        
+        return {
+            type: 'habit-charm',
+            id: `hc-${hc.id}`,
+            title: activeHabit?.title || hc.name,
+            charmId: hc.id,
+            status: hc.state,
+            focusArea: activeHabit?.focusArea,
+            stats: { 
+                streak: activeHabit?.currentStreak || 0, 
+                target: activeHabit?.targetDays || 66 
+            }
+        };
+    });
+
+    const allItems = [...lifeCharmItems, ...habitCharmItems, ...filteredMemories];
     
     // Randomize (Fisher-Yates Shuffle)
     for (let i = allItems.length - 1; i > 0; i--) {
@@ -682,7 +940,7 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
     }
 
     return allItems;
-  }, [filteredMemories, lifeCharms, searchQuery, selectedFilter]);
+  }, [filteredMemories, lifeCharms, habitCharms, searchQuery, selectedFilter]);
 
 
   // Initialize Grid Data
@@ -703,8 +961,8 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
             const gridIndex = FILL_ORDER[index];
             if (gridIndex === undefined) return;
 
-            // Check if it's already a shaped GridItem (LifeCharm) or raw Memory
-            if (item.type === 'life-charm') {
+            // Check if it's already a shaped GridItem (LifeCharm/HabitCharm) or raw Memory
+            if (item.type === 'life-charm' || item.type === 'habit-charm') {
                 newGrid[gridIndex] = item;
             } else {
                 // It's a memory
@@ -809,6 +1067,10 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
       if (charm) {
           setSelectedLifeCharm(charm);
       }
+  };
+
+  const handleHabitCharmClick = (charmId: string) => {
+      router.push(`/habit-charm?charmId=${charmId}`);
   };
 
   return (
@@ -927,6 +1189,14 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
                                 cellSize={cellSize} containerSize={containerSize}
                                 visualYOffset={VISUAL_Y_OFFSET}
                             />
+                        ) : item && item.type === 'habit-charm' ? (
+                            <HabitCharmCard 
+                                item={item} 
+                                onClick={() => handleHabitCharmClick(item.charmId)}
+                                x={x} y={y} row={r} col={c}
+                                cellSize={cellSize} containerSize={containerSize}
+                                visualYOffset={VISUAL_Y_OFFSET}
+                            />
                         ) : (
                             <EmptyCard 
                                 onClick={handleAddMemory} 
@@ -961,6 +1231,30 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
                                 stats: { total, lived }
                             }}
                             onClick={() => handleLifeCharmClick(lc.id)}
+                        />
+                    );
+                })}
+
+                {/* Render Habit Charms in List View */}
+                {habitCharms.map((hc: any) => {
+                    const activeHabit = hc.habits?.find((h: any) => h.isActive);
+                    
+                    return (
+                        <ListHabitCard
+                            key={hc.id}
+                            item={{ 
+                                type: 'habit-charm', 
+                                id: `hc-${hc.id}`, 
+                                title: activeHabit?.title || hc.name, 
+                                charmId: hc.id, 
+                                status: hc.state,
+                                focusArea: activeHabit?.focusArea,
+                                stats: { 
+                                    streak: activeHabit?.currentStreak || 0, 
+                                    target: activeHabit?.targetDays || 66 
+                                }
+                            }}
+                            onClick={() => handleHabitCharmClick(hc.id)}
                         />
                     );
                 })}

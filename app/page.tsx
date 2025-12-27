@@ -33,6 +33,7 @@ export default async function Home({
   // Fetch memories, products, and people in parallel
   let memories: any[] = [];
   let lifeCharms: any[] = [];
+  let habitCharms: any[] = [];
   let allPeople: any[] = [];
 
   try {
@@ -45,13 +46,15 @@ export default async function Home({
      memories = fetchedMemories;
      allPeople = fetchedPeople;
      
-     // Filter for active Life Charms
+     // Filter for active Life Charms and Habit Charms
      if (!charmId) {
          lifeCharms = allProducts.filter((p: any) => p.type === 'LIFE');
+         habitCharms = allProducts.filter((p: any) => p.type === 'HABIT');
      }
 
      console.log("HOME: Fetched Memories Count:", memories.length);
      console.log("HOME: Life Charms Count:", lifeCharms.length);
+     console.log("HOME: Habit Charms Count:", habitCharms.length);
 
   } catch (error) {
      console.error("Failed to fetch data on server", error);
@@ -62,6 +65,7 @@ export default async function Home({
       <HomeContent 
         initialMemories={memories} 
         lifeCharms={lifeCharms}
+        habitCharms={habitCharms}
         people={allPeople}
         user={session.user} 
       />
