@@ -10,11 +10,23 @@ export async function getAdminStats() {
     throw new Error("Unauthorized");
   }
 
-  const [displayUserCount, productCount, memoryCount] = await Promise.all([
+  const [displayUserCount, productCount, memoryCount, lifeListCount, lifeListItemCount] = await Promise.all([
     db.user.count(),
     db.product.count(),
     db.memory.count(),
+    db.lifeList.count(),
+    db.lifeListItem.count(),
   ]);
+
+  // Count by charm type
+  const charmTypeCounts = await db.product.groupBy({
+    by: ["type"],
+    _count: true,
+  });
+
+  const memoryCharmCount = charmTypeCounts.find((c) => c.type === "MEMORY")?._count || 0;
+  const lifeCharmCount = charmTypeCounts.find((c) => c.type === "LIFE")?._count || 0;
+  const habitCharmCount = charmTypeCounts.find((c) => c.type === "HABIT")?._count || 0;
 
   // Aggregate media size
   const mediaSize = await db.media.aggregate({
@@ -23,15 +35,33 @@ export async function getAdminStats() {
     },
   });
 
+  // Aggregate experience media size
+  const experienceMediaSize = await db.experienceMedia.aggregate({
+    _sum: {
+      size: true,
+    },
+  });
+
+  const totalStorage = (mediaSize._sum?.size ?? 0) + (experienceMediaSize._sum?.size ?? 0);
+
   return {
     userCount: displayUserCount,
     productCount,
     memoryCount,
-    totalStorage: mediaSize._sum?.size ?? 0,
+    lifeListCount,
+    lifeListItemCount,
+    memoryCharmCount,
+    lifeCharmCount,
+    habitCharmCount,
+    totalStorage,
   };
 }
 
-export async function createProduct(email: string, productName: string) {
+export async function createProduct(
+  email: string,
+  productName: string,
+  charmType: "MEMORY" | "LIFE" | "HABIT" = "MEMORY"
+) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
     return { error: "Unauthorized" };
@@ -56,6 +86,7 @@ export async function createProduct(email: string, productName: string) {
         token,
         guestToken,
         userId: user.id,
+        type: charmType,
       },
     });
 

@@ -6,28 +6,50 @@ datasource db {
   provider = "postgresql"
 }
 
+// Enums for charm type system
+enum CharmType {
+  MEMORY // Existing functionality
+  LIFE   // Life Charm (bucket lists)
+  HABIT  // Habit Charm (future)
+}
+
+enum CharmState {
+  ACTIVE
+  GRADUATED
+  CLOSED
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String     @id @default(cuid())
+  email     String     @unique
   password  String
   name      String?
-  role      String   @default("USER") // "USER" or "ADMIN"
+  role      String     @default("USER") // "USER" or "ADMIN"
   memories  Memory[]
   products  Product[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  lifeLists LifeList[]
+  people    Person[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Product {
-  id        String   @id @default(cuid())
-  name      String
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  active    Boolean  @default(true)
-  guestToken String? @unique @default(cuid())
+  id          String     @id @default(cuid())
+  name        String
+  token       String     @unique
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  active      Boolean    @default(true)
+  guestToken  String?    @unique @default(cuid())
+
+  // Charm type system
+  type        CharmType  @default(MEMORY)
+  state       CharmState @default(ACTIVE)
+  graduatedAt DateTime?
+
   memories  Memory[]
+  lifeLists LifeList[]
 }
 
 model Memory {
@@ -76,4 +98,92 @@ model GuestSession {
   productId String
   createdAt DateTime @default(now())
   expiresAt DateTime
+}
+
+// ==========================================
+// LIFE CHARM MODELS
+// ==========================================
+
+model LifeList {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  template    String?        // Reference to curated template ID if used
+
+  productId   String
+  product     Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items       LifeListItem[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model LifeListItem {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+
+  // WHO tagging (array of person IDs)
+  peopleIds   String[]
+
+  // WHEN context
+  whenType    String?     // "someday", "this_year", "this_month", "specific_date"
+  targetDate  DateTime?
+
+  // Status
+  status      String      @default("pending") // "pending", "lived", "skipped"
+  livedAt     DateTime?
+
+  lifeListId  String
+  lifeList    LifeList    @relation(fields: [lifeListId], references: [id], onDelete: Cascade)
+
+  experience  Experience?
+
+  orderIndex  Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Person {
+  id        String   @id @default(cuid())
+  name      String
+  avatarUrl String?
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Experience {
+  id          String            @id @default(cuid())
+  reflection  String?
+  location    String?
+  date        DateTime
+  peopleIds   String[]          // WHO was actually there
+
+  itemId      String            @unique
+  item        LifeListItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  media       ExperienceMedia[]
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model ExperienceMedia {
+  id           String     @id @default(cuid())
+  url          String
+  type         String     // 'image', 'video', 'audio'
+  size         Int        @default(0)
+
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  orderIndex   Int        @default(0)
+  createdAt    DateTime   @default(now())
 }

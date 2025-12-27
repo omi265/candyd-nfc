@@ -20,10 +20,14 @@ export default async function AdminPage() {
         <h1 className="text-3xl font-bold text-[#5B2D7D] mb-8">Admin Dashboard</h1>
         
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard title="Total Users" value={stats.userCount} />
-          <StatCard title="Total Products" value={stats.productCount} />
-          <StatCard title="Total Memories" value={stats.memoryCount} />
+          <StatCard title="Total Charms" value={stats.productCount} />
+          <StatCard title="Memory Charms" value={stats.memoryCharmCount} color="purple" />
+          <StatCard title="Life Charms" value={stats.lifeCharmCount} color="green" />
+          <StatCard title="Memories" value={stats.memoryCount} />
+          <StatCard title="Life Lists" value={stats.lifeListCount} />
+          <StatCard title="List Items" value={stats.lifeListItemCount} />
           <StatCard title="Storage Used" value={formatBytes(stats.totalStorage)} />
         </div>
 
@@ -45,6 +49,7 @@ export default async function AdminPage() {
                     <thead>
                       <tr className="border-b border-[#5B2D7D]/10">
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Product Name</th>
+                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Type</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Assigned To</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Token Link</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Guest Link</th>
@@ -55,6 +60,17 @@ export default async function AdminPage() {
                       {products.map((product: any) => (
                         <tr key={product.id} className="group hover:bg-white/50 transition-colors">
                           <td className="py-3 pr-4 text-[#5B2D7D]">{product.name}</td>
+                          <td className="py-3 pr-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              product.type === "LIFE"
+                                ? "bg-[#A4C538]/20 text-[#7A9429]"
+                                : product.type === "HABIT"
+                                ? "bg-[#F37B55]/20 text-[#D45A35]"
+                                : "bg-[#5B2D7D]/20 text-[#5B2D7D]"
+                            }`}>
+                              {product.type === "LIFE" ? "Life" : product.type === "HABIT" ? "Habit" : "Memory"}
+                            </span>
+                          </td>
                           <td className="py-3 pr-4">
                             <div className="text-sm font-medium text-[#5B2D7D]">{product.user.name}</div>
                             <div className="text-xs text-[#5B2D7D]/60">{product.user.email}</div>
@@ -91,11 +107,16 @@ export default async function AdminPage() {
   );
 }
 
-function StatCard({ title, value }: { title: string; value: string | number }) {
+function StatCard({ title, value, color }: { title: string; value: string | number; color?: "purple" | "green" | "orange" }) {
+  const colorClasses = {
+    purple: "text-[#5B2D7D]",
+    green: "text-[#A4C538]",
+    orange: "text-[#F37B55]",
+  };
   return (
-    <div className="bg-white/40 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-white/50">
-      <p className="text-sm font-medium text-[#5B2D7D]/60 mb-1">{title}</p>
-      <p className="text-3xl font-bold text-[#5B2D7D]">{value}</p>
+    <div className="bg-white/40 backdrop-blur-xl rounded-2xl shadow-sm p-4 border border-white/50">
+      <p className="text-xs font-medium text-[#5B2D7D]/60 mb-1">{title}</p>
+      <p className={`text-2xl font-bold ${color ? colorClasses[color] : "text-[#5B2D7D]"}`}>{value}</p>
     </div>
   );
 }

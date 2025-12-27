@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { Zap } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { getProductIdFromToken } from "@/app/actions/memories";
+import { getProductWithType } from "@/app/actions/life-charm";
 
 function NFCLoginContent() {
   const searchParams = useSearchParams();
@@ -20,19 +20,31 @@ function NFCLoginContent() {
 
     const login = async () => {
       try {
-        const result = await signIn("credentials", { 
-          token, 
-          redirect: false 
+        const result = await signIn("credentials", {
+          token,
+          redirect: false
         });
 
         if (result?.error) {
             setStatus("Invalid or expired tag.");
         } else {
             setStatus("Success! Redirecting...");
-            // Fetch product ID for redirection
-            const productId = await getProductIdFromToken(token);
-            if (productId) {
-                window.location.href = `/?charmId=${productId}`;
+            // Fetch product info including type for routing
+            const product = await getProductWithType(token);
+            if (product) {
+                // Route based on charm type
+                switch (product.type) {
+                    case "LIFE":
+                        window.location.href = `/life-charm?charmId=${product.id}`;
+                        break;
+                    case "HABIT":
+                        // Future: Habit charm routing
+                        window.location.href = `/habit-charm?charmId=${product.id}`;
+                        break;
+                    case "MEMORY":
+                    default:
+                        window.location.href = `/?charmId=${product.id}`;
+                }
             } else {
                 window.location.href = "/";
             }
