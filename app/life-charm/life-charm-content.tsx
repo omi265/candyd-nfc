@@ -236,7 +236,9 @@ export default function LifeCharmContent({
                     people={people}
                     getPersonName={getPersonName}
                     onClick={() =>
-                      router.push(`/life-charm/item/${item.id}?charmId=${product.id}`)
+                      item.status === "lived"
+                        ? router.push(`/life-charm/experience/${item.id}?charmId=${product.id}`)
+                        : router.push(`/life-charm/item/${item.id}?charmId=${product.id}`)
                     }
                     isGraduated={isGraduated}
                   />

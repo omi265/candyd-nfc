@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
 import { getGuestSession } from "@/app/actions/guest"; // Import guest session checker
 
-export async function getCloudinarySignature() {
+export async function getCloudinarySignature(folder: string = "candyd_memories") {
   const session = await auth();
   const guestId = await getGuestSession();
 
@@ -14,7 +14,6 @@ export async function getCloudinarySignature() {
   }
 
   const timestamp = Math.round(new Date().getTime() / 1000);
-  const folder = "candyd_memories";
 
   const signature = cloudinary.utils.api_sign_request(
     {

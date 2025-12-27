@@ -22,6 +22,7 @@ import { Person, LifeListItem } from "@prisma/client";
 import { toast } from "sonner";
 
 interface MediaItem {
+  id: string;
   url: string;
   type: "image" | "video" | "audio";
   size: number;
@@ -111,8 +112,9 @@ export default function MarkAsLivedPage() {
         ? "video"
         : "audio";
 
-      const tempId = Date.now() + Math.random();
+      const mediaId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const newMedia: MediaItem = {
+        id: mediaId,
         url: "",
         type: mediaType,
         size: file.size,
@@ -121,7 +123,6 @@ export default function MarkAsLivedPage() {
       };
 
       setMedia((prev) => [...prev, newMedia]);
-      const index = media.length;
 
       try {
         // Get signature with specific folder
@@ -135,7 +136,7 @@ export default function MarkAsLivedPage() {
         formData.append("api_key", signatureData.apiKey);
         formData.append("timestamp", signatureData.timestamp.toString());
         formData.append("signature", signatureData.signature);
-        formData.append("folder", "candyd/experiences");
+        formData.append("folder", signatureData.folder);
 
         const response = await fetch(
           `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/${
@@ -151,8 +152,8 @@ export default function MarkAsLivedPage() {
 
         if (data.secure_url) {
           setMedia((prev) =>
-            prev.map((m, i) =>
-              i === index
+            prev.map((m) =>
+              m.id === mediaId
                 ? { ...m, url: data.secure_url, status: "complete", progress: 100 }
                 : m
             )
@@ -162,8 +163,8 @@ export default function MarkAsLivedPage() {
         }
       } catch (error) {
         setMedia((prev) =>
-          prev.map((m, i) =>
-            i === index ? { ...m, status: "error" } : m
+          prev.map((m) =>
+            m.id === mediaId ? { ...m, status: "error" } : m
           )
         );
         toast.error("Failed to upload file");
@@ -176,8 +177,8 @@ export default function MarkAsLivedPage() {
     }
   };
 
-  const removeMedia = (index: number) => {
-    setMedia((prev) => prev.filter((_, i) => i !== index));
+  const removeMedia = (mediaId: string) => {
+    setMedia((prev) => prev.filter((m) => m.id !== mediaId));
   };
 
   const handleSubmit = () => {
@@ -363,9 +364,9 @@ export default function MarkAsLivedPage() {
           {/* Media Grid */}
           {media.length > 0 && (
             <div className="grid grid-cols-3 gap-2 mb-3">
-              {media.map((m, index) => (
+              {media.map((m) => (
                 <div
-                  key={index}
+                  key={m.id}
                   className="aspect-square rounded-xl overflow-hidden bg-[#EADDDE] relative"
                 >
                   {m.status === "uploading" ? (
@@ -390,7 +391,7 @@ export default function MarkAsLivedPage() {
                     />
                   )}
                   <button
-                    onClick={() => removeMedia(index)}
+                    onClick={() => removeMedia(m.id)}
                     className="absolute top-1 right-1 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center"
                   >
                     <X className="w-4 h-4 text-white" />

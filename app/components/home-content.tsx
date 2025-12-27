@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, useMotionValue, animate, useTransform, MotionValue, AnimatePresence } from "motion/react";
 import { MemoryDrawer } from "@/components/memory-drawer";
+import { LifeCharmDrawer } from "@/components/life-charm-drawer";
 import { getOptimizedUrl } from "@/lib/media-helper";
 
 import { Plus, Search, LayoutGrid, List, Mic, Music, X, GraduationCap } from "lucide-react";
@@ -533,6 +534,7 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedMemory, setSelectedMemory] = useState<any>(null);
+  const [selectedLifeCharm, setSelectedLifeCharm] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(forcedViewMode || 'grid');
   
   const [cellSize, setCellSize] = useState({ width: 0, height: 0 });
@@ -796,7 +798,10 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
   };
   
   const handleLifeCharmClick = (charmId: string) => {
-      router.push(`/life-charm?charmId=${charmId}`);
+      const charm = lifeCharms.find((lc: any) => lc.id === charmId);
+      if (charm) {
+          setSelectedLifeCharm(charm);
+      }
   };
 
   return (
@@ -932,13 +937,26 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
         <div className="flex-1 min-h-0 w-full relative overflow-y-auto overflow-x-hidden pt-4 px-4 pb-24 no-scrollbar">
             <div className="columns-2 md:columns-3 lg:columns-4 gap-4 w-full max-w-7xl mx-auto">
                 {/* Render Life Charms First in List View */}
-                {lifeCharms.map((lc) => (
-                    <ListLifeCharmCard 
-                        key={lc.id}
-                        item={{ type: 'life-charm', id: `lc-${lc.id}`, title: lc.name, charmId: lc.id, status: lc.state }}
-                        onClick={() => handleLifeCharmClick(lc.id)}
-                    />
-                ))}
+                {lifeCharms.map((lc: any) => {
+                    const items = lc.lifeLists?.[0]?.items || [];
+                    const total = items.length;
+                    const lived = items.filter((i: any) => i.status === 'lived').length;
+
+                    return (
+                        <ListLifeCharmCard
+                            key={lc.id}
+                            item={{ 
+                                type: 'life-charm', 
+                                id: `lc-${lc.id}`, 
+                                title: lc.name, 
+                                charmId: lc.id, 
+                                status: lc.state,
+                                stats: { total, lived }
+                            }}
+                            onClick={() => handleLifeCharmClick(lc.id)}
+                        />
+                    );
+                })}
 
                 {filteredMemories?.map((memory) => {
                      const dateObj = new Date(memory.date);
@@ -1024,12 +1042,20 @@ export default function HomeContent({ initialMemories, lifeCharms = [], people =
         </div>
       
       {/* Memory Drawer as an overlay on Home */}
-      <MemoryDrawer 
-        memory={selectedMemory} 
-        open={!!selectedMemory} 
+      <MemoryDrawer
+        memory={selectedMemory}
+        open={!!selectedMemory}
         onOpenChange={(open) => !open && setSelectedMemory(null)}
         isGuest={isGuest}
         guestToken={guestToken}
+        people={people}
+      />
+
+      {/* Life Charm Drawer */}
+      <LifeCharmDrawer
+        lifeCharm={selectedLifeCharm}
+        open={!!selectedLifeCharm}
+        onOpenChange={(open) => !open && setSelectedLifeCharm(null)}
         people={people}
       />
     </div>

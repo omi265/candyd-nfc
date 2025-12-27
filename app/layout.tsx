@@ -34,8 +34,6 @@ export const viewport: Viewport = {
 
 import { cookies } from "next/headers";
 
-// ... existing imports ...
-
 export default async function RootLayout({
   children,
 }: Readonly<{
