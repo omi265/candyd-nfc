@@ -17,6 +17,7 @@ const createMemorySchema = z.object({
   events: z.string().optional(), // Comma separated or JSON string
   mood: z.string().optional(),
   productId: z.string().optional(),
+  peopleIds: z.string().optional(), // JSON string of string[]
   mediaUrls: z.string().optional(), // JSON string of string[]
   mediaTypes: z.string().optional(), // JSON string of string[]
   mediaSizes: z.string().optional(), // JSON string of number[]
@@ -42,7 +43,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
   }
 
 
-  const { title, description, date, time, location, emotions, events, mood, productId, mediaUrls, mediaTypes, mediaSizes } = validatedFields.data;
+  const { title, description, date, time, location, emotions, events, mood, productId, peopleIds, mediaUrls, mediaTypes, mediaSizes } = validatedFields.data;
 
   // content-type check for date if needed
   const parsedDate = new Date(date);
@@ -55,6 +56,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
     // 1. Create Memory
     const emotionsArray = emotions ? emotions.split(",") : [];
     const eventsArray = events ? events.split(",") : [];
+    const peopleIdsArray = peopleIds ? JSON.parse(peopleIds) : [];
     
     const memory = await db.memory.create({
       data: {
@@ -66,6 +68,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
         emotions: emotionsArray,
         events: eventsArray,
         mood,
+        peopleIds: peopleIdsArray,
         userId: session.user.id,
         productId: productId || undefined,
       },
@@ -144,6 +147,21 @@ export async function getUserProducts() {
                 userId: session.user.id,
                 active: true,
             },
+            include: {
+                lifeLists: {
+                    include: {
+                        items: {
+                            include: {
+                                experience: {
+                                    include: {
+                                        media: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             orderBy: {
                 createdAt: "desc",
             }
@@ -204,7 +222,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
         return { error: "Invalid fields: " + validatedFields.error.issues.map((i) => i.message).join(", ") };
     }
 
-    const { title, description, date, time, location, emotions, events, mood, productId, mediaUrls, mediaTypes, mediaSizes, orderedMedia } = validatedFields.data;
+    const { title, description, date, time, location, emotions, events, mood, productId, peopleIds, mediaUrls, mediaTypes, mediaSizes, orderedMedia } = validatedFields.data;
     const parsedDate = new Date(date);
 
     try {
@@ -219,6 +237,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
 
         const emotionsArray = emotions ? emotions.split(",") : [];
         const eventsArray = events ? events.split(",") : [];
+        const peopleIdsArray = peopleIds ? JSON.parse(peopleIds) : [];
 
         await db.memory.update({
             where: { id },
@@ -231,6 +250,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
                 emotions: emotionsArray,
                 events: eventsArray,
                 mood,
+                peopleIds: peopleIdsArray,
                 productId: productId || undefined,
             }
         });

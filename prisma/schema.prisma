@@ -62,6 +62,7 @@ model Memory {
   emotions    String[] // Array of emotion strings
   mood        String?
   events      String[] // Array of event strings
+  peopleIds   String[] // Array of person IDs (WHO)
   
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)

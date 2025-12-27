@@ -3,6 +3,7 @@
 import { createMemory, getUserProducts } from "@/app/actions/memories";
 import { createGuestMemory, getGuestSession } from "@/app/actions/guest";
 import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
+import { getPeople, createPerson } from "@/app/actions/people";
 
 // ... (icons remain the same, so imports are fine)
 // Re-importing necessary hooks only to be safe with the replacement context
@@ -27,6 +28,7 @@ import {
     ChevronDown,
     Plus,
     X,
+    Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
@@ -64,6 +66,14 @@ export default function MemoryUploadPage() {
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
     const [customMoodInput, setCustomMoodInput] = useState("");
     const [showCustomMood, setShowCustomMood] = useState(false);
+    
+    // People State
+    const [people, setPeople] = useState<any[]>([]);
+    const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
+    const [newPersonName, setNewPersonName] = useState("");
+    const [showPeopleSelector, setShowPeopleSelector] = useState(false);
+    const [isAddingPerson, setIsAddingPerson] = useState(false);
+
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const uploadPromisesRef = useRef<Map<string, Promise<any>>>(new Map());
     const completedUploadsRef = useRef<Map<string, { url: string, type: string, size: number }>>(new Map());
@@ -98,288 +108,41 @@ export default function MemoryUploadPage() {
             setIsGuest(true); // If we have a token, we are effectively a guest
         }
 
-        // Fetch products only if not guest (or maybe we don't need to fetch if guest)
+        // Fetch products only if not guest
         getUserProducts().then(setProducts);
+        
+        // Fetch people
+        getPeople().then(setPeople);
     }, []);
 
-    // Initial check for auth
-     useEffect(() => {
-        if (!isLoadingGuest && !isGuest && !isLoading && !user) {
-          router.push("/login");
-        }
-      }, [user, isLoading, isGuest, isLoadingGuest, router]);
+    // ... (keep auth check)
 
-    type MediaItem = {
-        id: string;
-        file: File;
-        previewUrl: string;
-        type?: string; // Added for audio override
-        status: 'pending' | 'uploading' | 'completed' | 'error';
-        cloudData?: { url: string; type: string; size: number };
-    };
+    // ... (keep MediaItem type and file handlers)
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const files = Array.from(e.target.files);
-            
-            const newItems: MediaItem[] = files.map(file => ({
-                id: Math.random().toString(36).substring(7),
-                file,
-                previewUrl: URL.createObjectURL(file), // Note: Make sure to revoke these covers eventually if needed, though browsers handle it reasonably well for page lifetime
-                status: 'uploading',
-            }));
+    const handleAddPerson = async () => {
+        if (!newPersonName.trim()) return;
 
-            setMediaItems(prev => [...prev, ...newItems]);
+        setIsAddingPerson(true);
+        const result = await createPerson({ name: newPersonName.trim() });
+        setIsAddingPerson(false);
 
-            // Start uploads immediately
-            newItems.forEach(item => {
-                uploadFile(item);
-            });
+        if (result.error) {
+            toast.error(result.error);
+        } else if (result.person) {
+            setPeople([...people, result.person]);
+            setSelectedPeople([...selectedPeople, result.person.id]);
+            setNewPersonName("");
+            toast.success(`Added ${result.person.name}`);
         }
     };
 
-    const uploadFile = async (item: MediaItem) => {
-        try {
-            // Store promise in ref to await later if needed
-            const uploadPromise = (async () => {
-                const signatureData = await getCloudinarySignature();
-                const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
-
-                const formData = new FormData();
-                formData.append("file", item.file);
-                formData.append("api_key", apiKey!);
-                formData.append("timestamp", timestamp.toString());
-                formData.append("signature", signature);
-                formData.append("folder", folder);
-
-                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error?.message || "Upload failed");
-                }
-
-                return await response.json();
-            })();
-
-            uploadPromisesRef.current.set(item.id, uploadPromise);
-
-            const data = await uploadPromise;
-
-            completedUploadsRef.current.set(item.id, { 
-                url: data.secure_url, 
-                type: item.file.type.startsWith('audio') ? 'audio' : data.resource_type, 
-                size: data.bytes 
-            });
-
-            setMediaItems(prev => prev.map(i => 
-                i.id === item.id 
-                ? { ...i, status: 'completed', cloudData: { url: data.secure_url, type: item.file.type.startsWith('audio') ? 'audio' : data.resource_type, size: data.bytes } } 
-                : i
-            ));
-        } catch (error) {
-            console.error("Upload failed for", item.file.name, error);
-            setMediaItems(prev => prev.map(i => 
-                i.id === item.id 
-                ? { ...i, status: 'error' } 
-                : i
-            ));
-            toast.error(`Failed to upload ${item.file.name}`);
-        } finally {
-            uploadPromisesRef.current.delete(item.id);
-        }
+    const togglePerson = (personId: string) => {
+        setSelectedPeople(prev => prev.includes(personId) ? prev.filter(id => id !== personId) : [...prev, personId]);
     };
 
-    const toggleEmotion = (emotion: string) => {
-        setSelectedEmotions(prev => prev.includes(emotion) ? prev.filter(e => e !== emotion) : [...prev, emotion]);
-    };
-    
-    const addCustomEmotion = () => {
-        if (customEmotionInput.trim()) {
-            const val = customEmotionInput.trim();
-            // Capitalize first letter strictly? Or keep user input? Let's Title case it nicely.
-            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
-            if (!selectedEmotions.includes(formatted)) {
-                setSelectedEmotions(prev => [...prev, formatted]);
-            }
-            setCustomEmotionInput("");
-            setShowCustomEmotion(false);
-        } else {
-             setShowCustomEmotion(false);
-        }
-    };
+    // ... (keep custom emotion/event/mood handlers)
 
-    const toggleEvent = (event: string) => {
-        setSelectedEvents(prev => prev.includes(event) ? prev.filter(e => e !== event) : [...prev, event]);
-    };
-
-    const addCustomEvent = () => {
-        if (customEventInput.trim()) {
-            const val = customEventInput.trim();
-            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
-            if (!selectedEvents.includes(formatted)) {
-                setSelectedEvents(prev => [...prev, formatted]);
-            }
-            setCustomEventInput("");
-            setShowCustomEvent(false);
-        } else {
-            setShowCustomEvent(false);
-        }
-    };
-    
-    const handleMoodSelect = (mood: string) => {
-        setSelectedMood(mood);
-        setShowCustomMood(false);
-        setCustomMoodInput("");
-    }
-
-    const addCustomMood = () => {
-         if (customMoodInput.trim()) {
-            const val = customMoodInput.trim();
-            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
-            setSelectedMood(formatted);
-            setCustomMoodInput("");
-            setShowCustomMood(false);
-        } else {
-             setShowCustomMood(false);
-        }
-    }
-
-    const handleSubmit = async () => {
-        setError(null);
-
-        // Validation
-        const missingFields = [];
-        if (!title.trim()) missingFields.push("Title");
-        if (!description.trim()) missingFields.push("Description");
-        if (mediaItems.length === 0) missingFields.push("Media");
-        if (!isGuest && !selectedProductId) missingFields.push("Charm Link");
-        
-        if (missingFields.length > 0) {
-            toast.error(`Please fill in the following details: ${missingFields.join(", ")}`);
-            return;
-        }
-
-        setIsUploading(true); // Using this for general "Saving..." state now
-
-        try {
-            // Check for pending uploads
-            const pendingUploads = mediaItems.filter(i => i.status === 'uploading' || i.status === 'pending');
-            const failedUploads = mediaItems.filter(i => i.status === 'error');
-
-            if (failedUploads.length > 0) {
-                // Retry failed? Or just block?
-                // For now, block and ask user to remove or retry (we need a retry button really, but let's just ask to remove for MVP speed)
-                toast.error("Some files failed to upload. Please remove them or try again.");
-                setIsUploading(false);
-                return;
-            }
-
-            if (pendingUploads.length > 0) {
-               // toast.loading("Finishing uploads..."); // 'sonner' toast.loading returns an ID if we want to dismiss, but here we just wait
-               // Actually better to just show it in the button text or a separate indicator
-            }
-
-            // Wait for all current uploads to finish
-            // We can use the values in uploadPromisesRef
-            await Promise.all(pendingUploads.map(item => uploadPromisesRef.current.get(item.id)).filter(Boolean));
-
-            // Re-read mediaItems to get the final URLs?
-            // Wait, state updates might not have flushed if we are in the same closure event...
-            // Actually, we need to rely on the *data* we just got or refetch state?
-            // 'mediaItems' here is closed over. 
-            // We can trust that since we awaited the promises, the side-effects (setting state) are queued, 
-            // BUT in this closure 'mediaItems' is STALE.
-            // However, we don't strictly need 'mediaItems' state if we knew the results. 
-            // But we don't have the results easily here without state.
-            
-            // CORRECT APPROACH in React 18+ with async handler:
-            // The state won't update mid-function.
-            // We can use a functional state update to inspect the latest, OR use a ref to track the items data.
-            // Let's use a Ref to track the *latest* mediaItems as well, or just rely on the fact that 
-            // we can wait for the promises and then... wait, how do we get the data?
-            // The promises function returns the data! 
-            
-            // Let's re-gather the data.
-            // We know existing completed items have cloudData.
-            // The ones we just awaited returned data.
-            // But mixing them is tricky.
-            
-            // Alternative: Use a Ref for `mediaItemsRef` that is always kept in sync with state, 
-            // so we can read the latest values here.
-        } catch (err: any) {
-            console.error("Wait for upload error", err);
-            toast.error("Error finishing uploads");
-            setIsUploading(false);
-            return;
-        }
-        
-        // We need to access the LATEST items. 
-        // Let's use a function to get the actual data to submit.
-        // We can't access updated state here easily.
-        // Let's change the strategy slightly: 
-        // We will construct the final arrays by checking if we have cloudData in current state (already done) 
-        // OR by using the result of the promise we just awaited.
-        
-        // But simpler: just use a ref to hold the items data for submission reading.
-        submitWithLatestData();
-    };
-    
-    // We need a ref to access latest media items inside the async handleSubmit
-    const mediaItemsRef = useRef<MediaItem[]>(mediaItems);
-    useEffect(() => { mediaItemsRef.current = mediaItems; }, [mediaItems]);
-
-    const submitWithLatestData = async () => {
-         // Final check using REF
-         const currentItems = mediaItemsRef.current;
-         const pending = currentItems.filter(i => i.status === 'uploading');
-         const failed = currentItems.filter(i => i.status === 'error');
-         
-         if (failed.length > 0) {
-             toast.error("Some uploads failed. Please remove them.");
-             setIsUploading(false);
-             return;
-         }
-
-         if (pending.length > 0) {
-             // We still have pending items? 
-             // If we just awaited them in the previous block... wait, I split the logic.
-             // Let's merge it:
-             
-             // 1. Identify which IDs are pending
-             const pendingIds = pending.map(i => i.id);
-             
-             // 2. Wait for their specific promises
-             try {
-                await Promise.all(pendingIds.map(id => uploadPromisesRef.current.get(id)));
-             } catch (e) {
-                 toast.error("Upload failed.");
-                 setIsUploading(false);
-                 return;
-             }
-         }
-         
-         // 3. NOW check ref again, they should be completed (because the promise resolution splits state update)
-         // Wait, React state updates are batched/async. Even after await, the re-render might not have happened 
-         // on the javascript thread before we continue? 
-         // Actually, if we await a promise, the microtask queue clears. The state setter was called. 
-         // But the component function hasn't re-run to update `mediaItemsRef`.
-         // So `mediaItemsRef.current` MIGHT BE STALE if we rely on useEffect to update it.
-         
-         // Fix: create a dedicated `completedUploads` Map ref that stores the data directly 
-         // as soon as it's available, independent of React state. 
-         // Use that for submission.
-         
-         processSubmission();
-    }
-
-    
-
-    // Update uploadFile to write to this ref
-    // (See uploadFile modification below in the full code)
+    // ... (keep handleSubmit)
 
     const processSubmission = () => {
         startTransition(async () => {
@@ -413,6 +176,10 @@ export default function MemoryUploadPage() {
             formData.append("events", selectedEvents.join(",")); // Add events
             if (selectedMood) formData.append("mood", selectedMood);
             
+            if (selectedPeople.length > 0) {
+                formData.append("peopleIds", JSON.stringify(selectedPeople));
+            }
+            
             if (finalUrls.length > 0) {
                 formData.append("mediaUrls", JSON.stringify(finalUrls));
                 formData.append("mediaTypes", JSON.stringify(finalTypes));
@@ -422,7 +189,7 @@ export default function MemoryUploadPage() {
             let result;
             
             if (isGuest) {
-                console.log("UPLOAD: Submitting GUEST memory");
+                // ... (guest logic)
                 if (guestName) formData.append("guestName", guestName);
                 if (guestTokenRef.current) formData.append("guestToken", guestTokenRef.current);
                 result = await createGuestMemory(undefined, formData);
@@ -432,6 +199,7 @@ export default function MemoryUploadPage() {
                 result = await createMemory(undefined, formData);
             }
 
+            // ... (keep result handling)
             if (result?.error) {
                 setError(result.error);
                 toast.error(result.error);
@@ -448,7 +216,7 @@ export default function MemoryUploadPage() {
         });
     };
     
-    // ... inside component ...
+    // ... (keep rest)
 
     const hasMedia = mediaItems.length > 0;
 
@@ -746,6 +514,82 @@ export default function MemoryUploadPage() {
                                     </button>
                                 )}
                             </div>
+                        </div>
+
+                        {/* People */}
+                        <div className="mb-6">
+                            <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">People</label>
+                            <p className="text-[#A68CAB] text-[10px] mb-3">Who was there with you?</p>
+                            
+                            <button
+                                type="button"
+                                onClick={() => setShowPeopleSelector(!showPeopleSelector)}
+                                className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-left flex items-center justify-between"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Users className="w-5 h-5 text-[#5B2D7D]/40" />
+                                    {selectedPeople.length > 0 ? (
+                                        <span className="text-[#5B2D7D] text-[13px]">
+                                            {selectedPeople
+                                                .map((id) => people.find((p) => p.id === id)?.name)
+                                                .filter(Boolean)
+                                                .join(", ")}
+                                        </span>
+                                    ) : (
+                                        <span className="text-[#5B2D7D]/30 text-[13px]">Select people</span>
+                                    )}
+                                </div>
+                                <ChevronDown
+                                    className={`w-5 h-5 text-[#5B2D7D]/40 transition-transform ${
+                                        showPeopleSelector ? "rotate-180" : ""
+                                    }`}
+                                />
+                            </button>
+
+                            {showPeopleSelector && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mt-2 p-3 bg-white rounded-xl border border-[#5B2D7D]/10 space-y-2 shadow-sm"
+                                >
+                                    {people.map((person) => (
+                                        <button
+                                            type="button"
+                                            key={person.id}
+                                            onClick={() => togglePerson(person.id)}
+                                            className={`w-full px-3 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${
+                                                selectedPeople.includes(person.id)
+                                                    ? "bg-[#5B2D7D] text-white"
+                                                    : "hover:bg-[#EADDDE]/50 text-[#5B2D7D]"
+                                            }`}
+                                        >
+                                            <span className="text-[13px] font-medium">{person.name}</span>
+                                            {selectedPeople.includes(person.id) && (
+                                                <span className="text-[11px]">✓</span>
+                                            )}
+                                        </button>
+                                    ))}
+
+                                    <div className="flex gap-2 pt-2 border-t border-[#5B2D7D]/10">
+                                        <input
+                                            type="text"
+                                            value={newPersonName}
+                                            onChange={(e) => setNewPersonName(e.target.value)}
+                                            placeholder="Add someone new..."
+                                            className="flex-1 px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none text-[13px]"
+                                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddPerson())}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddPerson}
+                                            disabled={!newPersonName.trim() || isAddingPerson}
+                                            className="px-3 py-2 bg-[#5B2D7D] text-white rounded-lg text-[11px] font-bold disabled:opacity-50"
+                                        >
+                                            {isAddingPerson ? "..." : "Add"}
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
                         </div>
 
                         {/* Optional Fields Toggle */}

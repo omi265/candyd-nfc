@@ -13,7 +13,7 @@ import { useRef, useState } from "react";
 import { addGuestMedia } from "@/app/actions/guest";
 import { getCloudinarySignature } from "@/app/actions/upload";
 import { toast } from "sonner";
-import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles } from "lucide-react";
+import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles, Users } from "lucide-react";
 import AudioPlayer from "@/app/components/AudioPlayer";
 import { getOptimizedUrl } from "@/lib/media-helper";
 
@@ -23,9 +23,10 @@ interface MemoryDrawerProps {
     onOpenChange: (open: boolean) => void;
     isGuest?: boolean;
     guestToken?: string;
+    people?: any[];
 }
 
-export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false, guestToken }: MemoryDrawerProps) {
+export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false, guestToken, people = [] }: MemoryDrawerProps) {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -34,6 +35,11 @@ export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false, gues
 
     const dateStr = new Date(memory.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     const hasMedia = memory.media && memory.media.length > 0;
+
+    // Resolve people
+    const taggedPeople = memory.peopleIds 
+        ? memory.peopleIds.map((id: string) => people.find(p => p.id === id)?.name).filter(Boolean)
+        : [];
 
     const handleEdit = () => {
         router.push(`/memory/${memory.id}`);
@@ -136,6 +142,12 @@ export function MemoryDrawer({ memory, open, onOpenChange, isGuest = false, gues
                                             {event}
                                         </div>
                                     ))}
+                                    {taggedPeople.length > 0 && (
+                                        <div className="bg-[#EADDDE] px-3 py-1.5 rounded-lg text-[#5B2D7D] text-xs font-bold flex items-center gap-1.5">
+                                            <Users className="w-3 h-3" />
+                                            {taggedPeople.join(", ")}
+                                        </div>
+                                    )}
                                  </div>
                              </div>
                              <div className="flex gap-3 shrink-0">

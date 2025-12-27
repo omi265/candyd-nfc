@@ -6,12 +6,13 @@ import { motion, useMotionValue, animate, useTransform, MotionValue, AnimatePres
 import { MemoryDrawer } from "@/components/memory-drawer";
 import { getOptimizedUrl } from "@/lib/media-helper";
 
-import { Plus, Search, LayoutGrid, List, Mic, Music, X } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, Mic, Music, X, GraduationCap } from "lucide-react";
 
 // --- Data ---
 
 type GridItemType = 
   | { type: 'memory', id: string, mediaUrl: string, mediaType: 'image' | 'video' | 'audio', title: string, date: string }
+  | { type: 'life-charm', id: string, title: string, charmId: string, status?: string, stats: { total: number, lived: number }, coverImage?: string }
   | { type: 'empty', id: string };
 
 // --- Components ---
@@ -126,7 +127,6 @@ function MemoryCard({
     const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
     
     // Map distance to visual properties
-    // Adjust range [0, 500] based on screen size ideally, but fixed is okay for now
     const scale = useTransform(dist, [0, 400], [1, 0.85]);
     const opacity = useTransform(dist, [0, 400], [1, 0.5]);
     const titleOpacity = useTransform(dist, [0, 200], [1, 0]);
@@ -181,6 +181,222 @@ function MemoryCard({
              </motion.div>
         </motion.div>
     )
+}
+
+function LifeCharmCard({ 
+
+    item, 
+
+    onClick,
+
+    x, y, row, col, cellSize, containerSize, visualYOffset
+
+}: { 
+
+    item: Extract<GridItemType, { type: 'life-charm' }>; 
+
+    onClick: () => void;
+
+    x: MotionValue<number>;
+
+    y: MotionValue<number>;
+
+    row: number;
+
+    col: number;
+
+    cellSize: { width: number, height: number };
+
+    containerSize: { width: number, height: number };
+
+    visualYOffset: number;
+
+}) {
+
+    const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
+
+    
+
+    // Map distance to visual properties
+
+    const scale = useTransform(dist, [0, 400], [1, 0.85]);
+
+    const opacity = useTransform(dist, [0, 400], [1, 0.6]);
+
+    const contentOpacity = useTransform(dist, [0, 200], [1, 0]);
+
+
+
+    const percentage = item.stats.total > 0 ? Math.round((item.stats.lived / item.stats.total) * 100) : 0;
+
+
+
+    return (
+
+        <motion.div 
+
+            onClick={onClick}
+
+            className="w-full h-full relative flex flex-col justify-end shadow-xl rounded-[32px] overflow-hidden group origin-center cursor-pointer bg-[#2E1640]"
+
+            style={{ 
+
+                scale,
+
+                opacity,
+
+                willChange: "transform, opacity",
+
+                touchAction: "none",
+
+                transform: "translate3d(0,0,0)",
+
+                backfaceVisibility: "hidden"
+
+            }}
+
+            whileTap={{ scale: 0.98 }}
+
+        >
+
+             {/* Background Image */}
+
+             {item.coverImage ? (
+
+                 <div className="absolute inset-0">
+
+                     <img src={item.coverImage} alt="" className="w-full h-full object-cover" />
+
+                     {/* Strong Gradient Overlay for readability */}
+
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                 </div>
+
+             ) : (
+
+                 /* Decorative Gradient Background */
+
+                 <div className="absolute inset-0 bg-gradient-to-br from-[#5B2D7D] to-[#2E1640]">
+
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10"></div>
+
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#A4C538]/20 rounded-full blur-3xl transform -translate-x-10 translate-y-10"></div>
+
+                 </div>
+
+             )}
+
+
+
+             {/* Top Badge */}
+
+             <div className="absolute top-4 left-4 z-20">
+
+                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10">
+
+                    <GraduationCap className="w-4 h-4 text-white" />
+
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Life Charm</span>
+
+                 </div>
+
+             </div>
+
+
+
+             {/* Main Content (Bottom Aligned) */}
+
+             <motion.div 
+
+                className="relative z-10 px-6 pb-8 flex flex-col w-full"
+
+                style={{ opacity: contentOpacity }}
+
+             >
+
+                 {item.status === 'GRADUATED' && (
+
+                    <div className="self-start mb-2 px-3 py-1 bg-[#A4C538] rounded-lg shadow-lg transform -rotate-2">
+
+                        <span className="text-white text-xs font-black uppercase tracking-widest">Graduated</span>
+
+                    </div>
+
+                 )}
+
+
+
+                 <h3 className="text-4xl font-black font-[Outfit] text-white leading-none mb-3 drop-shadow-lg line-clamp-2">
+
+                    {item.title}
+
+                 </h3>
+
+                 
+
+                 {/* Stats Row */}
+
+                 {item.stats.total > 0 ? (
+
+                    <div className="flex items-end gap-2 mb-4">
+
+                        <span className="text-5xl font-black text-[#A4C538] leading-none tracking-tighter">
+
+                            {item.stats.lived}
+
+                        </span>
+
+                        <div className="flex flex-col pb-1">
+
+                            <span className="text-white/60 text-lg font-bold leading-none">/ {item.stats.total}</span>
+
+                            <span className="text-white/40 text-xs font-medium uppercase tracking-wide">Experiences Lived</span>
+
+                        </div>
+
+                    </div>
+
+                 ) : (
+
+                    <span className="mb-4 text-white/80 text-lg font-medium font-[Outfit]">
+
+                        Tap to Start Your List
+
+                    </span>
+
+                 )}
+
+             </motion.div>
+
+
+
+             {/* Full Width Progress Bar */}
+
+             {item.stats.total > 0 && (
+
+                 <div className="absolute bottom-0 left-0 right-0 h-3 bg-black/40">
+
+                    <motion.div 
+
+                        className="h-full bg-[#A4C538] shadow-[0_0_15px_rgba(164,197,56,0.6)]" 
+
+                        initial={{ width: 0 }}
+
+                        animate={{ width: `${percentage}%` }}
+
+                        transition={{ duration: 1, ease: "easeOut" }}
+
+                    />
+
+                 </div>
+
+             )}
+
+        </motion.div>
+
+    )
+
 }
 
 function EmptyCard({ 
@@ -252,8 +468,6 @@ function ListMemoryCard({ item, onClick }: { item: Extract<GridItemType, { type:
                 ) : (
                     <img src={item.mediaUrl} alt={item.title} className="w-full h-auto object-cover block" />
                 )}
-                
-                {/* Gradient Overlay for text readability if over image, but we are putting text below for clean masonry */}
             </div>
 
             <div className="pt-2 pb-1">
@@ -264,6 +478,26 @@ function ListMemoryCard({ item, onClick }: { item: Extract<GridItemType, { type:
     )
 }
 
+function ListLifeCharmCard({ item, onClick }: { item: Extract<GridItemType, { type: 'life-charm' }>; onClick: () => void }) {
+    return (
+        <div 
+            onClick={onClick}
+            className="w-full mb-4 break-inside-avoid relative rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-br from-[#5B2D7D] to-[#452260] aspect-[4/5] flex flex-col items-center justify-center text-center p-6"
+        >
+             <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-4 backdrop-blur-sm border border-white/20">
+                <GraduationCap className="w-7 h-7 text-white" />
+             </div>
+             
+             <h3 className="text-xl font-bold font-[Outfit] text-white leading-tight mb-2">
+                {item.title}
+             </h3>
+             
+             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10">
+                <span className="text-[10px] font-medium text-white/90 uppercase tracking-wide">Life Charm</span>
+             </div>
+        </div>
+    )
+}
 
 
 function getCenterOutOrder(n: number): number[] {
@@ -284,13 +518,15 @@ function getCenterOutOrder(n: number): number[] {
 
 interface HomeContentProps {
   initialMemories?: any[];
+  lifeCharms?: any[]; // Products with type='LIFE'
+  people?: any[];
   user?: any;
   isGuest?: boolean;
   guestToken?: string;
   forcedViewMode?: 'grid' | 'list';
 }
 
-export default function HomeContent({ initialMemories, user, isGuest = false, guestToken, forcedViewMode }: HomeContentProps) {
+export default function HomeContent({ initialMemories, lifeCharms = [], people = [], user, isGuest = false, guestToken, forcedViewMode }: HomeContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const charmId = searchParams.get('charmId');
@@ -371,183 +607,180 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
       });
   }, [initialMemories, searchQuery, selectedFilter]);
 
-  // Determine grid size based on FILTERED memories
-  const memoryCount = filteredMemories.length;
-  const gridSize = Math.max(3, Math.ceil(Math.sqrt(memoryCount)));
-
-  // Initialize grid (using filteredMemories to start)
-  const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(initialMemories?.length || 0)));
-  const [gridData, setGridData] = useState<GridItemType[]>(() => {
-    const totalCells = currentGridSize * currentGridSize;
-    const initialGrid: GridItemType[] = Array(totalCells).fill(null).map((_, i) => ({ type: 'empty', id: `e${i}` }));
-
-    if (!initialMemories || initialMemories.length === 0) return initialGrid;
+  // Combine Life Charms and Memories for Grid
+  const combinedItems = useMemo(() => {
+    // Only show Life Charms if no specific filter/search is active (or maybe include them always?)
+    // Typically, if I search for "Happy", a Life Charm doesn't have emotions, so it shouldn't show.
+    // If I have no filters, show Life Charms first.
     
-    // Initial mapping (using initialMemories for first render to avoid mismatch, 
-    // though filteredMemories is likely same unless default search exists)
-    const newGrid = [...initialGrid];
-    const FILL_ORDER = getCenterOutOrder(currentGridSize);
-    const memoriesToMap = initialMemories.slice(0, totalCells);
-
-    memoriesToMap.forEach((memory: any, index: number) => {
-        const gridIndex = FILL_ORDER[index];
-        if (gridIndex === undefined) return;
-
-        const dateObj = new Date(memory.date);
-        const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    if (searchQuery || selectedFilter) {
+        return filteredMemories;
+    }
+    
+    // Map Life Charms to GridItemType
+    const lifeCharmItems: GridItemType[] = lifeCharms.map(lc => {
+        const items = lc.lifeLists?.[0]?.items || [];
         
-        let mediaUrl = 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&w=800&q=80';
-        let mediaType: 'image' | 'video' | 'audio' = 'image';
+        // DEBUG: Log items structure
+        console.log(`[LifeCharm: ${lc.name}] Items:`, items);
 
-        if (memory.media && memory.media.length > 0) {
-            const firstMedia = memory.media[0];
-            if (firstMedia.type.startsWith('video')) {
-                     const videoAsImage = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
-                     mediaUrl = getOptimizedUrl(videoAsImage, 'image', 400);
-                     mediaType = 'video';
-            } else if (firstMedia.type.startsWith('audio')) {
-                     mediaUrl = firstMedia.url;
-                     mediaType = 'audio';
-            } else {
-                     mediaUrl = getOptimizedUrl(firstMedia.url, 'image', 400);
-                     mediaType = 'image';
+        const total = items.length;
+        const lived = items.filter((i: any) => i.status === 'lived').length;
+        
+        // Collect all valid media from lived items
+        const allMedia: string[] = [];
+        items.forEach((item: any) => {
+            // DEBUG: Check each item's media
+            if (item.status === 'lived') {
+                console.log(`[LifeCharm: ${lc.name}] Checking item ${item.title}:`, item.experience);
             }
+
+            if (item.status === 'lived' && item.experience?.media?.length > 0) {
+                item.experience.media.forEach((m: any) => {
+                    if (m.type === 'image' || m.type === 'video') {
+                        allMedia.push(m.url);
+                    }
+                });
+            }
+        });
+
+        console.log(`[LifeCharm: ${lc.name}] All collected media:`, allMedia);
+
+        // Select a random cover image if any exist
+        let coverImage: string | undefined;
+        if (allMedia.length > 0) {
+            const randomIndex = Math.floor(Math.random() * allMedia.length);
+            coverImage = getOptimizedUrl(allMedia[randomIndex], 'image', 600);
         }
 
-        newGrid[gridIndex] = {
-            type: 'memory',
-            id: memory.id,
-            title: memory.title,
-            date: dateStr,
-            mediaUrl,
-            mediaType
+        return {
+            type: 'life-charm',
+            id: `lc-${lc.id}`,
+            title: lc.name,
+            charmId: lc.id,
+            status: lc.state,
+            stats: { total, lived },
+            coverImage
         };
     });
-    return newGrid;
-  });
+
+    const allItems = [...lifeCharmItems, ...filteredMemories];
+    
+    // Randomize (Fisher-Yates Shuffle)
+    for (let i = allItems.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allItems[i], allItems[j]] = [allItems[j], allItems[i]];
+    }
+
+    return allItems;
+  }, [filteredMemories, lifeCharms, searchQuery, selectedFilter]);
+
+
+  // Initialize Grid Data
+  // We need to re-calc grid size based on COMBINED items
+  const [gridData, setGridData] = useState<GridItemType[]>([]);
+
+  useEffect(() => {
+        const totalItems = combinedItems.length;
+        const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(totalItems)));
+        const totalCells = currentGridSize * currentGridSize;
+        const initialGrid: GridItemType[] = Array(totalCells).fill(null).map((_, i) => ({ type: 'empty', id: `e${i}` }));
+        
+        const newGrid = [...initialGrid];
+        const itemsToMap = combinedItems.slice(0, totalCells);
+        const FILL_ORDER = getCenterOutOrder(currentGridSize);
+
+        itemsToMap.forEach((item: any, index: number) => {
+            const gridIndex = FILL_ORDER[index];
+            if (gridIndex === undefined) return;
+
+            // Check if it's already a shaped GridItem (LifeCharm) or raw Memory
+            if (item.type === 'life-charm') {
+                newGrid[gridIndex] = item;
+            } else {
+                // It's a memory
+                const memory = item;
+                const dateObj = new Date(memory.date);
+                const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                
+                let mediaUrl = 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&w=800&q=80';
+                let mediaType: 'image' | 'video' | 'audio' = 'image';
+
+                if (memory.media && memory.media.length > 0) {
+                    const firstMedia = memory.media[0];
+                    if (firstMedia.type.startsWith('video')) {
+                        const videoAsImage = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                        mediaUrl = getOptimizedUrl(videoAsImage, 'image', 400);
+                        mediaType = 'video';
+                    } else if (firstMedia.type.startsWith('audio')) {
+                        mediaUrl = firstMedia.url;
+                        mediaType = 'audio';
+                    } else {
+                        mediaUrl = getOptimizedUrl(firstMedia.url, 'image', 400);
+                        mediaType = 'image';
+                    }
+                }
+
+                newGrid[gridIndex] = {
+                    type: 'memory',
+                    id: memory.id,
+                    title: memory.title,
+                    date: dateStr,
+                    mediaUrl,
+                    mediaType
+                };
+            }
+        });
+        setGridData(newGrid);
+  }, [combinedItems]);
+
 
   // Measure cell size on mount/resize
   useEffect(() => {
     const updateSize = () => {
-        // Use container width if available, fallback to window.
-        // Cap width at 400px for desktop sanity
         if (containerRef.current) {
             const containerW = containerRef.current.offsetWidth;
             const containerH = containerRef.current.offsetHeight;
-            
-            // Standard mobile: 75% width
-            // Desktop: cap at 380px (enough for good content)
             const w = Math.min(containerW * 0.75, 380);
-            
-            // Height: 60% of container or window, cap at 600px
             const h = Math.min(containerH * 0.60, 550);
 
             setCellSize({ width: w, height: h });
             setContainerSize({ width: containerW, height: containerH });
         } else {
-             // Fallback
              setCellSize({
                 width: Math.min(window.innerWidth * 0.75, 380),
                 height: Math.min(window.innerHeight * 0.60, 550)
             });
         }
     };
-    // Initial measure after a small delay to ensure layout is ready
     setTimeout(updateSize, 0); 
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Visual offset to account for bottom buttons (push grid up slightly)
   const VISUAL_Y_OFFSET = 60;
+  const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(combinedItems.length))); // Derived for positioning
 
   // Set Initial Position (Centering)
   useEffect(() => {
     if (cellSize.width === 0 || containerSize.width === 0) return;
     
-    // Find grid center
-    // We want to center the FIRST memory (index 0 of memories) which is placed at FILL_ORDER[0]
-    const centerIndex = getCenterOutOrder(gridSize)[0];
-    // If invalid grid, fallback
+    const centerIndex = getCenterOutOrder(currentGridSize)[0];
     if (centerIndex === undefined) return;
 
-    const row = Math.floor(centerIndex / gridSize);
-    const col = centerIndex % gridSize;
+    const row = Math.floor(centerIndex / currentGridSize);
+    const col = centerIndex % currentGridSize;
 
-    // Calculate offsets to center the item relative to container
-    // formula: x = (ContainerW - CellW)/2 - Col * CellW
     const initialX = (containerSize.width - cellSize.width) / 2 - col * cellSize.width;
     const initialY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - row * cellSize.height;
 
-    // Use jump to avoid animation on initial load if desired, but set is fine
     x.set(initialX);
     y.set(initialY);
     
-  }, [cellSize, containerSize, gridSize, x, y]);
-
-  // --- Grid Logic updates to use filteredMemories ---
-  
-  // Determine grid size based on FILTERED memories (or keep it based on initial? 
-  // Usually better to shrink grid if specific search, but for masonry feel, re-calculating is better)
-  // Let's re-calculate grid size for filtered results to avoid too many empty spaces.
-  // If we have 0 memories matching search, size 3 is fine for empty state.
-
-  // Update Grid Data
-  useEffect(() => {
-        // Use filteredMemories instead of initialMemories
-        // Always reconstruct grid when filteredMemories changes
-        const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(filteredMemories.length)));
-        const totalCells = currentGridSize * currentGridSize;
-        const initialGrid: GridItemType[] = Array(totalCells).fill(null).map((_, i) => ({ type: 'empty', id: `e${i}` }));
-        
-        const newGrid = [...initialGrid];
-        const memoriesToMap = filteredMemories.slice(0, totalCells);
-        const FILL_ORDER = getCenterOutOrder(currentGridSize);
-
-        memoriesToMap.forEach((memory: any, index: number) => {
-            const gridIndex = FILL_ORDER[index];
-            if (gridIndex === undefined) return;
-
-            const dateObj = new Date(memory.date);
-            const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-            
-            let mediaUrl = 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&w=800&q=80';
-            let mediaType: 'image' | 'video' | 'audio' = 'image';
-
-            if (memory.media && memory.media.length > 0) {
-                const firstMedia = memory.media[0];
-                if (firstMedia.type.startsWith('video')) {
-                     const videoAsImage = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
-                     mediaUrl = getOptimizedUrl(videoAsImage, 'image', 400);
-                     mediaType = 'video';
-                } else if (firstMedia.type.startsWith('audio')) {
-                     mediaUrl = firstMedia.url;
-                     mediaType = 'audio';
-                } else {
-                     mediaUrl = getOptimizedUrl(firstMedia.url, 'image', 400);
-                     mediaType = 'image';
-                }
-            }
-
-            newGrid[gridIndex] = {
-                type: 'memory',
-                id: memory.id,
-                title: memory.title,
-                date: dateStr,
-                mediaUrl,
-                mediaType
-            };
-        });
-        setGridData(newGrid);
-  }, [filteredMemories]); // Depend on filteredMemories
-
+  }, [cellSize, containerSize, currentGridSize, x, y]);
 
 
   const handleAddMemory = () => {
-    // If guest, router push will handle "upload-memory" which logic inside will handle isGuest 
-    // OR we can explicit redirect. "upload-memory" logic handles guest.
-    // OR we can explicit redirect. "upload-memory" logic handles guest.
-    // If we have a guest token, pass it back to upload
     if (isGuest && guestToken) {
         router.push(`/upload-memory?guest_token=${guestToken}`);
     } else {
@@ -561,11 +794,14 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
           setSelectedMemory(memory);
       }
   };
+  
+  const handleLifeCharmClick = (charmId: string) => {
+      router.push(`/life-charm?charmId=${charmId}`);
+  };
 
   return (
     <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden"> 
       <div className="shrink-0 pt-2 pb-2 z-30 relative pointer-events-none">
-          {/* Allow pointer events only on the filter bar itself if needed, or wrap it */}
           <div className="pointer-events-auto">
              <FilterBar 
                 tags={uniqueTags}
@@ -582,14 +818,14 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
       <div className="flex-1 min-h-0 relative flex flex-col justify-end" ref={containerRef}>
              {viewMode === 'grid' ? (
              <motion.div  
-                className="grid gap-0 absolute top-0 left-0 touch-none origin-top-left" // touch-none is key for preventing browser scroll interference
+                className="grid gap-0 absolute top-0 left-0 touch-none origin-top-left"
                 style={{ 
-                    gridTemplateColumns: `repeat(${gridSize}, ${cellSize.width ? cellSize.width + 'px' : '75vw'})`,
-                    gridTemplateRows: `repeat(${gridSize}, ${cellSize.height ? cellSize.height + 'px' : '60vh'})`,
+                    gridTemplateColumns: `repeat(${currentGridSize}, ${cellSize.width ? cellSize.width + 'px' : '75vw'})`,
+                    gridTemplateRows: `repeat(${currentGridSize}, ${cellSize.height ? cellSize.height + 'px' : '60vh'})`,
                     x, 
                     y,
-                    width: gridSize * (cellSize.width || 0),
-                    height: gridSize * (cellSize.height || 0),
+                    width: currentGridSize * (cellSize.width || 0),
+                    height: currentGridSize * (cellSize.height || 0),
                     willChange: "transform",
                     touchAction: "none",
                     overscrollBehavior: "none",
@@ -604,7 +840,6 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
                 dragElastic={0.2}
                 dragMomentum={false}
                 onDragStart={() => {
-                    // Capture current index
                     const textContentWidth = cellSize.width;
                     const textContentHeight = cellSize.height;
                     
@@ -626,8 +861,7 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
                     let offsetStart = (containerValues - textContentSize) / 2;
                     if (!isX) offsetStart -= VISUAL_Y_OFFSET;
 
-                    // STRICT SWIPE LOGIC
-                    const SWIPE_THRESHOLD = 50; // px
+                    const SWIPE_THRESHOLD = 50; 
                     let targetIndex = 0;
                     
                     if (dragStartRef.current) {
@@ -635,24 +869,17 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
                         const dragOffset = isX ? offset.x : offset.y;
                         
                         let direction = 0;
-                        if (dragOffset < -SWIPE_THRESHOLD) direction = 1; // Dragged Left/Up -> Next
-                        if (dragOffset > SWIPE_THRESHOLD) direction = -1; // Dragged Right/Down -> Prev
+                        if (dragOffset < -SWIPE_THRESHOLD) direction = 1;
+                        if (dragOffset > SWIPE_THRESHOLD) direction = -1;
 
                         targetIndex = startIndex + direction;
                     } else {
-                         // Fallback if no start ref
                         const current = isX ? x.get() : y.get();
                         targetIndex = Math.round((offsetStart - current) / textContentSize);
                     }
                     
-                    // Clamp
-                    const clampedIndex = Math.max(0, Math.min(gridSize - 1, targetIndex));
-                    
-                    // Calculate Snap Point
-                    // snapPoint = offsetStart - index * size
+                    const clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
                     const snapPoint = offsetStart - clampedIndex * textContentSize;
-
-                    // Animate to snap point
                     const valueToAnimate = isX ? x : y;
                     
                     animate(valueToAnimate, snapPoint, {
@@ -663,20 +890,27 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
                 }}
               >
                  {gridData.map((item, index) => {
-                     const r = Math.floor(index / gridSize);
-                     const c = index % gridSize;
+                     const r = Math.floor(index / currentGridSize);
+                     const c = index % currentGridSize;
                      
                      return (
                     <div 
                         key={index}
                         className="flex items-center justify-center p-2"
-                        // Ensure click doesn't trigger if we dragged. Framer motion handles this usually.
                         style={{ width: cellSize.width || '75vw', height: cellSize.height || '60vh' }}
                     >
                         {item && item.type === 'memory' ? (
                             <MemoryCard 
                                 item={item} 
                                 onClick={() => handleMemoryClick(item.id)}
+                                x={x} y={y} row={r} col={c}
+                                cellSize={cellSize} containerSize={containerSize}
+                                visualYOffset={VISUAL_Y_OFFSET}
+                            />
+                        ) : item && item.type === 'life-charm' ? (
+                            <LifeCharmCard 
+                                item={item} 
+                                onClick={() => handleLifeCharmClick(item.charmId)}
                                 x={x} y={y} row={r} col={c}
                                 cellSize={cellSize} containerSize={containerSize}
                                 visualYOffset={VISUAL_Y_OFFSET}
@@ -697,11 +931,16 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
         /* List View */
         <div className="flex-1 min-h-0 w-full relative overflow-y-auto overflow-x-hidden pt-4 px-4 pb-24 no-scrollbar">
             <div className="columns-2 md:columns-3 lg:columns-4 gap-4 w-full max-w-7xl mx-auto">
-                {/* Render only actual memories, skipping empty slots for the list view */}
+                {/* Render Life Charms First in List View */}
+                {lifeCharms.map((lc) => (
+                    <ListLifeCharmCard 
+                        key={lc.id}
+                        item={{ type: 'life-charm', id: `lc-${lc.id}`, title: lc.name, charmId: lc.id, status: lc.state }}
+                        onClick={() => handleLifeCharmClick(lc.id)}
+                    />
+                ))}
+
                 {filteredMemories?.map((memory) => {
-                     // Need to map memory to strictly typed object or reuse logic? 
-                     // Let's reuse the logic we used for Grid but simpler since we iterate directly.
-                     
                      const dateObj = new Date(memory.date);
                      const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
                      
@@ -741,7 +980,6 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
                      );
                 })}
                 
-                {/* Add an "Add Memory" card at the end or beginning? */}
                  <div 
                     onClick={handleAddMemory}
                     className="w-full mb-4 break-inside-avoid relative rounded-2xl overflow-hidden cursor-pointer bg-[#FDF2EC] border-2 border-dashed border-[#5B2D7D]/20 flex flex-col items-center justify-center p-8 aspect-4/5"
@@ -775,9 +1013,6 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
                  </div>
              )}
              
-             {/* If forced view mode, we might want to shift the plus button or keep it right aligned. 
-                 If the left side is missing, justify-between pushes it to the right which is fine. 
-             */}
              <div className={forcedViewMode ? "ml-auto pointer-events-auto" : ""}>
                  <button 
                     onClick={handleAddMemory}
@@ -795,6 +1030,7 @@ export default function HomeContent({ initialMemories, user, isGuest = false, gu
         onOpenChange={(open) => !open && setSelectedMemory(null)}
         isGuest={isGuest}
         guestToken={guestToken}
+        people={people}
       />
     </div>
   );
