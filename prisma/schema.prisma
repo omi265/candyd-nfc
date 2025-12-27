@@ -28,6 +28,7 @@ model User {
   memories  Memory[]
   products  Product[]
   lifeLists LifeList[]
+  habits    Habit[]
   people    Person[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -50,6 +51,7 @@ model Product {
 
   memories  Memory[]
   lifeLists LifeList[]
+  habits    Habit[]
 }
 
 model Memory {
@@ -187,4 +189,51 @@ model ExperienceMedia {
 
   orderIndex   Int        @default(0)
   createdAt    DateTime   @default(now())
+}
+
+// ==========================================
+// HABIT CHARM MODELS
+// ==========================================
+
+model Habit {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  focusArea   String         // e.g., "Energy", "Movement", "Rest", "Mind"
+  
+  // Configuration
+  frequency   String         @default("daily") // "daily", "weekly"
+  targetDays  Int            @default(66)      // Days to graduation
+  
+  // Progress
+  currentStreak Int          @default(0)
+  longestStreak Int          @default(0)
+  totalCompletions Int       @default(0)
+  
+  // Status
+  isActive    Boolean        @default(true)
+  graduatedAt DateTime?
+  archivedAt  DateTime?
+
+  productId   String
+  product     Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  logs        HabitLog[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model HabitLog {
+  id          String   @id @default(cuid())
+  date        DateTime // The date of the log (normalized to start of day)
+  notes       String?  // Optional reflection
+  
+  habitId     String
+  habit       Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
 }

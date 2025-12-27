@@ -270,7 +270,7 @@ function LifeCharmCard({
 
                      {/* Strong Gradient Overlay for readability */}
 
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
 
                  </div>
 
@@ -310,7 +310,7 @@ function LifeCharmCard({
 
              <motion.div 
 
-                className="relative z-10 px-6 pb-8 flex flex-col w-full"
+                className="relative z-10 px-8 pb-24 flex flex-col w-full"
 
                 style={{ opacity: contentOpacity }}
 
@@ -318,7 +318,7 @@ function LifeCharmCard({
 
                  {item.status === 'GRADUATED' && (
 
-                    <div className="self-start mb-2 px-3 py-1 bg-[#A4C538] rounded-lg shadow-lg transform -rotate-2">
+                    <div className="self-start mb-4 px-3 py-1 bg-[#A4C538] rounded-lg shadow-lg transform -rotate-2">
 
                         <span className="text-white text-xs font-black uppercase tracking-widest">Graduated</span>
 
@@ -328,7 +328,7 @@ function LifeCharmCard({
 
 
 
-                 <h3 className="text-4xl font-black font-[Outfit] text-white leading-none mb-3 drop-shadow-lg line-clamp-2">
+                 <h3 className="text-4xl font-black font-[Outfit] text-white leading-[0.9] mb-6 drop-shadow-2xl line-clamp-3 tracking-tighter uppercase">
 
                     {item.title}
 
@@ -340,19 +340,19 @@ function LifeCharmCard({
 
                  {item.stats.total > 0 ? (
 
-                    <div className="flex items-end gap-2 mb-4">
+                    <div className="flex items-baseline gap-3">
 
-                        <span className="text-5xl font-black text-[#A4C538] leading-none tracking-tighter">
+                        <span className="text-8xl font-black text-[#A4C538] leading-none tracking-tighter drop-shadow-xl">
 
                             {item.stats.lived}
 
                         </span>
 
-                        <div className="flex flex-col pb-1">
+                        <div className="flex flex-col">
 
-                            <span className="text-white/60 text-lg font-bold leading-none">/ {item.stats.total}</span>
+                            <span className="text-3xl font-black text-white/30 leading-none">/ {item.stats.total}</span>
 
-                            <span className="text-white/40 text-xs font-medium uppercase tracking-wide">Experiences Lived</span>
+                            <span className="text-[#A4C538] text-[10px] font-black uppercase tracking-[0.3em] mt-1">Lived</span>
 
                         </div>
 
@@ -360,7 +360,7 @@ function LifeCharmCard({
 
                  ) : (
 
-                    <span className="mb-4 text-white/80 text-lg font-medium font-[Outfit]">
+                    <span className="text-white/80 text-xl font-medium font-[Outfit] self-start border-2 border-white/20 rounded-full px-6 py-2">
 
                         Tap to Start Your List
 
@@ -372,21 +372,21 @@ function LifeCharmCard({
 
 
 
-             {/* Full Width Progress Bar */}
+             {/* Detached, Thick, Gradient Progress Bar */}
 
              {item.stats.total > 0 && (
 
-                 <div className="absolute bottom-0 left-0 right-0 h-3 bg-black/40">
+                 <div className="absolute bottom-8 left-8 right-8 h-6 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm border border-white/5">
 
                     <motion.div 
 
-                        className="h-full bg-[#A4C538] shadow-[0_0_15px_rgba(164,197,56,0.6)]" 
+                        className="h-full bg-gradient-to-r from-[#A4C538] via-[#A4C538] to-[#E3FF80] shadow-[0_0_30px_rgba(164,197,56,0.4)] rounded-full" 
 
                         initial={{ width: 0 }}
 
                         animate={{ width: `${percentage}%` }}
 
-                        transition={{ duration: 1, ease: "easeOut" }}
+                        transition={{ duration: 1.5, ease: [0.34, 1.56, 0.64, 1] }}
 
                     />
 
@@ -489,9 +489,16 @@ function ListLifeCharmCard({ item, onClick }: { item: Extract<GridItemType, { ty
                 <GraduationCap className="w-7 h-7 text-white" />
              </div>
              
-             <h3 className="text-xl font-bold font-[Outfit] text-white leading-tight mb-2">
+             <h3 className="text-2xl font-black font-[Outfit] text-white leading-tight mb-3 uppercase tracking-tighter">
                 {item.title}
              </h3>
+
+             {item.stats.total > 0 && (
+                <div className="flex flex-col items-center mb-4">
+                    <span className="text-4xl font-black text-[#A4C538] leading-none">{item.stats.lived}/{item.stats.total}</span>
+                    <span className="text-[#A4C538] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Lived</span>
+                </div>
+             )}
              
              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10">
                 <span className="text-[10px] font-medium text-white/90 uppercase tracking-wide">Life Charm</span>
