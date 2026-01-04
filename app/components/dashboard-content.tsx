@@ -328,9 +328,15 @@ export default function DashboardContent({ products }: DashboardContentProps) {
 
   return (
     <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden font-[Outfit]">
-      <header className="shrink-0 px-6 py-6 z-30">
-        <h1 className="text-3xl font-bold text-[#5B2D7D]">My Charms</h1>
-        <p className="text-[#5B2D7D]/60">Swipe to explore</p>
+      <header className="shrink-0 px-6 py-4 z-30 bg-white border-b border-[#EADDDE] shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-black text-[#5B2D7D] tracking-tight">My Charms</h1>
+            <p className="text-sm font-bold text-[#5B2D7D]/70 uppercase tracking-wider">
+              {products.length} active
+            </p>
+          </div>
+        </div>
       </header>
 
       <div className="flex-1 min-h-0 relative" ref={containerRef}>
