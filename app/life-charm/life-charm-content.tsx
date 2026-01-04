@@ -98,7 +98,6 @@ function LifeItemCard({
 }) {
   const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
 
-  const scale = useTransform(dist, [0, 400], [1, 0.85]);
   const opacity = useTransform(dist, [0, 400], [1, 0.5]);
   const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
 
@@ -131,16 +130,14 @@ function LifeItemCard({
   return (
     <motion.div
       onClick={onClick}
-      className={`w-full h-full relative flex flex-col justify-between shadow-xl rounded-[32px] overflow-hidden cursor-pointer`}
+      className={`w-full h-full relative flex flex-col justify-between shadow-xl rounded-none overflow-hidden cursor-pointer`}
       style={{
-        scale,
         opacity,
         willChange: "transform, opacity",
         touchAction: "none",
         transform: "translate3d(0,0,0)",
         backfaceVisibility: "hidden",
       }}
-      whileTap={{ scale: 0.98 }}
     >
       {/* Background */}
       {hasMedia && firstMedia?.type === "image" ? (
@@ -265,15 +262,13 @@ function EmptyCard({
 }) {
   const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
 
-  const scale = useTransform(dist, [0, 400], [1, 0.85]);
   const opacity = useTransform(dist, [0, 400], [1, 0.6]);
   const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
 
   return (
     <motion.div
-      className="w-full h-full rounded-[32px] flex flex-col items-center justify-center overflow-hidden cursor-pointer bg-white/60 shadow-md border-2 border-dashed border-[#5B2D7D]/20"
+      className="w-full h-full rounded-none flex flex-col items-center justify-center overflow-hidden cursor-pointer bg-white/60 shadow-md border-2 border-dashed border-[#5B2D7D]/20"
       style={{
-        scale,
         opacity,
         willChange: "transform, opacity",
         touchAction: "none",
@@ -382,8 +377,9 @@ export default function LifeCharmContent({
       if (containerRef.current) {
         const containerW = containerRef.current.offsetWidth;
         const containerH = containerRef.current.offsetHeight;
-        const w = Math.min(containerW * 0.8, 340);
-        const h = Math.min(containerH * 0.65, 480);
+        // Adjusted multipliers to show side cards more clearly
+        const w = Math.min(containerW * 0.85, 400);
+        const h = Math.min(containerH * 0.80, 650);
         setCellSize({ width: w, height: h });
         setContainerSize({ width: containerW, height: containerH });
       }
@@ -583,7 +579,7 @@ export default function LifeCharmContent({
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-center p-2"
+                className="flex items-center justify-center p-1"
                 style={{ width: cellSize.width || "80vw", height: cellSize.height || "65vh" }}
               >
                   <LifeItemCard

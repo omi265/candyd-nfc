@@ -407,7 +407,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     }
 
     const handleCancel = () => {
-        router.push("/");
+        router.push("/memories");
     };
 
     const handleSave = async () => {
@@ -518,7 +518,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                     setIsUploading(false);
                     toast.dismiss(loadingToast);
                     toast.success("Memory saved successfully!");
-                    router.push("/");
+                    router.push("/memories");
                     router.refresh(); 
                 } else {
                     console.error(result?.error);
@@ -544,7 +544,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
              if (result.success) {
                  toast.dismiss(toastId);
                  toast.success("Memory deleted successfully");
-                 router.push("/");
+                 router.push("/memories");
              } else {
                  toast.dismiss(toastId);
                  toast.error(result.error || "Failed to delete memory");

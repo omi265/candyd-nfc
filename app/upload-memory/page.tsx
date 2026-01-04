@@ -998,7 +998,7 @@ export default function MemoryUploadPage() {
                         <div className="pt-4 flex items-center gap-3">
                              <button
                                 type="button"
-                                onClick={() => router.push(isGuest ? '/guest/memories' : '/')}
+                                onClick={() => router.back()}
                                 className="w-[56px] h-[56px] rounded-full bg-[#EADDDE] flex items-center justify-center shadow-lg text-[#5B2D7D] shrink-0 active:scale-95 transition-transform"
                             >
                                 <ChevronLeft className="w-6 h-6" />

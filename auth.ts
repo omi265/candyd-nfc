@@ -21,15 +21,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       authorize: async (credentials) => {
         try {
-            // 1. Check for Token Login
-            if (credentials.token && typeof credentials.token === 'string') {
+            // 1. Check for Token Login (Magic Link / NFC)
+            // Ensure token is a non-empty string and not "undefined"
+            if (credentials.token && typeof credentials.token === 'string' && credentials.token !== "undefined" && credentials.token.length > 5) {
               const product = await db.product.findUnique({
                 where: { token: credentials.token },
                 include: { user: true }
               });
 
               if (product && product.active && product.user) {
-                return product.user;
+                return {
+                    id: product.user.id,
+                    email: product.user.email,
+                    name: product.user.name,
+                    role: product.user.role,
+                };
               }
               return null;
             }
@@ -37,7 +43,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             // 2. Standard Email/Password Login
             const parsedCredentials = await loginSchema.safeParseAsync(credentials);
             
-            if (!parsedCredentials.success) return null;
+            if (!parsedCredentials.success) {
+                return null;
+            }
 
             const { email, password } = parsedCredentials.data;
 
@@ -45,14 +53,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 where: { email },
             });
 
-            if (!user) return null;
+            if (!user || !user.password) {
+                return null;
+            }
 
             const passwordsMatch = await bcrypt.compare(password, user.password);
 
-            if (passwordsMatch) return user;
+            if (passwordsMatch) {
+                return {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                };
+            }
             
             return null;
         } catch (error) {
+           console.error("Authentication error:", error);
            return null;
         }
       },

@@ -77,7 +77,6 @@ function CharmCard({
 }) {
   const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
 
-  const scale = useTransform(dist, [0, 400], [1, 0.85]);
   const opacity = useTransform(dist, [0, 400], [1, 0.5]);
   const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
 
@@ -114,16 +113,14 @@ function CharmCard({
   return (
     <motion.div
       onClick={onClick}
-      className={`w-full h-full relative flex flex-col justify-between shadow-xl rounded-[32px] overflow-hidden cursor-pointer`}
+      className={`w-full h-full relative flex flex-col justify-between shadow-xl rounded-none overflow-hidden cursor-pointer`}
       style={{
-        scale,
         opacity,
         willChange: "transform, opacity",
         touchAction: "none",
         transform: "translate3d(0,0,0)",
         backfaceVisibility: "hidden",
       }}
-      whileTap={{ scale: 0.98 }}
     >
       {/* Background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient}`}>
@@ -187,16 +184,14 @@ function AddCharmCard({
 }) {
   const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
 
-  const scale = useTransform(dist, [0, 400], [1, 0.85]);
   const opacity = useTransform(dist, [0, 400], [1, 0.6]);
   const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
 
   return (
     <motion.div
       onClick={onClick}
-      className="w-full h-full rounded-[32px] flex flex-col items-center justify-center overflow-hidden cursor-pointer bg-white/60 shadow-md border-2 border-dashed border-[#5B2D7D]/20"
+      className="w-full h-full rounded-none flex flex-col items-center justify-center overflow-hidden cursor-pointer bg-white/60 shadow-md border-2 border-dashed border-[#5B2D7D]/20"
       style={{
-        scale,
         opacity,
         willChange: "transform, opacity",
         touchAction: "none",
@@ -260,8 +255,9 @@ export default function DashboardContent({ products }: DashboardContentProps) {
       if (containerRef.current) {
         const containerW = containerRef.current.offsetWidth;
         const containerH = containerRef.current.offsetHeight;
-        const w = Math.min(containerW * 0.8, 340);
-        const h = Math.min(containerH * 0.65, 480);
+        // Adjusted multipliers to show side cards more clearly
+        const w = Math.min(containerW * 0.85, 400);
+        const h = Math.min(containerH * 0.80, 650);
         setCellSize({ width: w, height: h });
         setContainerSize({ width: containerW, height: containerH });
       }
@@ -329,7 +325,7 @@ export default function DashboardContent({ products }: DashboardContentProps) {
   return (
     <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden font-[Outfit]">
       <header className="shrink-0 px-6 py-4 z-30 bg-white border-b border-[#EADDDE] shadow-sm">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-2xl font-black text-[#5B2D7D] tracking-tight">My Charms</h1>
             <p className="text-sm font-bold text-[#5B2D7D]/70 uppercase tracking-wider">
@@ -337,6 +333,18 @@ export default function DashboardContent({ products }: DashboardContentProps) {
             </p>
           </div>
         </div>
+
+        {/* Progress bar visual
+        <div className="w-full h-4 bg-[#EADDDE] rounded-full overflow-hidden shadow-inner">
+          <motion.div
+            className="h-full bg-[#A4C538] rounded-full shadow-[0_0_10px_rgba(164,197,56,0.5)]"
+            initial={{ width: 0 }}
+            animate={{
+              width: "100%",
+            }}
+            transition={{ duration: 0.8, ease: "circOut" }}
+          />
+        </div> */}
       </header>
 
       <div className="flex-1 min-h-0 relative" ref={containerRef}>
@@ -428,7 +436,7 @@ export default function DashboardContent({ products }: DashboardContentProps) {
                 return (
                     <div
                         key="add-card"
-                        className="flex items-center justify-center p-2"
+                        className="flex items-center justify-center p-1"
                         style={{ width: cellSize.width || "80vw", height: cellSize.height || "65vh" }}
                     >
                         <AddCharmCard
@@ -444,7 +452,7 @@ export default function DashboardContent({ products }: DashboardContentProps) {
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-center p-2"
+                className="flex items-center justify-center p-1"
                 style={{ width: cellSize.width || "80vw", height: cellSize.height || "65vh" }}
               >
                   <CharmCard

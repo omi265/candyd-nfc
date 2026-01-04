@@ -7,9 +7,14 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnDashboard = nextUrl.pathname.startsWith("/");
-      // Add logic here if needed, but for now we just return true or let middleware handle redirection
-      // simplified: returning true lets middleware.ts logic dictate
+      const isPublicRoute = ["/login", "/register", "/api/auth", "/nfc/login", "/guest"].some(route => 
+        nextUrl.pathname.startsWith(route)
+      );
+
+      if (!isPublicRoute && !isLoggedIn) {
+        return false; // Redirect to login
+      }
+
       return true; 
     },
     async session({ session, token }) {

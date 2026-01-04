@@ -84,7 +84,7 @@ export default function ItemDetailClient({
       {/* Hero Section */}
       <div className="relative">
         {/* Background */}
-        <div className={`h-64 relative overflow-hidden ${isLived && heroMedia ? '' : 'bg-gradient-to-br from-[#5B2D7D] to-[#3d1d54]'}`}>
+        <div className={`h-72 relative overflow-hidden ${isLived && heroMedia ? '' : isLived ? 'bg-gradient-to-br from-[#A4C538] to-[#7A9B1E]' : 'bg-gradient-to-br from-[#5B2D7D] to-[#3d1d54]'}`}>
           {isLived && heroMedia ? (
             <>
               {heroMedia.type === "image" ? (
@@ -103,23 +103,30 @@ export default function ItemDetailClient({
                   playsInline
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#5B2D7D] to-[#3d1d54]" />
+                <div className="w-full h-full bg-gradient-to-br from-[#A4C538] to-[#7A9B1E]" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             </>
           ) : (
             <>
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl transform translate-x-20 -translate-y-20" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#A4C538]/10 rounded-full blur-3xl transform -translate-x-10 translate-y-10" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform -translate-x-10 translate-y-10" />
             </>
+          )}
+
+          {/* Lived Overlay Text */}
+          {isLived && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                <h2 className="text-6xl font-black text-white uppercase tracking-tighter rotate-[-10deg] scale-150">ACHIEVED</h2>
+            </div>
           )}
         </div>
 
         {/* Header Buttons */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 z-10">
           <button
-            onClick={() => router.push("/")}
-            className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20"
+            onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
+            className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/10"
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
@@ -136,7 +143,7 @@ export default function ItemDetailClient({
             )}
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20"
+              className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/10"
             >
               <Trash2 className="w-5 h-5 text-white" />
             </button>
@@ -144,34 +151,40 @@ export default function ItemDetailClient({
         </div>
 
         {/* Status Badge - Positioned at bottom of hero */}
-        <div className="absolute bottom-4 left-4 right-4 z-10">
+        <div className="absolute bottom-6 left-6 right-6 z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full shadow-2xl ${
               isLived
-                ? "bg-[#A4C538] text-white"
+                ? "bg-[#A4C538] text-[#5B2D7D] border-2 border-white/30"
                 : "bg-white/20 backdrop-blur-md text-white border border-white/20"
             }`}
           >
             <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                isLived ? "bg-white/20" : "border-2 border-white/50"
+              className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                isLived ? "bg-[#5B2D7D] text-[#A4C538]" : "border-2 border-white/50"
               }`}
             >
               {isLived ? (
-                <Check className="w-3 h-3 text-white" />
+                <Check className="w-4 h-4 font-black" />
               ) : (
                 <Circle className="w-2 h-2 text-white/50" />
               )}
             </div>
-            <span className="text-sm font-semibold">
-              {isLived ? "Lived" : "Pending"}
-            </span>
+            <div className="flex flex-col">
+                <span className={`text-[10px] uppercase font-black tracking-widest leading-none ${isLived ? 'text-[#5B2D7D]/60' : 'text-white/60'}`}>Status</span>
+                <span className="text-sm font-black uppercase tracking-tight">
+                {isLived ? "Experience Lived" : "Pending Adventure"}
+                </span>
+            </div>
             {isLived && item.livedAt && (
-              <span className="text-sm opacity-80">
-                • {new Date(item.livedAt).toLocaleDateString()}
-              </span>
+              <div className="ml-auto pl-4 border-l border-[#5B2D7D]/20">
+                <span className="text-[10px] font-black uppercase block opacity-60">Lived on</span>
+                <span className="text-xs font-bold whitespace-nowrap">
+                    {new Date(item.livedAt).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              </div>
             )}
           </motion.div>
         </div>

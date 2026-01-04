@@ -103,7 +103,7 @@ export default function GraduatePage() {
       {/* Header */}
       <header className="flex items-center gap-4 px-6 py-4 border-b border-[#5B2D7D]/10">
         <button
-          onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
+          onClick={() => router.back()}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
         >
           <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
@@ -240,7 +240,7 @@ export default function GraduatePage() {
         )}
 
         <button
-          onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
+          onClick={() => router.back()}
           className="w-full py-3 text-[#5B2D7D]/60 font-medium"
         >
           Back to list

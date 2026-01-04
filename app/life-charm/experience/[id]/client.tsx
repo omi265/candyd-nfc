@@ -80,7 +80,7 @@ export default function ExperienceClient({
       <header className="sticky top-0 z-30 bg-[#FDF2EC]/80 backdrop-blur-xl border-b border-[#5B2D7D]/5">
         <div className="flex items-center gap-4 px-6 py-4">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
             className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
           >
             <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
