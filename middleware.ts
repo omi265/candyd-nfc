@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 const { auth } = NextAuth(authConfig);
 
 // Define public routes that don't need authentication
-const publicRoutes = ["/login", "/register", "/api/auth", "/nfc/login", "/guest"];
+const publicRoutes = ["/login", "/register", "/api/auth", "/nfc/login", "/guest", "/products"];
 
 export default auth((req) => {
   const needsAuth = !publicRoutes.some((route) => req.nextUrl.pathname.startsWith(route));
