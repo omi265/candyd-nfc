@@ -31,7 +31,7 @@ export default async function LifeCharmPage({ searchParams }: PageProps) {
   if (product.type !== "LIFE") {
     // Redirect to appropriate page based on type
     if (product.type === "MEMORY") {
-      redirect(`/?charmId=${charmId}`);
+      redirect(`/memories?charmId=${charmId}`);
     }
     redirect("/");
   }

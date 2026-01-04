@@ -312,6 +312,7 @@ export default function LifeCharmContent({
 
   const [cellSize, setCellSize] = useState({ width: 0, height: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const dragStartRef = useRef<{ col: number; row: number } | null>(null);
 
   const x = useMotionValue(0);
@@ -330,7 +331,7 @@ export default function LifeCharmContent({
   // Grid data - all items
   const gridItems = useMemo(() => {
     const items = [...lifeList.items];
-    // Sort: pending first, then lived
+    // Sort: pending first, then lived (for Grid)
     items.sort((a, b) => {
       if (a.status === "pending" && b.status === "lived") return -1;
       if (a.status === "lived" && b.status === "pending") return 1;
@@ -339,14 +340,34 @@ export default function LifeCharmContent({
     return items;
   }, [lifeList.items]);
 
+  // List Items - Lived first for List View
+  const listItems = useMemo(() => {
+      const items = [...lifeList.items];
+      items.sort((a, b) => {
+          if (a.status === "lived" && b.status === "pending") return -1;
+          if (a.status === "pending" && b.status === "lived") return 1;
+          return 0;
+      });
+      return items;
+  }, [lifeList.items]);
+
   const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(gridItems.length)));
   const totalCells = currentGridSize * currentGridSize;
   const FILL_ORDER = getCenterOutOrder(currentGridSize);
 
-  // Build grid
+  // Build grid with random order but compact layout
   const gridData = useMemo(() => {
     const grid: (LifeListItemWithExperience | null)[] = Array(totalCells).fill(null);
-    gridItems.slice(0, totalCells).forEach((item, index) => {
+    
+    // Shuffle the items to randomize their order
+    const shuffledItems = [...gridItems];
+    for (let i = shuffledItems.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+    }
+
+    // Place shuffled items into grid using center-out order (compact)
+    shuffledItems.slice(0, totalCells).forEach((item, index) => {
       const gridIndex = FILL_ORDER[index];
       if (gridIndex !== undefined) {
         grid[gridIndex] = item;
@@ -373,23 +394,47 @@ export default function LifeCharmContent({
   }, []);
 
   const VISUAL_Y_OFFSET = 40;
+  const initialFocusIndexRef = useRef<number | null>(null);
 
   // Set initial position
   useEffect(() => {
     if (cellSize.width === 0 || containerSize.width === 0) return;
 
-    const centerIndex = FILL_ORDER[0];
-    if (centerIndex === undefined) return;
+    let targetIndex = initialFocusIndexRef.current;
 
-    const row = Math.floor(centerIndex / currentGridSize);
-    const col = centerIndex % currentGridSize;
+    if (targetIndex === null) {
+        // Find all indices that contain a lived item
+        const livedIndices: number[] = [];
+        gridData.forEach((item, index) => {
+            if (item && item.status === "lived") {
+                livedIndices.push(index);
+            }
+        });
+
+        if (livedIndices.length > 0) {
+            // Pick a random lived item
+            const randomIndex = Math.floor(Math.random() * livedIndices.length);
+            targetIndex = livedIndices[randomIndex];
+        } else {
+             // If center is empty, try to find ANY item to center on
+             const anyItemIndex = gridData.findIndex(item => item !== null);
+             targetIndex = (anyItemIndex !== -1) ? anyItemIndex : FILL_ORDER[0];
+        }
+        initialFocusIndexRef.current = targetIndex;
+    }
+
+    if (targetIndex === undefined || targetIndex === -1) return;
+
+    const row = Math.floor(targetIndex / currentGridSize);
+    const col = targetIndex % currentGridSize;
 
     const initialX = (containerSize.width - cellSize.width) / 2 - col * cellSize.width;
     const initialY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - row * cellSize.height;
 
-    x.set(initialX);
-    y.set(initialY);
-  }, [cellSize, containerSize, currentGridSize, x, y, FILL_ORDER]);
+    // Use animate with 0 duration to ensure value update propagates
+    animate(x, initialX, { type: "spring", stiffness: 300, damping: 30, duration: 0 });
+    animate(y, initialY, { type: "spring", stiffness: 300, damping: 30, duration: 0 });
+  }, [cellSize, containerSize, currentGridSize, x, y, FILL_ORDER, gridData]);
 
   const handleAddItem = () => {
     router.push(`/life-charm/add?charmId=${product.id}`);
@@ -406,23 +451,23 @@ export default function LifeCharmContent({
   return (
     <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden font-[Outfit]">
       {/* Header */}
-      <header className="shrink-0 px-6 pt-4 pb-2 z-30">
-        <div className="flex items-center justify-between mb-2">
+      <header className="shrink-0 px-6 py-4 z-30 bg-white border-b border-[#EADDDE] shadow-sm">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-xl font-bold text-[#5B2D7D]">{lifeList.name}</h1>
-            <p className="text-sm text-[#5B2D7D]/60">
-              {stats.lived} of {stats.total} lived
+            <h1 className="text-2xl font-black text-[#5B2D7D] tracking-tight">{lifeList.name}</h1>
+            <p className="text-sm font-bold text-[#5B2D7D]/70 uppercase tracking-wider">
+              {stats.lived} / {stats.total} Lived
             </p>
           </div>
           {isGraduated ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#A4C538]/20 rounded-full">
-              <GraduationCap className="w-4 h-4 text-[#A4C538]" />
-              <span className="text-sm font-medium text-[#5B2D7D]">Graduated</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#A4C538]/20 rounded-full border border-[#A4C538]/30">
+              <GraduationCap className="w-5 h-5 text-[#A4C538]" />
+              <span className="text-sm font-black text-[#5B2D7D]">Graduated</span>
             </div>
           ) : (
             <button
               onClick={() => router.push(`/life-charm/graduate?charmId=${product.id}`)}
-              className="text-sm text-[#5B2D7D]/60 hover:text-[#5B2D7D] transition-colors"
+              className="px-4 py-2 rounded-full bg-[#5B2D7D]/5 text-sm font-bold text-[#5B2D7D]/80 hover:bg-[#5B2D7D]/10 transition-colors"
             >
               Graduate
             </button>
@@ -430,20 +475,28 @@ export default function LifeCharmContent({
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-2 bg-[#EADDDE] rounded-full overflow-hidden">
+        <div 
+            onClick={() => setViewMode(prev => prev === 'grid' ? 'list' : 'grid')}
+            className="w-full h-4 bg-[#EADDDE] rounded-full overflow-hidden shadow-inner cursor-pointer hover:opacity-90 transition-opacity relative group"
+            title="Click to toggle view"
+        >
           <motion.div
-            className="h-full bg-[#A4C538] rounded-full"
+            className="h-full bg-[#A4C538] rounded-full shadow-[0_0_10px_rgba(164,197,56,0.5)]"
             initial={{ width: 0 }}
             animate={{
               width: stats.total > 0 ? `${(stats.lived / stats.total) * 100}%` : "0%",
             }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            transition={{ duration: 0.8, ease: "circOut" }}
           />
+           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-[9px] font-bold text-[#5B2D7D]/60 uppercase tracking-widest">{viewMode === 'grid' ? 'View List' : 'View Grid'}</span>
+           </div>
         </div>
       </header>
 
-      {/* Card Swiper */}
+      {/* Content */}
       <div className="flex-1 min-h-0 relative" ref={containerRef}>
+        {viewMode === 'grid' ? (
         <motion.div
           className="grid gap-0 absolute top-0 left-0 touch-none origin-top-left"
           style={{
@@ -517,13 +570,22 @@ export default function LifeCharmContent({
             const r = Math.floor(index / currentGridSize);
             const c = index % currentGridSize;
 
+            if (!item) {
+                return (
+                    <div
+                        key={`empty-${index}`}
+                        className="pointer-events-none"
+                        style={{ width: cellSize.width || "80vw", height: cellSize.height || "65vh" }}
+                    />
+                );
+            }
+
             return (
               <div
-                key={item?.id || `empty-${index}`}
+                key={item.id}
                 className="flex items-center justify-center p-2"
                 style={{ width: cellSize.width || "80vw", height: cellSize.height || "65vh" }}
               >
-                {item ? (
                   <LifeItemCard
                     item={item}
                     people={people}
@@ -536,22 +598,52 @@ export default function LifeCharmContent({
                     containerSize={containerSize}
                     visualYOffset={VISUAL_Y_OFFSET}
                   />
-                ) : (
-                  <EmptyCard
-                    onClick={handleAddItem}
-                    x={x}
-                    y={y}
-                    row={r}
-                    col={c}
-                    cellSize={cellSize}
-                    containerSize={containerSize}
-                    visualYOffset={VISUAL_Y_OFFSET}
-                  />
-                )}
               </div>
             );
           })}
         </motion.div>
+        ) : (
+            // List View
+            <div className="w-full h-full overflow-y-auto px-4 pt-4 pb-24 no-scrollbar">
+                <div className="max-w-2xl mx-auto space-y-4">
+                    {listItems.map((item) => {
+                         const isLived = item.status === 'lived';
+                         const hasMedia = item.experience?.media && item.experience.media.length > 0;
+                         const firstMedia = hasMedia ? item.experience!.media[0] : null;
+                         
+                         return (
+                            <div 
+                                key={item.id} 
+                                onClick={() => handleItemClick(item)}
+                                className="bg-white rounded-2xl p-4 shadow-sm border border-[#EADDDE] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
+                            >
+                                <div className={`w-16 h-16 shrink-0 rounded-xl overflow-hidden ${isLived ? '' : 'bg-[#EADDDE]/30 flex items-center justify-center'}`}>
+                                    {hasMedia && firstMedia?.type === 'image' ? (
+                                        <img src={getOptimizedUrl(firstMedia.url, 'image', 200)} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className={`w-full h-full flex items-center justify-center ${isLived ? 'bg-[#A4C538]/20' : ''}`}>
+                                            {isLived ? <Check className="w-6 h-6 text-[#A4C538]" /> : <div className="w-3 h-3 rounded-full bg-[#EADDDE]" />}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                    <h3 className={`font-bold text-lg truncate ${isLived ? 'text-[#5B2D7D]' : 'text-[#5B2D7D]/60'}`}>{item.title}</h3>
+                                    {item.description && <p className="text-sm text-[#5B2D7D]/60 truncate">{item.description}</p>}
+                                    {isLived && item.livedAt && (
+                                        <p className="text-xs text-[#A4C538] font-medium mt-1">
+                                            {new Date(item.livedAt).toLocaleDateString()}
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                {isLived && <div className="w-2 h-2 rounded-full bg-[#A4C538]" />}
+                            </div>
+                         );
+                    })}
+                </div>
+            </div>
+        )}
       </div>
 
       {/* Add Button */}

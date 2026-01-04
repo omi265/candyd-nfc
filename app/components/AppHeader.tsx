@@ -54,14 +54,14 @@ function MenuDropdown({
   const currentCharmId = searchParams.get('charmId');
   const menuRef = useRef<HTMLDivElement>(null);
   
-  const [products, setProducts] = useState<{id: string, name: string}[]>([]);
+  const [products, setProducts] = useState<{id: string, name: string, type: string}[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
   // Fetch products on open
   useEffect(() => {
     if (isOpen) {
         setIsLoadingProducts(true);
-        getUserProducts().then(fetchedProducts => {
+        getUserProducts().then((fetchedProducts: any) => {
             setProducts(fetchedProducts);
             setIsLoadingProducts(false);
         });
@@ -80,13 +80,26 @@ function MenuDropdown({
   ];
 
   const handleCharmSelect = (productId: string | null) => {
+      const selected = products.find(p => p.id === productId);
       const params = new URLSearchParams(searchParams.toString());
-      if (productId) {
-          params.set('charmId', productId);
-      } else {
+      
+      if (!productId || !selected) {
           params.delete('charmId');
+          router.push('/');
+      } else {
+          params.set('charmId', productId);
+          
+          let route = '/';
+          if (selected.type === 'MEMORY') {
+              route = '/memories';
+          } else if (selected.type === 'LIFE') {
+              route = '/life-charm';
+          } else if (selected.type === 'HABIT') {
+              route = '/habit-charm';
+          }
+          
+          router.push(`${route}?${params.toString()}`);
       }
-      router.push(`/?${params.toString()}`);
       setIsCharmDropdownOpen(false);
   };
 
