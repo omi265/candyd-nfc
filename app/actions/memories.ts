@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import cloudinary from "@/lib/cloudinary";
-import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
+import { extractPublicId, deleteFromCloudinary, isValidCloudinaryUrl } from "@/lib/cloudinary-helper";
 
 const createMemorySchema = z.object({
   title: z.string().min(1, "Title is required").max(15, "Title too long"),
@@ -56,7 +56,16 @@ export async function createMemory(prevState: { error?: string; success?: boolea
     // 1. Create Memory
     const emotionsArray = emotions ? emotions.split(",") : [];
     const eventsArray = events ? events.split(",") : [];
-    const peopleIdsArray = peopleIds ? JSON.parse(peopleIds) : [];
+
+    let peopleIdsArray: string[] = [];
+    if (peopleIds) {
+      try {
+        peopleIdsArray = JSON.parse(peopleIds);
+        if (!Array.isArray(peopleIdsArray)) peopleIdsArray = [];
+      } catch {
+        peopleIdsArray = [];
+      }
+    }
     
     const memory = await db.memory.create({
       data: {
@@ -82,16 +91,19 @@ export async function createMemory(prevState: { error?: string; success?: boolea
             const sizes = mediaSizes ? (JSON.parse(mediaSizes) as number[]) : [];
 
             if (Array.isArray(urls) && Array.isArray(types) && urls.length === types.length) {
-                for (let i = 0; i < urls.length; i++) {
-                    await db.media.create({
-                        data: {
-                            url: urls[i],
-                            type: types[i], // 'image', 'video'
-                            size: sizes[i] || 0,
-                            memoryId: memory.id,
-                            orderIndex: i // Set initial order
-                        }
-                    });
+                // Filter to only valid Cloudinary URLs and prepare batch data
+                const mediaData = urls
+                  .map((url, i) => ({
+                    url,
+                    type: types[i],
+                    size: sizes[i] || 0,
+                    memoryId: memory.id,
+                    orderIndex: i,
+                  }))
+                  .filter((item) => isValidCloudinaryUrl(item.url));
+
+                if (mediaData.length > 0) {
+                  await db.media.createMany({ data: mediaData });
                 }
             }
         } catch (e) {
@@ -238,7 +250,16 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
 
         const emotionsArray = emotions ? emotions.split(",") : [];
         const eventsArray = events ? events.split(",") : [];
-        const peopleIdsArray = peopleIds ? JSON.parse(peopleIds) : [];
+
+        let peopleIdsArray: string[] = [];
+        if (peopleIds) {
+          try {
+            peopleIdsArray = JSON.parse(peopleIds);
+            if (!Array.isArray(peopleIdsArray)) peopleIdsArray = [];
+          } catch {
+            peopleIdsArray = [];
+          }
+        }
 
         await db.memory.update({
             where: { id },
@@ -258,8 +279,14 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
 
         // Handle Ordered Media (Consolidated New + Existing)
         if (orderedMedia) {
-             const items = JSON.parse(orderedMedia);
-             
+             let items: any[] = [];
+             try {
+               items = JSON.parse(orderedMedia);
+               if (!Array.isArray(items)) items = [];
+             } catch {
+               items = [];
+             }
+
              // Process sequentially to ensure orderIndex is correct
              for (let i = 0; i < items.length; i++) {
                  const item = items[i];
@@ -292,10 +319,23 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
         }
         // Fallback: Add NEW media if provided via old method (only if orderedMedia not present)
         else if (mediaUrls && mediaTypes) {
-             const urls = JSON.parse(mediaUrls) as string[];
-             const types = JSON.parse(mediaTypes) as string[];
-             const sizes = mediaSizes ? (JSON.parse(mediaSizes) as number[]) : [];
-             
+             let urls: string[] = [];
+             let types: string[] = [];
+             let sizes: number[] = [];
+
+             try {
+               urls = JSON.parse(mediaUrls);
+               types = JSON.parse(mediaTypes);
+               sizes = mediaSizes ? JSON.parse(mediaSizes) : [];
+               if (!Array.isArray(urls)) urls = [];
+               if (!Array.isArray(types)) types = [];
+               if (!Array.isArray(sizes)) sizes = [];
+             } catch {
+               urls = [];
+               types = [];
+               sizes = [];
+             }
+
              // Get current media count to append correctly? or just append.
              // For now just appending with arbitrary orderIndex might be tricky if we mix methods.
              // We'll just append using 0-based index or maybe 100+ to be safe?

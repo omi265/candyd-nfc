@@ -12,6 +12,8 @@ import { CharmType, CharmState } from "@prisma/client";
 
 export async function getProductWithType(token: string) {
   try {
+    // Only return minimal info needed for routing - no sensitive data
+    // Name is only included if the user will be authenticated via this token
     const product = await db.product.findUnique({
       where: { token },
       select: {
@@ -19,8 +21,15 @@ export async function getProductWithType(token: string) {
         type: true,
         state: true,
         name: true,
+        active: true,
       },
     });
+
+    // Don't expose info for inactive products
+    if (!product || !product.active) {
+      return null;
+    }
+
     return product;
   } catch (error) {
     console.error("Failed to get product with type:", error);

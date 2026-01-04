@@ -38,12 +38,11 @@ function NFCLoginContent() {
                         window.location.href = `/life-charm?charmId=${product.id}`;
                         break;
                     case "HABIT":
-                        // Future: Habit charm routing
                         window.location.href = `/habit-charm?charmId=${product.id}`;
                         break;
                     case "MEMORY":
                     default:
-                        window.location.href = `/?charmId=${product.id}`;
+                        window.location.href = "/";
                 }
             } else {
                 window.location.href = "/";

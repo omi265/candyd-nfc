@@ -1,60 +1,29 @@
 import { auth } from "@/auth";
-import { getMemories, getUserProducts } from "@/app/actions/memories";
-import { getProductById } from "@/app/actions/life-charm";
+import { getMemories } from "@/app/actions/memories";
 import { getPeople } from "@/app/actions/people";
 import { redirect } from "next/navigation";
 import HomeContent from "@/app/components/home-content";
 import { Suspense } from "react";
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export default async function Home() {
   const session = await auth();
 
   if (!session?.user) {
     redirect("/login");
   }
 
-  const resolvedSearchParams = await searchParams;
-  const charmId = typeof resolvedSearchParams?.charmId === 'string' ? resolvedSearchParams.charmId : undefined;
-
-  // Check if the selected charm is a Life Charm and redirect if so
-  if (charmId) {
-    const product = await getProductById(charmId);
-    if (product && product.type === "LIFE") {
-      redirect(`/life-charm?charmId=${charmId}`);
-    }
-  }
-
-  console.log("HOME: Session User ID:", session?.user?.id);
-  
-  // Fetch memories, products, and people in parallel
+  // Fetch memories and people in parallel
   let memories: any[] = [];
-  let lifeCharms: any[] = [];
-  let habitCharms: any[] = [];
   let allPeople: any[] = [];
 
   try {
-     const [fetchedMemories, allProducts, fetchedPeople] = await Promise.all([
-        getMemories(charmId),
-        getUserProducts(),
+     const [fetchedMemories, fetchedPeople] = await Promise.all([
+        getMemories(),
         getPeople()
      ]);
-     
+
      memories = fetchedMemories;
      allPeople = fetchedPeople;
-     
-     // Filter for active Life Charms and Habit Charms
-     if (!charmId) {
-         lifeCharms = allProducts.filter((p: any) => p.type === 'LIFE');
-         habitCharms = allProducts.filter((p: any) => p.type === 'HABIT');
-     }
-
-     console.log("HOME: Fetched Memories Count:", memories.length);
-     console.log("HOME: Life Charms Count:", lifeCharms.length);
-     console.log("HOME: Habit Charms Count:", habitCharms.length);
 
   } catch (error) {
      console.error("Failed to fetch data on server", error);
@@ -62,12 +31,10 @@ export default async function Home({
 
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#FDF2EC] text-[#5B2D7D]">Loading...</div>}>
-      <HomeContent 
-        initialMemories={memories} 
-        lifeCharms={lifeCharms}
-        habitCharms={habitCharms}
+      <HomeContent
+        initialMemories={memories}
         people={allPeople}
-        user={session.user} 
+        user={session.user}
       />
     </Suspense>
   );

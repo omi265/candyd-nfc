@@ -42,9 +42,11 @@ import { useSearchParams } from "next/navigation";
 function MenuDropdown({
   isOpen,
   onClose,
+  toggleButtonRef,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  toggleButtonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   const [isCharmDropdownOpen, setIsCharmDropdownOpen] = useState(false);
   const router = useRouter();
@@ -90,7 +92,12 @@ function MenuDropdown({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // Ignore clicks on the toggle button (let the button handle its own toggle)
+      if (toggleButtonRef.current && toggleButtonRef.current.contains(target)) {
+        return;
+      }
+      if (menuRef.current && !menuRef.current.contains(target)) {
         onClose();
       }
     }
@@ -101,7 +108,7 @@ function MenuDropdown({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, toggleButtonRef]);
 
   return (
     <AnimatePresence>
@@ -249,6 +256,7 @@ function MenuDropdown({
 export default function AppHeader({ userName }: { userName: string }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const today = new Date();
   const formattedDate = today.toLocaleDateString("en-US", {
@@ -267,13 +275,14 @@ export default function AppHeader({ userName }: { userName: string }) {
           </div>
         </div>
         <button
-          onClick={() => setIsMenuOpen(true)}
+          ref={menuButtonRef}
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
         >
             <Menu className="w-6 h-6 text-[#5B2D7D]" />
         </button>
       </header>
-      <MenuDropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      <MenuDropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} toggleButtonRef={menuButtonRef} />
     </>
   );
 }

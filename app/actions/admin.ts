@@ -104,6 +104,25 @@ export async function getProducts() {
     throw new Error("Unauthorized");
   }
 
+  // First, batch update any products missing guestToken (runs once, then no-op)
+  const productsWithoutToken = await db.product.findMany({
+    where: { guestToken: null },
+    select: { id: true },
+  });
+
+  if (productsWithoutToken.length > 0) {
+    // Update each product with a unique token using a transaction
+    await db.$transaction(
+      productsWithoutToken.map((p) =>
+        db.product.update({
+          where: { id: p.id },
+          data: { guestToken: crypto.randomUUID() },
+        })
+      )
+    );
+  }
+
+  // Now fetch all products with their tokens guaranteed
   const products = await db.product.findMany({
     include: {
       user: {
@@ -118,18 +137,5 @@ export async function getProducts() {
     },
   });
 
-  // Lazy backfill for existing products
-  const productsWithGuestToken = await Promise.all(products.map(async (p) => {
-    if (!p.guestToken) {
-        const guestToken = crypto.randomUUID();
-        return await db.product.update({
-            where: { id: p.id },
-            data: { guestToken },
-            include: { user: { select: { email: true, name: true } } }
-        });
-    }
-    return p;
-  }));
-
-  return productsWithGuestToken;
+  return products;
 }

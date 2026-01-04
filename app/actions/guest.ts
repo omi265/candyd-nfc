@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { isValidCloudinaryUrl } from "@/lib/cloudinary-helper";
 
 const GUEST_COOKIE = "guest_session";
 
@@ -49,14 +50,26 @@ export async function loginGuest(token: string) {
 export async function getGuestSession() {
     const cookieStore = await cookies();
     const productId = cookieStore.get(GUEST_COOKIE)?.value;
-    
+
     if (!productId) return null;
-    
-    // Verify product still exists? Optional but good.
-    // For now trust the cookie to avoid DB hit on every render if not needed, 
-    // but verifying ensures validity.
-    // Let's verify lightly or just return ID.
-    return productId;
+
+    // Verify product still exists and is active
+    try {
+      const product = await db.product.findUnique({
+        where: { id: productId },
+        select: { id: true, active: true },
+      });
+
+      if (!product || !product.active) {
+        // Invalid or inactive product - clear the cookie
+        (await cookies()).delete(GUEST_COOKIE);
+        return null;
+      }
+
+      return productId;
+    } catch {
+      return null;
+    }
 }
 
 export async function logoutGuest() {
@@ -130,22 +143,36 @@ export async function createGuestMemory(prevState: any, formData: FormData) {
 
         // Add Media
         if (mediaUrls && mediaTypes) {
-             const urls = JSON.parse(mediaUrls) as string[];
-             const types = JSON.parse(mediaTypes) as string[];
-             const sizes = mediaSizes ? (JSON.parse(mediaSizes) as number[]) : [];
+             let urls: string[] = [];
+             let types: string[] = [];
+             let sizes: number[] = [];
 
-             if (Array.isArray(urls) && Array.isArray(types)) {
-                 for (let i = 0; i < urls.length; i++) {
-                     await db.media.create({
-                        data: {
-                            url: urls[i],
-                            type: types[i],
-                            size: sizes[i] || 0,
-                            memoryId: memory.id,
-                            orderIndex: i
-                        }
-                    });
-                }
+             try {
+               urls = JSON.parse(mediaUrls);
+               types = JSON.parse(mediaTypes);
+               sizes = mediaSizes ? JSON.parse(mediaSizes) : [];
+               if (!Array.isArray(urls)) urls = [];
+               if (!Array.isArray(types)) types = [];
+               if (!Array.isArray(sizes)) sizes = [];
+             } catch {
+               return { error: "Invalid media data format" };
+             }
+
+             if (urls.length > 0 && types.length > 0) {
+                 // Filter to only valid Cloudinary URLs and prepare batch data
+                 const mediaData = urls
+                   .map((url, i) => ({
+                     url,
+                     type: types[i],
+                     size: sizes[i] || 0,
+                     memoryId: memory.id,
+                     orderIndex: i,
+                   }))
+                   .filter((item) => isValidCloudinaryUrl(item.url));
+
+                 if (mediaData.length > 0) {
+                   await db.media.createMany({ data: mediaData });
+                 }
              }
         }
 
