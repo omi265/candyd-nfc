@@ -125,8 +125,8 @@ function MemoryCard({
 
     // Map distance to visual properties
     const scale = useTransform(dist, [0, 400], [1, 0.85]);
-    const opacity = useTransform(dist, [0, 400], [1, 0.5]);
-    const titleOpacity = useTransform(dist, [0, 200], [1, 0]);
+    const opacity = useTransform(dist, [0, 400], [1, 0.7]);
+    const titleOpacity = useTransform(dist, [0, 200], [1, 0.8]);
 
     return (
         <motion.div
@@ -197,7 +197,7 @@ function EmptyCard({
 
     const scale = useTransform(dist, [0, 400], [1, 0.85]);
     const opacity = useTransform(dist, [0, 400], [1, 0.6]);
-    const contentOpacity = useTransform(dist, [0, 200], [1, 0.5]);
+    const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
 
     return (
         <motion.div

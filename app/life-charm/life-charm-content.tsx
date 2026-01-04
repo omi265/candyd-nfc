@@ -1,17 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, useMotionValue, animate, useTransform, MotionValue } from "motion/react";
 import {
   Plus,
-  Search,
-  X,
   Check,
-  Circle,
-  Sparkles,
-  ChevronRight,
   GraduationCap,
+  Calendar,
+  Users,
+  ChevronUp,
 } from "lucide-react";
 import { LifeList, LifeListItem, Product, Person, Experience, ExperienceMedia } from "@prisma/client";
 import { getOptimizedUrl } from "@/lib/media-helper";
@@ -35,8 +33,274 @@ interface LifeCharmContentProps {
   user: { id?: string; name?: string | null; email?: string | null };
 }
 
-type FilterType = "all" | "pending" | "lived";
+// --- Helper for Distance Calculation ---
+function useDistance(
+  x: MotionValue<number>,
+  y: MotionValue<number>,
+  row: number,
+  col: number,
+  cellSize: { width: number; height: number },
+  containerSize: { width: number; height: number },
+  visualYOffset: number
+) {
+  return useTransform([x, y], (values: number[]) => {
+    const [latestX, latestY] = values;
+    if (cellSize.width === 0 || containerSize.width === 0) return 1000;
 
+    const targetX = (containerSize.width - cellSize.width) / 2 - col * cellSize.width;
+    const targetY = (containerSize.height - cellSize.height) / 2 - visualYOffset - row * cellSize.height;
+
+    const distX = Math.abs(latestX - targetX);
+    const distY = Math.abs(latestY - targetY);
+
+    return Math.sqrt(distX * distX + distY * distY);
+  });
+}
+
+function getCenterOutOrder(n: number): number[] {
+  const center = (n - 1) / 2;
+  const cells: { index: number; dist: number }[] = [];
+
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const dist = Math.sqrt(Math.pow(r - center, 2) + Math.pow(c - center, 2));
+      cells.push({ index: r * n + c, dist });
+    }
+  }
+
+  cells.sort((a, b) => a.dist - b.dist);
+  return cells.map((cell) => cell.index);
+}
+
+// --- Life Item Card ---
+function LifeItemCard({
+  item,
+  people,
+  onClick,
+  x,
+  y,
+  row,
+  col,
+  cellSize,
+  containerSize,
+  visualYOffset,
+}: {
+  item: LifeListItemWithExperience;
+  people: Person[];
+  onClick: () => void;
+  x: MotionValue<number>;
+  y: MotionValue<number>;
+  row: number;
+  col: number;
+  cellSize: { width: number; height: number };
+  containerSize: { width: number; height: number };
+  visualYOffset: number;
+}) {
+  const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
+
+  const scale = useTransform(dist, [0, 400], [1, 0.85]);
+  const opacity = useTransform(dist, [0, 400], [1, 0.5]);
+  const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
+
+  const isLived = item.status === "lived";
+  const hasMedia = item.experience?.media && item.experience.media.length > 0;
+  const firstMedia = hasMedia ? item.experience!.media[0] : null;
+
+  // Get people names
+  const peopleNames = item.peopleIds
+    .map((id) => people.find((p) => p.id === id)?.name)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  // Format when text
+  const getWhenText = () => {
+    if (item.whenType === "someday") return "Someday";
+    if (item.whenType === "this_year") return "This Year";
+    if (item.whenType === "this_month") return "This Month";
+    if (item.targetDate) return new Date(item.targetDate).toLocaleDateString();
+    return null;
+  };
+
+  const whenText = getWhenText();
+
+  // Background colors based on status
+  const bgGradient = isLived
+    ? "from-[#A4C538] to-[#7A9B1E]"
+    : "from-[#5B2D7D] to-[#3A1D52]";
+
+  return (
+    <motion.div
+      onClick={onClick}
+      className={`w-full h-full relative flex flex-col justify-between shadow-xl rounded-[32px] overflow-hidden cursor-pointer`}
+      style={{
+        scale,
+        opacity,
+        willChange: "transform, opacity",
+        touchAction: "none",
+        transform: "translate3d(0,0,0)",
+        backfaceVisibility: "hidden",
+      }}
+      whileTap={{ scale: 0.98 }}
+    >
+      {/* Background */}
+      {hasMedia && firstMedia?.type === "image" ? (
+        <div className="absolute inset-0">
+          <img
+            src={getOptimizedUrl(firstMedia.url, "image", 600)}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        </div>
+      ) : (
+        <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient}`}>
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl transform -translate-x-10 translate-y-10" />
+        </div>
+      )}
+
+      {/* Status Badge */}
+      <div className="relative z-10 p-6">
+        {isLived ? (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full">
+            <Check className="w-4 h-4 text-white" />
+            <span className="text-xs font-bold text-white uppercase tracking-wider">
+              Lived
+            </span>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+            <div className="w-2 h-2 rounded-full bg-white/60" />
+            <span className="text-xs font-bold text-white/80 uppercase tracking-wider">
+              Pending
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <motion.div
+        className="relative z-10 p-6 pt-0"
+        style={{ opacity: contentOpacity }}
+      >
+        {/* Title */}
+        <h2 className="text-3xl font-black text-white leading-tight mb-3 uppercase tracking-tight">
+          {item.title}
+        </h2>
+
+        {/* Description */}
+        {item.description && (
+          <p className="text-white/70 text-sm line-clamp-2 mb-4">
+            {item.description}
+          </p>
+        )}
+
+        {/* Meta Tags */}
+        <div className="flex flex-wrap gap-2">
+          {peopleNames.length > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
+              <Users className="w-3.5 h-3.5 text-white/70" />
+              <span className="text-xs text-white/80 font-medium">
+                {peopleNames.join(", ")}
+                {item.peopleIds.length > 2 && ` +${item.peopleIds.length - 2}`}
+              </span>
+            </div>
+          )}
+
+          {whenText && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
+              <Calendar className="w-3.5 h-3.5 text-white/70" />
+              <span className="text-xs text-white/80 font-medium">{whenText}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Lived Date */}
+        {isLived && item.livedAt && (
+          <div className="mt-4 pt-4 border-t border-white/20">
+            <p className="text-white/60 text-xs">
+              Experienced on{" "}
+              <span className="text-white font-medium">
+                {new Date(item.livedAt).toLocaleDateString("en-US", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+            </p>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Swipe hint */}
+      <motion.div
+        className="absolute bottom-6 left-1/2 -translate-x-1/2"
+        style={{ opacity: contentOpacity }}
+      >
+        <ChevronUp className="w-6 h-6 text-white/30 animate-bounce" />
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// --- Empty Card ---
+function EmptyCard({
+  onClick,
+  x,
+  y,
+  row,
+  col,
+  cellSize,
+  containerSize,
+  visualYOffset,
+}: {
+  onClick: () => void;
+  x: MotionValue<number>;
+  y: MotionValue<number>;
+  row: number;
+  col: number;
+  cellSize: { width: number; height: number };
+  containerSize: { width: number; height: number };
+  visualYOffset: number;
+}) {
+  const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
+
+  const scale = useTransform(dist, [0, 400], [1, 0.85]);
+  const opacity = useTransform(dist, [0, 400], [1, 0.6]);
+  const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
+
+  return (
+    <motion.div
+      className="w-full h-full rounded-[32px] flex flex-col items-center justify-center overflow-hidden cursor-pointer bg-white/60 shadow-md border-2 border-dashed border-[#5B2D7D]/20"
+      style={{
+        scale,
+        opacity,
+        willChange: "transform, opacity",
+        touchAction: "none",
+        transform: "translate3d(0,0,0)",
+        backfaceVisibility: "hidden",
+      }}
+      onClick={onClick}
+    >
+      <motion.div
+        className="flex flex-col items-center justify-center"
+        style={{
+          opacity: contentOpacity,
+          scale: useTransform(dist, [0, 400], [1, 0.9]),
+        }}
+      >
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-3 shadow-sm bg-[#5B2D7D]/10">
+          <Plus className="w-8 h-8 text-[#5B2D7D]" />
+        </div>
+        <span className="text-[#5B2D7D] font-medium font-[Outfit]">
+          Add Experience
+        </span>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// --- Main Component ---
 export default function LifeCharmContent({
   lifeList,
   product,
@@ -44,35 +308,16 @@ export default function LifeCharmContent({
   user,
 }: LifeCharmContentProps) {
   const router = useRouter();
-  const [filter, setFilter] = useState<FilterType>("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [cellSize, setCellSize] = useState({ width: 0, height: 0 });
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const dragStartRef = useRef<{ col: number; row: number } | null>(null);
+
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
 
   const isGraduated = product.state === "GRADUATED";
-
-  // Filter items based on selected filter and search
-  const filteredItems = useMemo(() => {
-    let items = lifeList.items;
-
-    // Filter by status
-    if (filter === "pending") {
-      items = items.filter((item) => item.status === "pending");
-    } else if (filter === "lived") {
-      items = items.filter((item) => item.status === "lived");
-    }
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      items = items.filter(
-        (item) =>
-          item.title.toLowerCase().includes(query) ||
-          item.description?.toLowerCase().includes(query)
-      );
-    }
-
-    return items;
-  }, [lifeList.items, filter, searchQuery]);
 
   // Stats
   const stats = useMemo(() => {
@@ -82,21 +327,89 @@ export default function LifeCharmContent({
     return { total, lived, pending };
   }, [lifeList.items]);
 
-  // Get person name by ID
-  const getPersonName = (personId: string) => {
-    const person = people.find((p) => p.id === personId);
-    return person?.name || "Unknown";
+  // Grid data - all items
+  const gridItems = useMemo(() => {
+    const items = [...lifeList.items];
+    // Sort: pending first, then lived
+    items.sort((a, b) => {
+      if (a.status === "pending" && b.status === "lived") return -1;
+      if (a.status === "lived" && b.status === "pending") return 1;
+      return 0;
+    });
+    return items;
+  }, [lifeList.items]);
+
+  const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(gridItems.length)));
+  const totalCells = currentGridSize * currentGridSize;
+  const FILL_ORDER = getCenterOutOrder(currentGridSize);
+
+  // Build grid
+  const gridData = useMemo(() => {
+    const grid: (LifeListItemWithExperience | null)[] = Array(totalCells).fill(null);
+    gridItems.slice(0, totalCells).forEach((item, index) => {
+      const gridIndex = FILL_ORDER[index];
+      if (gridIndex !== undefined) {
+        grid[gridIndex] = item;
+      }
+    });
+    return grid;
+  }, [gridItems, totalCells, FILL_ORDER]);
+
+  // Measure cell size
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const containerW = containerRef.current.offsetWidth;
+        const containerH = containerRef.current.offsetHeight;
+        const w = Math.min(containerW * 0.8, 340);
+        const h = Math.min(containerH * 0.65, 480);
+        setCellSize({ width: w, height: h });
+        setContainerSize({ width: containerW, height: containerH });
+      }
+    };
+    setTimeout(updateSize, 0);
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
+  const VISUAL_Y_OFFSET = 40;
+
+  // Set initial position
+  useEffect(() => {
+    if (cellSize.width === 0 || containerSize.width === 0) return;
+
+    const centerIndex = FILL_ORDER[0];
+    if (centerIndex === undefined) return;
+
+    const row = Math.floor(centerIndex / currentGridSize);
+    const col = centerIndex % currentGridSize;
+
+    const initialX = (containerSize.width - cellSize.width) / 2 - col * cellSize.width;
+    const initialY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - row * cellSize.height;
+
+    x.set(initialX);
+    y.set(initialY);
+  }, [cellSize, containerSize, currentGridSize, x, y, FILL_ORDER]);
+
+  const handleAddItem = () => {
+    router.push(`/life-charm/add?charmId=${product.id}`);
+  };
+
+  const handleItemClick = (item: LifeListItemWithExperience) => {
+    if (item.status === "lived") {
+      router.push(`/life-charm/experience/${item.id}?charmId=${product.id}`);
+    } else {
+      router.push(`/life-charm/item/${item.id}?charmId=${product.id}`);
+    }
   };
 
   return (
-    <div className="min-h-dvh bg-[#FDF2EC] flex flex-col font-[Outfit]">
+    <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden font-[Outfit]">
       {/* Header */}
-      <header className="px-6 pt-6 pb-4">
+      <header className="shrink-0 px-6 pt-4 pb-2 z-30">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-2xl font-bold text-[#5B2D7D]">
-              {lifeList.name}
-            </h1>
+            <h1 className="text-xl font-bold text-[#5B2D7D]">{lifeList.name}</h1>
             <p className="text-sm text-[#5B2D7D]/60">
               {stats.lived} of {stats.total} lived
             </p>
@@ -104,15 +417,11 @@ export default function LifeCharmContent({
           {isGraduated ? (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[#A4C538]/20 rounded-full">
               <GraduationCap className="w-4 h-4 text-[#A4C538]" />
-              <span className="text-sm font-medium text-[#5B2D7D]">
-                Graduated
-              </span>
+              <span className="text-sm font-medium text-[#5B2D7D]">Graduated</span>
             </div>
           ) : (
             <button
-              onClick={() =>
-                router.push(`/life-charm/graduate?charmId=${product.id}`)
-              }
+              onClick={() => router.push(`/life-charm/graduate?charmId=${product.id}`)}
               className="text-sm text-[#5B2D7D]/60 hover:text-[#5B2D7D] transition-colors"
             >
               Graduate
@@ -126,272 +435,136 @@ export default function LifeCharmContent({
             className="h-full bg-[#A4C538] rounded-full"
             initial={{ width: 0 }}
             animate={{
-              width:
-                stats.total > 0
-                  ? `${(stats.lived / stats.total) * 100}%`
-                  : "0%",
+              width: stats.total > 0 ? `${(stats.lived / stats.total) * 100}%` : "0%",
             }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           />
         </div>
       </header>
 
-      {/* Filter Bar */}
-      <div className="flex items-center gap-3 px-6 py-3 overflow-x-auto no-scrollbar">
-        {/* Search */}
-        <div
-          className={`shrink-0 rounded-full bg-white shadow-sm flex items-center transition-all duration-300 overflow-hidden h-10 ${
-            isSearchOpen ? "w-48 px-4" : "w-10 justify-center"
-          }`}
+      {/* Card Swiper */}
+      <div className="flex-1 min-h-0 relative" ref={containerRef}>
+        <motion.div
+          className="grid gap-0 absolute top-0 left-0 touch-none origin-top-left"
+          style={{
+            gridTemplateColumns: `repeat(${currentGridSize}, ${cellSize.width ? cellSize.width + "px" : "80vw"})`,
+            gridTemplateRows: `repeat(${currentGridSize}, ${cellSize.height ? cellSize.height + "px" : "65vh"})`,
+            x,
+            y,
+            width: currentGridSize * (cellSize.width || 0),
+            height: currentGridSize * (cellSize.height || 0),
+            willChange: "transform",
+            touchAction: "none",
+            overscrollBehavior: "none",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            perspective: 1000,
+            backfaceVisibility: "hidden",
+            transform: "translate3d(0,0,0)",
+          }}
+          drag
+          dragDirectionLock
+          dragElastic={0.2}
+          dragMomentum={false}
+          onDragStart={() => {
+            const offsetStartX = (containerSize.width - cellSize.width) / 2;
+            const currentX = x.get();
+            const startCol = Math.round((offsetStartX - currentX) / cellSize.width);
+
+            const offsetStartY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET;
+            const currentY = y.get();
+            const startRow = Math.round((offsetStartY - currentY) / cellSize.height);
+
+            dragStartRef.current = { col: startCol, row: startRow };
+          }}
+          onDragEnd={(e, { offset }) => {
+            const isX = Math.abs(offset.x) > Math.abs(offset.y);
+
+            const textContentSize = isX ? cellSize.width : cellSize.height;
+            const containerValues = isX ? containerSize.width : containerSize.height;
+            let offsetStart = (containerValues - textContentSize) / 2;
+            if (!isX) offsetStart -= VISUAL_Y_OFFSET;
+
+            const SWIPE_THRESHOLD = 50;
+            let targetIndex = 0;
+
+            if (dragStartRef.current) {
+              const startIndex = isX ? dragStartRef.current.col : dragStartRef.current.row;
+              const dragOffset = isX ? offset.x : offset.y;
+
+              let direction = 0;
+              if (dragOffset < -SWIPE_THRESHOLD) direction = 1;
+              if (dragOffset > SWIPE_THRESHOLD) direction = -1;
+
+              targetIndex = startIndex + direction;
+            } else {
+              const current = isX ? x.get() : y.get();
+              targetIndex = Math.round((offsetStart - current) / textContentSize);
+            }
+
+            const clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
+            const snapPoint = offsetStart - clampedIndex * textContentSize;
+            const valueToAnimate = isX ? x : y;
+
+            animate(valueToAnimate, snapPoint, {
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+            });
+          }}
         >
-          {isSearchOpen ? (
-            <>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..."
-                className="w-full h-full bg-transparent outline-none text-[#5B2D7D] text-sm placeholder-[#5B2D7D]/40 min-w-0"
-                autoFocus
-                onBlur={() => !searchQuery && setIsSearchOpen(false)}
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="ml-2">
-                  <X className="w-4 h-4 text-[#5B2D7D]/60" />
-                </button>
-              )}
-            </>
-          ) : (
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="w-full h-full flex items-center justify-center"
-            >
-              <Search className="w-5 h-5 text-[#5B2D7D]" />
-            </button>
-          )}
-        </div>
+          {gridData.map((item, index) => {
+            const r = Math.floor(index / currentGridSize);
+            const c = index % currentGridSize;
 
-        {/* Filter buttons */}
-        {(["all", "pending", "lived"] as FilterType[]).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap shadow-sm transition-colors ${
-              filter === f
-                ? "bg-[#5B2D7D] text-white"
-                : "bg-white text-[#5B2D7D] hover:bg-[#EADDDE]"
-            }`}
-          >
-            {f === "all" ? "All" : f === "pending" ? "Pending" : "Lived"}
-            {f === "all" && ` (${stats.total})`}
-            {f === "pending" && ` (${stats.pending})`}
-            {f === "lived" && ` (${stats.lived})`}
-          </button>
-        ))}
-      </div>
-
-      {/* Items List */}
-      <div className="flex-1 px-6 py-4 overflow-y-auto">
-        <AnimatePresence mode="popLayout">
-          {filteredItems.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-12 text-center"
-            >
-              <Sparkles className="w-12 h-12 text-[#5B2D7D]/20 mb-4" />
-              <p className="text-[#5B2D7D]/60">
-                {searchQuery
-                  ? "No items match your search"
-                  : filter === "pending"
-                  ? "No pending items"
-                  : filter === "lived"
-                  ? "No lived experiences yet"
-                  : "Your list is empty"}
-              </p>
-              {!isGraduated && filter === "all" && !searchQuery && (
-                <button
-                  onClick={() =>
-                    router.push(`/life-charm/add?charmId=${product.id}`)
-                  }
-                  className="mt-4 px-4 py-2 bg-[#5B2D7D] text-white rounded-full text-sm font-medium"
-                >
-                  Add your first item
-                </button>
-              )}
-            </motion.div>
-          ) : (
-            <div className="space-y-3">
-              {filteredItems.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <ListItemCard
+            return (
+              <div
+                key={item?.id || `empty-${index}`}
+                className="flex items-center justify-center p-2"
+                style={{ width: cellSize.width || "80vw", height: cellSize.height || "65vh" }}
+              >
+                {item ? (
+                  <LifeItemCard
                     item={item}
                     people={people}
-                    getPersonName={getPersonName}
-                    onClick={() =>
-                      item.status === "lived"
-                        ? router.push(`/life-charm/experience/${item.id}?charmId=${product.id}`)
-                        : router.push(`/life-charm/item/${item.id}?charmId=${product.id}`)
-                    }
-                    isGraduated={isGraduated}
+                    onClick={() => handleItemClick(item)}
+                    x={x}
+                    y={y}
+                    row={r}
+                    col={c}
+                    cellSize={cellSize}
+                    containerSize={containerSize}
+                    visualYOffset={VISUAL_Y_OFFSET}
                   />
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </AnimatePresence>
+                ) : (
+                  <EmptyCard
+                    onClick={handleAddItem}
+                    x={x}
+                    y={y}
+                    row={r}
+                    col={c}
+                    cellSize={cellSize}
+                    containerSize={containerSize}
+                    visualYOffset={VISUAL_Y_OFFSET}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </motion.div>
       </div>
 
       {/* Add Button */}
       {!isGraduated && (
-        <div className="sticky bottom-0 p-6 pt-4">
+        <div className="absolute bottom-6 right-6 z-20">
           <button
-            onClick={() =>
-              router.push(`/life-charm/add?charmId=${product.id}`)
-            }
-            className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#93B132] transition-colors"
+            onClick={handleAddItem}
+            className="w-14 h-14 rounded-full bg-[#A4C538] flex items-center justify-center shadow-lg hover:bg-[#93B132] transition-colors"
           >
-            <Plus className="w-5 h-5" />
-            Add to list
+            <Plus className="w-7 h-7 text-white" />
           </button>
         </div>
       )}
     </div>
-  );
-}
-
-// List Item Card Component
-interface ListItemCardProps {
-  item: LifeListItemWithExperience;
-  people: Person[];
-  getPersonName: (id: string) => string;
-  onClick: () => void;
-  isGraduated: boolean;
-}
-
-function ListItemCard({
-  item,
-  people,
-  getPersonName,
-  onClick,
-  isGraduated,
-}: ListItemCardProps) {
-  const isLived = item.status === "lived";
-  const hasMedia = item.experience?.media && item.experience.media.length > 0;
-  const firstMedia = hasMedia ? item.experience!.media[0] : null;
-
-  return (
-    <button
-      onClick={onClick}
-      className="w-full text-left bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
-    >
-      <div className="flex items-start gap-3">
-        {/* Status Icon */}
-        <div
-          className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
-            isLived
-              ? "bg-[#A4C538]"
-              : "border-2 border-[#5B2D7D]/30"
-          }`}
-        >
-          {isLived ? (
-            <Check className="w-4 h-4 text-white" />
-          ) : (
-            <Circle className="w-3 h-3 text-[#5B2D7D]/30" />
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <h3
-            className={`font-semibold text-[#5B2D7D] ${
-              isLived ? "line-through opacity-60" : ""
-            }`}
-          >
-            {item.title}
-          </h3>
-
-          {item.description && (
-            <p className="text-sm text-[#5B2D7D]/60 line-clamp-2 mt-0.5">
-              {item.description}
-            </p>
-          )}
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mt-2">
-            {/* People tags */}
-            {item.peopleIds.length > 0 && (
-              <div className="flex items-center gap-1 text-xs text-[#5B2D7D]/60 bg-[#EADDDE]/50 px-2 py-1 rounded-full">
-                <span>with</span>
-                <span className="font-medium">
-                  {item.peopleIds
-                    .slice(0, 2)
-                    .map((id) => getPersonName(id))
-                    .join(", ")}
-                  {item.peopleIds.length > 2 &&
-                    ` +${item.peopleIds.length - 2}`}
-                </span>
-              </div>
-            )}
-
-            {/* When tag */}
-            {item.whenType && (
-              <div className="text-xs text-[#5B2D7D]/60 bg-[#FBE0D6]/50 px-2 py-1 rounded-full">
-                {item.whenType === "someday"
-                  ? "Someday"
-                  : item.whenType === "this_year"
-                  ? "This year"
-                  : item.whenType === "this_month"
-                  ? "This month"
-                  : item.targetDate
-                  ? new Date(item.targetDate).toLocaleDateString()
-                  : ""}
-              </div>
-            )}
-
-            {/* Lived date */}
-            {isLived && item.livedAt && (
-              <div className="text-xs text-[#A4C538] font-medium bg-[#A4C538]/10 px-2 py-1 rounded-full">
-                Lived {new Date(item.livedAt).toLocaleDateString()}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Thumbnail or Chevron */}
-        <div className="shrink-0">
-          {hasMedia && firstMedia ? (
-            <div className="w-16 h-16 rounded-xl overflow-hidden">
-              {firstMedia.type === "image" ? (
-                <img
-                  src={getOptimizedUrl(firstMedia.url, "image", 128)}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              ) : firstMedia.type === "video" ? (
-                <video
-                  src={firstMedia.url}
-                  className="w-full h-full object-cover"
-                  muted
-                />
-              ) : (
-                <div className="w-full h-full bg-[#EADDDE] flex items-center justify-center">
-                  <span className="text-2xl">🎵</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <ChevronRight className="w-5 h-5 text-[#5B2D7D]/30" />
-          )}
-        </div>
-      </div>
-    </button>
   );
 }

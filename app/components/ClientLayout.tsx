@@ -23,7 +23,14 @@ export default function ClientLayout({
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   if (isLoading) {
-      return <>{children}</>;
+      // Render with full-height container to prevent layout shift
+      return (
+        <div className="h-dvh bg-[#FDF2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-2xl overflow-hidden">
+          <div className="flex-1 overflow-y-auto no-scrollbar relative w-full">
+            {children}
+          </div>
+        </div>
+      );
   }
 
   if ((!user && !isGuest) || isAuthPage) {
