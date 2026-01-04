@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { getCloudinaryUsage } from "@/lib/cloudinary-helper";
 
 export async function getAdminStats() {
   const session = await auth();
@@ -10,56 +11,75 @@ export async function getAdminStats() {
     throw new Error("Unauthorized");
   }
 
-  const [displayUserCount, productCount, memoryCount, lifeListCount, lifeListItemCount] = await Promise.all([
-    db.user.count(),
-    db.product.count(),
-    db.memory.count(),
-    db.lifeList.count(),
-    db.lifeListItem.count(),
-  ]);
+  try {
+    const displayUserCount = await db.user.count();
+    const productCount = await db.product.count();
+    const memoryCount = await db.memory.count();
+    const lifeListCount = await db.lifeList.count();
+    const lifeListItemCount = await db.lifeListItem.count();
 
-  // Count by charm type
-  const charmTypeCounts = await db.product.groupBy({
-    by: ["type"],
-    _count: true,
-  });
+    // Count by charm type
+    const charmTypeCounts = await db.product.groupBy({
+      by: ["type"],
+      _count: true,
+    });
 
-  const memoryCharmCount = charmTypeCounts.find((c) => c.type === "MEMORY")?._count || 0;
-  const lifeCharmCount = charmTypeCounts.find((c) => c.type === "LIFE")?._count || 0;
-  const habitCharmCount = charmTypeCounts.find((c) => c.type === "HABIT")?._count || 0;
+    const memoryCharmCount = charmTypeCounts.find((c) => c.type === "MEMORY")?._count || 0;
+    const lifeCharmCount = charmTypeCounts.find((c) => c.type === "LIFE")?._count || 0;
+    const habitCharmCount = charmTypeCounts.find((c) => c.type === "HABIT")?._count || 0;
 
-  // Aggregate media size
-  const mediaSize = await db.media.aggregate({
-    _sum: {
-      size: true,
+    // Get actual Cloudinary usage
+    const totalStorage = await getCloudinaryUsage();
+
+    return {
+      userCount: displayUserCount,
+      productCount,
+      memoryCount,
+      lifeListCount,
+      lifeListItemCount,
+      memoryCharmCount,
+      lifeCharmCount,
+      habitCharmCount,
+      totalStorage,
+    };
+  } catch (error) {
+    console.error("Error fetching admin stats:", error);
+    // Return empty stats instead of crashing the page if it's a transient DB error
+    return {
+      userCount: 0,
+      productCount: 0,
+      memoryCount: 0,
+      lifeListCount: 0,
+      lifeListItemCount: 0,
+      memoryCharmCount: 0,
+      lifeCharmCount: 0,
+      habitCharmCount: 0,
+      totalStorage: 0,
+    };
+  }
+}
+
+export async function getAllUsers() {
+  const session = await auth();
+  if (session?.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+
+  return db.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      name: true,
+    },
+    orderBy: {
+      email: "asc",
     },
   });
-
-  // Aggregate experience media size
-  const experienceMediaSize = await db.experienceMedia.aggregate({
-    _sum: {
-      size: true,
-    },
-  });
-
-  const totalStorage = (mediaSize._sum?.size ?? 0) + (experienceMediaSize._sum?.size ?? 0);
-
-  return {
-    userCount: displayUserCount,
-    productCount,
-    memoryCount,
-    lifeListCount,
-    lifeListItemCount,
-    memoryCharmCount,
-    lifeCharmCount,
-    habitCharmCount,
-    totalStorage,
-  };
 }
 
 export async function createProduct(
   email: string,
-  productName: string,
+  productName: string = "New Charm",
   charmType: "MEMORY" | "LIFE" | "HABIT" = "MEMORY"
 ) {
   const session = await auth();

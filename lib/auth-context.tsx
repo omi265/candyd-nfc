@@ -8,6 +8,7 @@ interface User {
   email: string;
   name: string;
   image?: string | null;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -30,7 +31,8 @@ function AuthContextInner({ children }: { children: ReactNode }) {
       name: session.user.name || "",
       email: session.user.email || "",
       image: session.user.image,
-      id: session.user.id
+      id: session.user.id,
+      role: session.user.role
   } : null;
 
   const login = async (): Promise<boolean> => {

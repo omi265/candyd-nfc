@@ -43,10 +43,12 @@ function MenuDropdown({
   isOpen,
   onClose,
   toggleButtonRef,
+  userRole,
 }: {
   isOpen: boolean;
   onClose: () => void;
   toggleButtonRef: React.RefObject<HTMLButtonElement | null>;
+  userRole?: string;
 }) {
   const [isCharmDropdownOpen, setIsCharmDropdownOpen] = useState(false);
   const router = useRouter();
@@ -73,6 +75,7 @@ function MenuDropdown({
   const displayLabel = currentProduct ? currentProduct.name : "All Charms";
 
   const menuItems = [
+    ...(userRole === "ADMIN" ? [{ label: "ADMIN DASHBOARD", href: "/admin" }] : []),
     { label: "SETTINGS", href: "/settings" },
     { label: "MANAGE CHARMS", href: "/manage-charms" },
     { label: "HELP", href: "/help" },
@@ -266,7 +269,7 @@ function MenuDropdown({
 
 // --- AppHeader Component ---
 
-export default function AppHeader({ userName }: { userName: string }) {
+export default function AppHeader({ userName, userRole }: { userName: string; userRole?: string }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -295,7 +298,7 @@ export default function AppHeader({ userName }: { userName: string }) {
             <Menu className="w-6 h-6 text-[#5B2D7D]" />
         </button>
       </header>
-      <MenuDropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} toggleButtonRef={menuButtonRef} />
+      <MenuDropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} toggleButtonRef={menuButtonRef} userRole={userRole} />
     </>
   );
 }

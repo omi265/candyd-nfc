@@ -70,6 +70,33 @@ export async function getProductById(productId: string) {
   }
 }
 
+export async function updateProduct(productId: string, data: { name: string }) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  try {
+    const product = await db.product.findUnique({
+      where: { id: productId },
+      select: { userId: true },
+    });
+
+    if (!product || product.userId !== session.user.id) {
+      return { error: "Unauthorized" };
+    }
+
+    await db.product.update({
+      where: { id: productId },
+      data: { name: data.name },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/manage-charms");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
 // ===========================================
 // LIFE LIST CRUD
 // ===========================================
@@ -100,6 +127,12 @@ export async function createLifeList(
     if (product.type !== "LIFE") {
       return { error: "This charm is not a Life Charm" };
     }
+
+    // Update product name as well (moving naming to setup)
+    await db.product.update({
+        where: { id: productId },
+        data: { name: data.name }
+    });
 
     // Create the life list
     const lifeList = await db.lifeList.create({

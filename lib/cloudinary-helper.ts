@@ -74,3 +74,17 @@ export async function deleteFromCloudinary(publicIds: string[]) {
         // but we log it.
     }
 }
+
+/**
+ * Gets the actual storage usage from Cloudinary account
+ * Returns usage in bytes
+ */
+export async function getCloudinaryUsage(): Promise<number> {
+  try {
+    const usage = await cloudinary.api.usage();
+    return usage.storage.usage || 0;
+  } catch (error) {
+    console.error("Error fetching Cloudinary usage:", error);
+    return 0;
+  }
+}

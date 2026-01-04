@@ -1,9 +1,9 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getAdminStats, getProducts, createProduct } from "@/app/actions/admin";
+import { getAdminStats, getProducts, createProduct, getAllUsers } from "@/app/actions/admin";
 import { AdminDashboardClient } from "./client";
 import { CopyButton } from "./CopyButton";
-import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
+
 export default async function AdminPage() {
   const session = await auth();
 
@@ -13,6 +13,7 @@ export default async function AdminPage() {
 
   const stats = await getAdminStats();
   const products = await getProducts();
+  const users = await getAllUsers();
 
   return (
     <div className="min-h-screen bg-[#FDF2EC] p-8 font-[Outfit]">
@@ -37,7 +38,7 @@ export default async function AdminPage() {
           <div className="lg:col-span-1">
              <div className="bg-white/40 backdrop-blur-xl rounded-[32px] shadow-sm p-6 border border-white/50">
                 <h2 className="text-xl font-bold text-[#5B2D7D] mb-4">Create New Product</h2>
-                <AdminDashboardClient />
+                <AdminDashboardClient users={users} />
              </div>
           </div>
 
