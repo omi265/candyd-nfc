@@ -5,6 +5,14 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
 import { CharmType, CharmState } from "@prisma/client";
+import {
+  createLifeListSchema,
+  updateLifeListSchema,
+  createLifeListItemSchema,
+  updateLifeListItemSchema,
+  markAsLivedSchema,
+  updateExperienceSchema
+} from "@/lib/schemas";
 
 // ===========================================
 // PRODUCT / CHARM TYPE HELPERS
@@ -113,6 +121,12 @@ export async function createLifeList(
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
+  const validated = createLifeListSchema.safeParse(data);
+  if (!validated.success) {
+      return { error: "Invalid data: " + validated.error.issues.map(i => i.message).join(", ") };
+  }
+  const { name, description, template, items } = validated.data;
+
   try {
     // Verify product ownership and type
     const product = await db.product.findUnique({
@@ -131,31 +145,29 @@ export async function createLifeList(
     // Update product name as well (moving naming to setup)
     await db.product.update({
         where: { id: productId },
-        data: { name: data.name }
+        data: { name: name }
     });
 
     // Create the life list
     const lifeList = await db.lifeList.create({
       data: {
-        name: data.name,
-        description: data.description,
-        template: data.template,
+        name,
+        description,
+        template,
         productId,
         userId: session.user.id,
       },
     });
 
-    // Add template items if provided
-    if (data.items && data.items.length > 0) {
-      for (let i = 0; i < data.items.length; i++) {
-        await db.lifeListItem.create({
-          data: {
-            title: data.items[i],
-            lifeListId: lifeList.id,
-            orderIndex: i,
-          },
-        });
-      }
+    // Add template items if provided - Optimized with createMany
+    if (items && items.length > 0) {
+      await db.lifeListItem.createMany({
+        data: items.map((title, i) => ({
+          title,
+          lifeListId: lifeList.id,
+          orderIndex: i,
+        })),
+      });
     }
 
     revalidatePath(`/life-charm`);
@@ -204,6 +216,11 @@ export async function updateLifeList(
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
+  const validated = updateLifeListSchema.safeParse(data);
+  if (!validated.success) {
+      return { error: validated.error.issues[0].message };
+  }
+
   try {
     const lifeList = await db.lifeList.findUnique({
       where: { id: listId },
@@ -216,10 +233,7 @@ export async function updateLifeList(
 
     await db.lifeList.update({
       where: { id: listId },
-      data: {
-        name: data.name,
-        description: data.description,
-      },
+      data: validated.data,
     });
 
     revalidatePath(`/life-charm`);
@@ -247,6 +261,12 @@ export async function addListItem(
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
+  const validated = createLifeListItemSchema.safeParse(data);
+  if (!validated.success) {
+      return { error: validated.error.issues[0].message };
+  }
+  const { title, description, peopleIds, whenType, targetDate } = validated.data;
+
   try {
     const lifeList = await db.lifeList.findUnique({
       where: { id: listId },
@@ -265,11 +285,11 @@ export async function addListItem(
 
     const item = await db.lifeListItem.create({
       data: {
-        title: data.title,
-        description: data.description,
-        peopleIds: data.peopleIds || [],
-        whenType: data.whenType,
-        targetDate: data.targetDate ? new Date(data.targetDate) : undefined,
+        title,
+        description,
+        peopleIds: peopleIds || [],
+        whenType,
+        targetDate: targetDate ? new Date(targetDate) : undefined,
         lifeListId: listId,
         orderIndex: maxIndex + 1,
       },
@@ -316,11 +336,17 @@ export async function updateListItem(
     peopleIds?: string[];
     whenType?: string;
     targetDate?: string | null;
-    status?: string;
+    status?: string; // We map string to Zod enum below
   }
 ) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
+
+  const validated = updateLifeListItemSchema.safeParse(data);
+  if (!validated.success) {
+      return { error: validated.error.issues[0].message };
+  }
+  const { title, description, peopleIds, whenType, targetDate, status } = validated.data;
 
   try {
     const item = await db.lifeListItem.findUnique({
@@ -335,12 +361,12 @@ export async function updateListItem(
     await db.lifeListItem.update({
       where: { id: itemId },
       data: {
-        title: data.title,
-        description: data.description,
-        peopleIds: data.peopleIds,
-        whenType: data.whenType,
-        targetDate: data.targetDate ? new Date(data.targetDate) : data.targetDate === null ? null : undefined,
-        status: data.status,
+        title,
+        description,
+        peopleIds,
+        whenType,
+        targetDate: targetDate ? new Date(targetDate) : targetDate === null ? null : undefined,
+        status,
       },
     });
 
@@ -405,13 +431,15 @@ export async function reorderListItems(listId: string, itemIds: string[]) {
       return { error: "Unauthorized" };
     }
 
-    // Update order indices
-    for (let i = 0; i < itemIds.length; i++) {
-      await db.lifeListItem.update({
-        where: { id: itemIds[i] },
-        data: { orderIndex: i },
-      });
-    }
+    // Update order indices - Optimized with transaction
+    await db.$transaction(
+      itemIds.map((id, index) =>
+        db.lifeListItem.update({
+          where: { id },
+          data: { orderIndex: index },
+        })
+      )
+    );
 
     revalidatePath(`/life-charm`);
     return { success: true };
@@ -440,6 +468,12 @@ export async function markAsLived(
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
+  const validated = markAsLivedSchema.safeParse(data);
+  if (!validated.success) {
+      return { error: validated.error.issues[0].message };
+  }
+  const { reflection, location, date, peopleIds, mediaUrls, mediaTypes, mediaSizes } = validated.data;
+
   try {
     const item = await db.lifeListItem.findUnique({
       where: { id: itemId },
@@ -457,27 +491,25 @@ export async function markAsLived(
     // Create experience
     const experience = await db.experience.create({
       data: {
-        reflection: data.reflection,
-        location: data.location,
-        date: new Date(data.date),
-        peopleIds: data.peopleIds || [],
+        reflection,
+        location,
+        date: new Date(date),
+        peopleIds: peopleIds || [],
         itemId,
       },
     });
 
-    // Add media
-    if (data.mediaUrls && data.mediaUrls.length > 0) {
-      for (let i = 0; i < data.mediaUrls.length; i++) {
-        await db.experienceMedia.create({
-          data: {
-            url: data.mediaUrls[i],
-            type: data.mediaTypes?.[i] || "image",
-            size: data.mediaSizes?.[i] || 0,
-            experienceId: experience.id,
-            orderIndex: i,
-          },
-        });
-      }
+    // Add media - Optimized with createMany
+    if (mediaUrls && mediaUrls.length > 0) {
+      await db.experienceMedia.createMany({
+        data: mediaUrls.map((url, i) => ({
+          url,
+          type: mediaTypes?.[i] || "image",
+          size: mediaSizes?.[i] || 0,
+          experienceId: experience.id,
+          orderIndex: i,
+        })),
+      });
     }
 
     // Update item status
@@ -538,6 +570,13 @@ export async function updateExperience(
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
+  const validated = updateExperienceSchema.safeParse(data);
+  if (!validated.success) {
+      return { error: validated.error.issues[0].message };
+  }
+  const { reflection, location, date, peopleIds } = validated.data;
+
+
   try {
     const experience = await db.experience.findUnique({
       where: { id: experienceId },
@@ -555,10 +594,10 @@ export async function updateExperience(
     await db.experience.update({
       where: { id: experienceId },
       data: {
-        reflection: data.reflection,
-        location: data.location,
-        date: data.date ? new Date(data.date) : undefined,
-        peopleIds: data.peopleIds,
+        reflection,
+        location,
+        date: date ? new Date(date) : undefined,
+        peopleIds,
       },
     });
 
@@ -598,15 +637,16 @@ export async function addExperienceMedia(
       -1
     );
 
-    for (let i = 0; i < media.length; i++) {
-      await db.experienceMedia.create({
-        data: {
-          url: media[i].url,
-          type: media[i].type,
-          size: media[i].size,
+    // Optimized with createMany
+    if (media.length > 0) {
+      await db.experienceMedia.createMany({
+        data: media.map((m, i) => ({
+          url: m.url,
+          type: m.type,
+          size: m.size,
           experienceId,
           orderIndex: maxIndex + 1 + i,
-        },
+        })),
       });
     }
 

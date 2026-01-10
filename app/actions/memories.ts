@@ -287,34 +287,45 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
                items = [];
              }
 
-             // Process sequentially to ensure orderIndex is correct
-             for (let i = 0; i < items.length; i++) {
-                 const item = items[i];
+             // Separate new and existing items
+             const newItems = items.filter(item => item.isNew);
+             const existingItems = items.filter(item => !item.isNew && item.id);
+
+             // 1. Bulk create new items
+             if (newItems.length > 0) {
+                 // We need to map them to the correct order index relative to the FULL list
+                 // Since createMany doesn't let us easily map "this item from the source array goes to this index" 
+                 // without strict ordering, we can assign orderIndex based on their position in the `items` array.
+                 // However, we need to know WHICH `i` corresponds to which item.
                  
-                 if (item.isNew) {
-                     // Create new media with correct index
-                     await db.media.create({
-                        data: {
-                            url: item.url,
-                            type: item.type,
-                            size: item.size || 0,
-                            memoryId: id,
-                            orderIndex: i
-                        }
-                    });
-                 } else if (item.id) {
-                     // Update existing media index
-                     // We use updateMany or try/catch to avoid errors if media doesn't exist (though it should)
-                     // Using update instead to ensure it exists
-                     try {
-                        await db.media.update({
-                            where: { id: item.id },
-                            data: { orderIndex: i }
-                        });
-                     } catch (e) {
-                         console.error(`Failed to update media order for ${item.id}`, e);
-                     }
-                 }
+                 // Strategy: iterate original `items` to find the index for new items
+                 const newMediaData = newItems.map(newItem => {
+                     const index = items.indexOf(newItem);
+                     return {
+                        url: newItem.url,
+                        type: newItem.type,
+                        size: newItem.size || 0,
+                        memoryId: id,
+                        orderIndex: index
+                     };
+                 });
+
+                 await db.media.createMany({
+                     data: newMediaData
+                 });
+             }
+
+             // 2. Batch update existing items (reordering)
+             if (existingItems.length > 0) {
+                 await db.$transaction(
+                     existingItems.map(item => {
+                         const index = items.indexOf(item);
+                         return db.media.update({
+                             where: { id: item.id },
+                             data: { orderIndex: index }
+                         });
+                     })
+                 );
              }
         }
         // Fallback: Add NEW media if provided via old method (only if orderedMedia not present)

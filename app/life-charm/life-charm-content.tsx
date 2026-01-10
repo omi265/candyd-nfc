@@ -10,8 +10,9 @@ import {
   Calendar,
   Users,
   ChevronUp,
+  Image as ImageIcon,
 } from "lucide-react";
-import { LifeList, LifeListItem, Product, Person, Experience, ExperienceMedia } from "@prisma/client";
+import { LifeList, LifeListItem, Product, Person, Experience, ExperienceMedia, Memory, Media } from "@prisma/client";
 import { getOptimizedUrl } from "@/lib/media-helper";
 
 type LifeListItemWithExperience = LifeListItem & {
@@ -22,8 +23,24 @@ type LifeListWithItems = LifeList & {
   items: LifeListItemWithExperience[];
 };
 
+type MemoryWithMedia = Memory & {
+    media: Media[];
+};
+
 type ProductWithState = Product & {
   state: string;
+};
+
+// Unified type for Grid Display
+type GridItem = {
+    id: string;
+    type: 'life_item' | 'memory';
+    title: string;
+    description?: string | null;
+    date: Date;
+    media: { url: string; type: string }[];
+    peopleIds: string[];
+    originalData: LifeListItemWithExperience | MemoryWithMedia;
 };
 
 interface LifeCharmContentProps {
@@ -31,6 +48,7 @@ interface LifeCharmContentProps {
   product: ProductWithState;
   people: Person[];
   user: { id?: string; name?: string | null; email?: string | null };
+  memories: MemoryWithMedia[];
 }
 
 // --- Helper for Distance Calculation ---
@@ -72,8 +90,8 @@ function getCenterOutOrder(n: number): number[] {
   return cells.map((cell) => cell.index);
 }
 
-// --- Life Item Card ---
-function LifeItemCard({
+// --- Life Item / Memory Card ---
+function GridCard({
   item,
   people,
   onClick,
@@ -85,7 +103,7 @@ function LifeItemCard({
   containerSize,
   visualYOffset,
 }: {
-  item: LifeListItemWithExperience;
+  item: GridItem;
   people: Person[];
   onClick: () => void;
   x: MotionValue<number>;
@@ -101,9 +119,8 @@ function LifeItemCard({
   const opacity = useTransform(dist, [0, 400], [1, 0.5]);
   const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
 
-  const isLived = item.status === "lived";
-  const hasMedia = item.experience?.media && item.experience.media.length > 0;
-  const firstMedia = hasMedia ? item.experience!.media[0] : null;
+  const hasMedia = item.media && item.media.length > 0;
+  const firstMedia = hasMedia ? item.media[0] : null;
 
   // Get people names
   const peopleNames = item.peopleIds
@@ -111,19 +128,10 @@ function LifeItemCard({
     .filter(Boolean)
     .slice(0, 2);
 
-  // Format when text
-  const getWhenText = () => {
-    if (item.whenType === "someday") return "Someday";
-    if (item.whenType === "this_year") return "This Year";
-    if (item.whenType === "this_month") return "This Month";
-    if (item.targetDate) return new Date(item.targetDate).toLocaleDateString();
-    return null;
-  };
-
-  const whenText = getWhenText();
-
-  // Background colors based on status
-  const bgGradient = isLived
+  // Background colors
+  // Life Items (Lived) get Green-ish gradient
+  // Memories get Purple-ish gradient
+  const bgGradient = item.type === 'life_item'
     ? "from-[#A4C538] to-[#7A9B1E]"
     : "from-[#5B2D7D] to-[#3A1D52]";
 
@@ -156,9 +164,9 @@ function LifeItemCard({
         </div>
       )}
 
-      {/* Status Badge */}
+      {/* Type Badge */}
       <div className="relative z-10 p-6">
-        {isLived ? (
+        {item.type === 'life_item' ? (
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full">
             <Check className="w-4 h-4 text-white" />
             <span className="text-xs font-bold text-white uppercase tracking-wider">
@@ -166,10 +174,10 @@ function LifeItemCard({
             </span>
           </div>
         ) : (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
-            <div className="w-2 h-2 rounded-full bg-white/60" />
-            <span className="text-xs font-bold text-white/80 uppercase tracking-wider">
-              Pending
+           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+            <ImageIcon className="w-4 h-4 text-white" />
+            <span className="text-xs font-bold text-white uppercase tracking-wider">
+              Memory
             </span>
           </div>
         )}
@@ -181,7 +189,7 @@ function LifeItemCard({
         style={{ opacity: contentOpacity }}
       >
         {/* Title */}
-        <h2 className="text-3xl font-black text-white leading-tight mb-3 uppercase tracking-tight">
+        <h2 className="text-3xl font-black text-white leading-tight mb-3 uppercase tracking-tight line-clamp-2">
           {item.title}
         </h2>
 
@@ -204,29 +212,13 @@ function LifeItemCard({
             </div>
           )}
 
-          {whenText && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
               <Calendar className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-xs text-white/80 font-medium">{whenText}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Lived Date */}
-        {isLived && item.livedAt && (
-          <div className="mt-4 pt-4 border-t border-white/20">
-            <p className="text-white/60 text-xs">
-              Experienced on{" "}
-              <span className="text-white font-medium">
-                {new Date(item.livedAt).toLocaleDateString("en-US", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+              <span className="text-xs text-white/80 font-medium">
+                  {new Date(item.date).toLocaleDateString()}
               </span>
-            </p>
           </div>
-        )}
+        </div>
       </motion.div>
 
       {/* Swipe hint */}
@@ -240,67 +232,13 @@ function LifeItemCard({
   );
 }
 
-// --- Empty Card ---
-function EmptyCard({
-  onClick,
-  x,
-  y,
-  row,
-  col,
-  cellSize,
-  containerSize,
-  visualYOffset,
-}: {
-  onClick: () => void;
-  x: MotionValue<number>;
-  y: MotionValue<number>;
-  row: number;
-  col: number;
-  cellSize: { width: number; height: number };
-  containerSize: { width: number; height: number };
-  visualYOffset: number;
-}) {
-  const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
-
-  const opacity = useTransform(dist, [0, 400], [1, 0.6]);
-  const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
-
-  return (
-    <motion.div
-      className="w-full h-full rounded-none flex flex-col items-center justify-center overflow-hidden cursor-pointer bg-white/60 shadow-md border-2 border-dashed border-[#5B2D7D]/20"
-      style={{
-        opacity,
-        willChange: "transform, opacity",
-        touchAction: "none",
-        transform: "translate3d(0,0,0)",
-        backfaceVisibility: "hidden",
-      }}
-      onClick={onClick}
-    >
-      <motion.div
-        className="flex flex-col items-center justify-center"
-        style={{
-          opacity: contentOpacity,
-          scale: useTransform(dist, [0, 400], [1, 0.9]),
-        }}
-      >
-        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-3 shadow-sm bg-[#5B2D7D]/10">
-          <Plus className="w-8 h-8 text-[#5B2D7D]" />
-        </div>
-        <span className="text-[#5B2D7D] font-medium font-[Outfit]">
-          Add Experience
-        </span>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 // --- Main Component ---
 export default function LifeCharmContent({
   lifeList,
   product,
   people,
   user,
+  memories
 }: LifeCharmContentProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -319,49 +257,79 @@ export default function LifeCharmContent({
   const stats = useMemo(() => {
     const total = lifeList.items.length;
     const lived = lifeList.items.filter((i) => i.status === "lived").length;
-    const pending = lifeList.items.filter((i) => i.status === "pending").length;
-    return { total, lived, pending };
+    return { total, lived };
   }, [lifeList.items]);
 
-  // Grid data - all items
-  const gridItems = useMemo(() => {
-    const items = [...lifeList.items];
-    // Sort: pending first, then lived (for Grid)
-    items.sort((a, b) => {
-      if (a.status === "pending" && b.status === "lived") return -1;
-      if (a.status === "lived" && b.status === "pending") return 1;
-      return 0;
-    });
-    return items;
-  }, [lifeList.items]);
+  // --- PREPARE DATA ---
 
-  // List Items - Lived first for List View
+  // 1. Grid Items: Standalone Memories + Lived List Items
+  const gridItems = useMemo<GridItem[]>(() => {
+      const unifiedItems: GridItem[] = [];
+
+      // Add Lived List Items
+      lifeList.items.forEach(item => {
+          if (item.status === 'lived' && item.experience) {
+              unifiedItems.push({
+                  id: item.id,
+                  type: 'life_item',
+                  title: item.title,
+                  description: item.experience.reflection || item.description,
+                  date: item.experience.date,
+                  media: item.experience.media.map(m => ({ url: m.url, type: m.type })),
+                  peopleIds: item.experience.peopleIds.length > 0 ? item.experience.peopleIds : item.peopleIds,
+                  originalData: item
+              });
+          }
+      });
+
+      // Add Standalone Memories
+      memories.forEach(memory => {
+          unifiedItems.push({
+              id: memory.id,
+              type: 'memory',
+              title: memory.title,
+              description: memory.description,
+              date: memory.date,
+              media: memory.media.map(m => ({ url: m.url, type: m.type })),
+              peopleIds: memory.peopleIds,
+              originalData: memory
+          });
+      });
+
+      // Sort by date descending (newest first)
+      unifiedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      return unifiedItems;
+  }, [lifeList.items, memories]);
+
+
+  // 2. List Items: All LifeList Items (Pending + Lived)
   const listItems = useMemo(() => {
       const items = [...lifeList.items];
+      // Sort: Pending first, then Lived? Or Lived first?
+      // Usually bucket lists show what's left to do first, or completed at bottom.
+      // Let's sort by Status (Pending top) then OrderIndex
       items.sort((a, b) => {
-          if (a.status === "lived" && b.status === "pending") return -1;
-          if (a.status === "pending" && b.status === "lived") return 1;
-          return 0;
+          if (a.status === "pending" && b.status === "lived") return -1;
+          if (a.status === "lived" && b.status === "pending") return 1;
+          return a.orderIndex - b.orderIndex;
       });
       return items;
   }, [lifeList.items]);
+
+
+  // --- GRID LAYOUT LOGIC ---
 
   const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(gridItems.length)));
   const totalCells = currentGridSize * currentGridSize;
   const FILL_ORDER = getCenterOutOrder(currentGridSize);
 
-  // Build grid with random order but compact layout
   const gridData = useMemo(() => {
-    const grid: (LifeListItemWithExperience | null)[] = Array(totalCells).fill(null);
+    const grid: (GridItem | null)[] = Array(totalCells).fill(null);
     
-    // Shuffle the items to randomize their order
+    // Shuffle slightly or keep sorted?
     const shuffledItems = [...gridItems];
-    for (let i = shuffledItems.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
-    }
-
-    // Place shuffled items into grid using center-out order (compact)
+    
     shuffledItems.slice(0, totalCells).forEach((item, index) => {
       const gridIndex = FILL_ORDER[index];
       if (gridIndex !== undefined) {
@@ -377,7 +345,6 @@ export default function LifeCharmContent({
       if (containerRef.current) {
         const containerW = containerRef.current.offsetWidth;
         const containerH = containerRef.current.offsetHeight;
-        // Adjusted multipliers to show side cards more clearly
         const w = Math.min(containerW * 0.85, 400);
         const h = Math.min(containerH * 0.80, 650);
         setCellSize({ width: w, height: h });
@@ -390,103 +357,75 @@ export default function LifeCharmContent({
   }, []);
 
   const VISUAL_Y_OFFSET = 40;
-  const initialFocusIndexRef = useRef<number | null>(null);
-
+  
   // Set initial position
   useEffect(() => {
     if (cellSize.width === 0 || containerSize.width === 0) return;
 
-    let targetIndex = initialFocusIndexRef.current;
-
-    if (targetIndex === null) {
-        // Find all indices that contain a lived item
-        const livedIndices: number[] = [];
-        gridData.forEach((item, index) => {
-            if (item && item.status === "lived") {
-                livedIndices.push(index);
-            }
-        });
-
-        if (livedIndices.length > 0) {
-            // Pick a random lived item
-            const randomIndex = Math.floor(Math.random() * livedIndices.length);
-            targetIndex = livedIndices[randomIndex];
-        } else {
-             // If center is empty, try to find ANY item to center on
-             const anyItemIndex = gridData.findIndex(item => item !== null);
-             targetIndex = (anyItemIndex !== -1) ? anyItemIndex : FILL_ORDER[0];
-        }
-        initialFocusIndexRef.current = targetIndex;
-    }
-
-    if (targetIndex === undefined || targetIndex === -1) return;
-
-    const row = Math.floor(targetIndex / currentGridSize);
-    const col = targetIndex % currentGridSize;
+    // Center on the first item (which is in the middle due to center-out)
+    const centerIndex = FILL_ORDER[0];
+    const row = Math.floor(centerIndex / currentGridSize);
+    const col = centerIndex % currentGridSize;
 
     const initialX = (containerSize.width - cellSize.width) / 2 - col * cellSize.width;
     const initialY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - row * cellSize.height;
 
-    // Use animate with 0 duration to ensure value update propagates
     animate(x, initialX, { type: "spring", stiffness: 300, damping: 30, duration: 0 });
     animate(y, initialY, { type: "spring", stiffness: 300, damping: 30, duration: 0 });
-  }, [cellSize, containerSize, currentGridSize, x, y, FILL_ORDER, gridData]);
+  }, [cellSize, containerSize, currentGridSize, x, y, FILL_ORDER]);
 
-  const handleAddItem = () => {
-    router.push(`/life-charm/add?charmId=${product.id}`);
+  // --- ACTIONS ---
+
+  const handleFabClick = () => {
+      if (viewMode === 'grid') {
+          // Grid View -> Add Standalone Memory
+          router.push(`/upload-memory?productId=${product.id}`);
+      } else {
+          // List View -> Add Bucket List Item
+          router.push(`/life-charm/add?charmId=${product.id}`);
+      }
   };
 
-  const handleItemClick = (item: LifeListItemWithExperience) => {
-    if (item.status === "lived") {
-      router.push(`/life-charm/experience/${item.id}?charmId=${product.id}`);
+  const handleItemClick = (item: GridItem) => {
+    if (item.type === 'memory') {
+        router.push(`/memory/${item.id}`);
     } else {
-      router.push(`/life-charm/item/${item.id}?charmId=${product.id}`);
+        router.push(`/life-charm/experience/${item.id}?charmId=${product.id}`);
     }
+  };
+
+  const handleListItemClick = (item: LifeListItemWithExperience) => {
+      if (item.status === 'lived') {
+          router.push(`/life-charm/experience/${item.id}?charmId=${product.id}`);
+      } else {
+          router.push(`/life-charm/item/${item.id}?charmId=${product.id}`);
+      }
   };
 
   return (
     <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden font-[Outfit]">
-      {/* Header */}
-      <header className="shrink-0 px-6 py-4 z-30 bg-white border-b border-[#EADDDE] shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h1 className="text-2xl font-black text-[#5B2D7D] tracking-tight">{lifeList.name}</h1>
-            <p className="text-sm font-bold text-[#5B2D7D]/70 uppercase tracking-wider">
-              {stats.lived} / {stats.total} Lived
+      {/* Header - Slimmer version */}
+      <header className="shrink-0 px-5 py-2 z-30 bg-white border-b border-[#EADDDE] shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-lg font-black text-[#5B2D7D] tracking-tight truncate max-w-[180px]">{lifeList.name}</h1>
+            <p className="text-[10px] font-bold text-[#5B2D7D]/50 uppercase tracking-widest whitespace-nowrap">
+              {stats.lived}/{stats.total} Lived
             </p>
           </div>
           {isGraduated ? (
-            <div className="flex items-center gap-2 px-4 py-2 bg-[#A4C538]/20 rounded-full border border-[#A4C538]/30">
-              <GraduationCap className="w-5 h-5 text-[#A4C538]" />
-              <span className="text-sm font-black text-[#5B2D7D]">Graduated</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A4C538]/10 rounded-full border border-[#A4C538]/20">
+              <GraduationCap className="w-3.5 h-3.5 text-[#A4C538]" />
+              <span className="text-[10px] font-black text-[#5B2D7D] uppercase">Graduated</span>
             </div>
           ) : (
             <button
               onClick={() => router.push(`/life-charm/graduate?charmId=${product.id}`)}
-              className="px-4 py-2 rounded-full bg-[#5B2D7D]/5 text-sm font-bold text-[#5B2D7D]/80 hover:bg-[#5B2D7D]/10 transition-colors"
+              className="px-3 py-1 rounded-full bg-[#5B2D7D]/5 text-[10px] font-bold text-[#5B2D7D]/70 hover:bg-[#5B2D7D]/10 transition-colors uppercase tracking-wider"
             >
               Graduate
             </button>
           )}
-        </div>
-
-        {/* Progress bar */}
-        <div 
-            onClick={() => setViewMode(prev => prev === 'grid' ? 'list' : 'grid')}
-            className="w-full h-4 bg-[#EADDDE] rounded-full overflow-hidden shadow-inner cursor-pointer hover:opacity-90 transition-opacity relative group"
-            title="Click to toggle view"
-        >
-          <motion.div
-            className="h-full bg-[#A4C538] rounded-full shadow-[0_0_10px_rgba(164,197,56,0.5)]"
-            initial={{ width: 0 }}
-            animate={{
-              width: stats.total > 0 ? `${(stats.lived / stats.total) * 100}%` : "0%",
-            }}
-            transition={{ duration: 0.8, ease: "circOut" }}
-          />
-           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-[9px] font-bold text-[#5B2D7D]/60 uppercase tracking-widest">{viewMode === 'grid' ? 'View List' : 'View Grid'}</span>
-           </div>
         </div>
       </header>
 
@@ -551,15 +490,66 @@ export default function LifeCharmContent({
               targetIndex = Math.round((offsetStart - current) / textContentSize);
             }
 
-            const clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
-            const snapPoint = offsetStart - clampedIndex * textContentSize;
-            const valueToAnimate = isX ? x : y;
+            let clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
 
-            animate(valueToAnimate, snapPoint, {
-              type: "spring",
-              stiffness: 300,
-              damping: 30,
-            });
+            // --- Snap to Valid Item Logic ---
+            // Calculate current Row/Col from current X/Y values
+            const getCurrentCol = (currentX: number) => {
+                    const startX = (containerSize.width - cellSize.width) / 2;
+                    return Math.round((startX - currentX) / cellSize.width);
+            };
+            const getCurrentRow = (currentY: number) => {
+                    const startY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET;
+                    return Math.round((startY - currentY) / cellSize.height);
+            };
+
+            let targetCol = isX ? clampedIndex : getCurrentCol(x.get());
+            let targetRow = !isX ? clampedIndex : getCurrentRow(y.get());
+            
+            // Clamp both
+            targetCol = Math.max(0, Math.min(currentGridSize - 1, targetCol));
+            targetRow = Math.max(0, Math.min(currentGridSize - 1, targetRow));
+
+            // Check if (targetRow, targetCol) is empty
+            const checkIndex = targetRow * currentGridSize + targetCol;
+            const targetItem = gridData[checkIndex];
+
+            if (!targetItem) {
+                // Find nearest valid item
+                let nearestDist = Infinity;
+                let bestRow = targetRow;
+                let bestCol = targetCol;
+
+                // Search all cells
+                for (let r = 0; r < currentGridSize; r++) {
+                    for (let c = 0; c < currentGridSize; c++) {
+                        const idx = r * currentGridSize + c;
+                        const item = gridData[idx];
+                        if (item) {
+                            // Calculate distance in "grid steps"
+                            const d = Math.abs(r - targetRow) + Math.abs(c - targetCol); // Manhattan dist
+                            // Prefer moves along the drag axis if possible
+                            const axisBias = isX ? (r === targetRow ? -0.5 : 0) : (c === targetCol ? -0.5 : 0); 
+                            
+                            if (d + axisBias < nearestDist) {
+                                nearestDist = d + axisBias;
+                                bestRow = r;
+                                bestCol = c;
+                            }
+                        }
+                    }
+                }
+                
+                targetRow = bestRow;
+                targetCol = bestCol;
+            }
+
+            // Animate X and Y to the validated target
+            const targetXPos = (containerSize.width - cellSize.width) / 2 - targetCol * cellSize.width;
+            const targetYPos = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - targetRow * cellSize.height;
+
+            animate(x, targetXPos, { type: "spring", stiffness: 300, damping: 30 });
+            animate(y, targetYPos, { type: "spring", stiffness: 300, damping: 30 });
           }}
         >
           {gridData.map((item, index) => {
@@ -578,11 +568,11 @@ export default function LifeCharmContent({
 
             return (
               <div
-                key={item.id}
+                key={`${item.type}-${item.id}`}
                 className="flex items-center justify-center p-1"
                 style={{ width: cellSize.width || "80vw", height: cellSize.height || "65vh" }}
               >
-                  <LifeItemCard
+                  <GridCard
                     item={item}
                     people={people}
                     onClick={() => handleItemClick(item)}
@@ -600,7 +590,7 @@ export default function LifeCharmContent({
         </motion.div>
         ) : (
             // List View
-            <div className="w-full h-full overflow-y-auto px-4 pt-4 pb-24 no-scrollbar">
+            <div className="w-full h-full overflow-y-auto px-4 pt-4 pb-32 no-scrollbar">
                 <div className="max-w-2xl mx-auto space-y-4">
                     {listItems.map((item) => {
                          const isLived = item.status === 'lived';
@@ -610,7 +600,7 @@ export default function LifeCharmContent({
                          return (
                             <div 
                                 key={item.id} 
-                                onClick={() => handleItemClick(item)}
+                                onClick={() => handleListItemClick(item)}
                                 className="bg-white rounded-2xl p-4 shadow-sm border border-[#EADDDE] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
                             >
                                 <div className={`w-16 h-16 shrink-0 rounded-xl overflow-hidden ${isLived ? '' : 'bg-[#EADDDE]/30 flex items-center justify-center'}`}>
@@ -631,6 +621,11 @@ export default function LifeCharmContent({
                                             {new Date(item.livedAt).toLocaleDateString()}
                                         </p>
                                     )}
+                                    {!isLived && item.targetDate && (
+                                        <p className="text-xs text-[#5B2D7D]/40 font-medium mt-1">
+                                            Target: {new Date(item.targetDate).toLocaleDateString()}
+                                        </p>
+                                    )}
                                 </div>
                                 
                                 {isLived && <div className="w-2 h-2 rounded-full bg-[#A4C538]" />}
@@ -642,17 +637,56 @@ export default function LifeCharmContent({
         )}
       </div>
 
-      {/* Add Button */}
-      {!isGraduated && (
-        <div className="absolute bottom-6 right-6 z-20">
-          <button
-            onClick={handleAddItem}
-            className="w-14 h-14 rounded-full bg-[#A4C538] flex items-center justify-center shadow-lg hover:bg-[#93B132] transition-colors"
-          >
-            <Plus className="w-7 h-7 text-white" />
-          </button>
+      {/* Bottom Controls Area */}
+      <div className="absolute bottom-6 left-0 right-0 z-40 pointer-events-none px-6 flex items-end justify-between gap-4">
+        {/* View Toggle - Bottom Center-ish */}
+        <div 
+            onClick={() => setViewMode(prev => prev === 'grid' ? 'list' : 'grid')}
+            className="h-12 bg-white/80 backdrop-blur-xl border border-[#EADDDE] shadow-lg rounded-2xl flex items-center p-1.5 cursor-pointer relative pointer-events-auto flex-1 max-w-[240px]"
+        >
+            <motion.div 
+                className="absolute inset-y-1.5 w-[calc(50%-6px)] bg-[#5B2D7D] rounded-xl shadow-sm"
+                animate={{ x: viewMode === 'grid' ? 0 : '100%' }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            />
+            <div className={`flex-1 flex items-center justify-center relative z-10 text-[10px] font-black uppercase tracking-wider transition-colors duration-200 ${viewMode === 'grid' ? 'text-white' : 'text-[#5B2D7D]'}`}>
+                Gallery
+            </div>
+            <div className={`flex-1 flex items-center justify-center relative z-10 text-[10px] font-black uppercase tracking-wider transition-colors duration-200 ${viewMode === 'list' ? 'text-white' : 'text-[#5B2D7D]'}`}>
+                Bucket List
+            </div>
         </div>
-      )}
+
+        {/* Action Buttons */}
+        {!isGraduated && (
+            <div className="flex flex-col items-center gap-3 pointer-events-auto">
+            {/* Secondary: Add Experience (only in grid) */}
+            {viewMode === 'grid' && (
+                <motion.button
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                onClick={() => router.push(`/life-charm/add?charmId=${product.id}`)}
+                className="w-12 h-12 rounded-full bg-[#A4C538] flex items-center justify-center shadow-lg hover:bg-[#93B132] transition-colors"
+                title="Add Bucket List Item"
+                >
+                <Plus className="w-6 h-6 text-white" />
+                </motion.button>
+            )}
+
+            {/* Primary: Add Memory (Grid) or Add Experience (List) */}
+            <button
+                onClick={handleFabClick}
+                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-colors ${
+                    viewMode === 'grid' 
+                    ? 'bg-[#5B2D7D] hover:bg-[#4A246A]' 
+                    : 'bg-[#A4C538] hover:bg-[#93B132]'
+                }`}
+            >
+                {viewMode === 'grid' ? <ImageIcon className="w-6 h-6 text-white" /> : <Plus className="w-7 h-7 text-white" />}
+            </button>
+            </div>
+        )}
+      </div>
     </div>
   );
 }

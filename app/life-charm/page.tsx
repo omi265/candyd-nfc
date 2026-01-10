@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getLifeList, getProductById } from "@/app/actions/life-charm";
 import { getPeople } from "@/app/actions/people";
+import { getMemories } from "@/app/actions/memories";
 import LifeCharmContent from "./life-charm-content";
 
 interface PageProps {
@@ -46,6 +47,9 @@ export default async function LifeCharmPage({ searchParams }: PageProps) {
 
   // Get all people for displaying tags
   const people = await getPeople();
+  
+  // Get standalone memories for this charm
+  const memories = await getMemories(charmId);
 
   return (
     <LifeCharmContent
@@ -53,6 +57,7 @@ export default async function LifeCharmPage({ searchParams }: PageProps) {
       product={product}
       people={people}
       user={session.user}
+      memories={memories}
     />
   );
 }

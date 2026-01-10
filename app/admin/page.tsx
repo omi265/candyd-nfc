@@ -24,7 +24,6 @@ export default async function AdminPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard title="Total Users" value={stats.userCount} />
           <StatCard title="Total Charms" value={stats.productCount} />
-          <StatCard title="Memory Charms" value={stats.memoryCharmCount} color="purple" />
           <StatCard title="Life Charms" value={stats.lifeCharmCount} color="green" />
           <StatCard title="Habit Charms" value={stats.habitCharmCount} color="orange" />
           <StatCard title="Memories" value={stats.memoryCount} />
@@ -54,7 +53,6 @@ export default async function AdminPage() {
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Type</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Assigned To</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Token Link</th>
-                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Guest Link</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Created</th>
                       </tr>
                     </thead>
@@ -83,14 +81,6 @@ export default async function AdminPage() {
                                     /nfc/login?token={product.token}
                                 </code>
                                 <CopyButton token={product.token as string} />
-                            </div>
-                          </td>
-                          <td className="py-3 pr-4">
-                            <div className="flex items-center gap-2">
-                                <code className="font-mono text-xs text-[#5B2D7D]/80 truncate max-w-[150px] bg-white/50 px-2 py-1 rounded">
-                                    /guest/login?token={product.guestToken || "N/A"}
-                                </code>
-                                {product.guestToken && <CopyButton token={product.guestToken as string} isGuest />}
                             </div>
                           </td>
                           <td className="py-3 text-sm text-[#5B2D7D]/60">

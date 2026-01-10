@@ -6,32 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
-// Enums for charm type system
-enum CharmType {
-  MEMORY // Existing functionality
-  LIFE   // Life Charm (bucket lists)
-  HABIT  // Habit Charm (future)
-}
-
-enum CharmState {
-  ACTIVE
-  GRADUATED
-  CLOSED
-}
-
 model User {
   id        String     @id @default(cuid())
   email     String     @unique
   password  String
   name      String?
-  role      String     @default("USER") // "USER" or "ADMIN"
-  memories  Memory[]
-  products  Product[]
-  lifeLists LifeList[]
-  habits    Habit[]
-  people    Person[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  role      String     @default("USER")
+  habits    Habit[]
+  lifeLists LifeList[]
+  memories  Memory[]
+  people    Person[]
+  products  Product[]
 }
 
 model Product {
@@ -39,20 +26,17 @@ model Product {
   name        String
   token       String     @unique
   userId      String
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime   @default(now())
   active      Boolean    @default(true)
-  guestToken  String?    @unique @default(cuid())
-
-  // Charm type system
-  type        CharmType  @default(MEMORY)
-  state       CharmState @default(ACTIVE)
   graduatedAt DateTime?
+  state       CharmState @default(ACTIVE)
+  type        CharmType  @default(MEMORY)
+  habits      Habit[]
+  lifeLists   LifeList[]
+  memories    Memory[]
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  memories      Memory[]
-  lifeLists     LifeList[]
-  habits        Habit[]
-  guestSessions GuestSession[]
+  @@index([userId])
 }
 
 model Memory {
@@ -60,185 +44,157 @@ model Memory {
   title       String
   description String
   date        DateTime
-  time        String?  // Can be formatted time string
+  time        String?
   location    String?
-  emotions    String[] // Array of emotion strings
+  emotions    String[]
   mood        String?
-  events      String[] // Array of event strings
-  peopleIds   String[] // Array of person IDs (WHO)
-  
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  productId   String?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  
-  media       Media[]
-  
-  isGuest     Boolean  @default(false)
-  guestName   String?
-
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  productId   String?
+  events      String[]
+  peopleIds   String[]
+  media       Media[]
+  product     Product? @relation(fields: [productId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([productId])
 }
 
 model Media {
-  id        String   @id @default(cuid())
-  url       String   // Cloudinary URL
-  type      String   // 'image', 'video', 'audio'
-  size      Int      @default(0)
-  
-  memoryId  String
-  memory    Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  url        String
+  type       String
+  memoryId   String
+  createdAt  DateTime @default(now())
+  size       Int      @default(0)
   orderIndex Int      @default(0)
+  memory     Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([memoryId])
 }
 
-// Added for Guest access
-model GuestSession {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-}
 
-// ==========================================
-// LIFE CHARM MODELS
-// ==========================================
 
 model LifeList {
   id          String         @id @default(cuid())
   name        String
   description String?
-  template    String?        // Reference to curated template ID if used
-
+  template    String?
   productId   String
-  product     Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-
   userId      String
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  items       LifeListItem[]
-
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  product     Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       LifeListItem[]
+
+  @@index([productId])
+  @@index([userId])
 }
 
 model LifeListItem {
   id          String      @id @default(cuid())
   title       String
   description String?
-
-  // WHO tagging (array of person IDs)
   peopleIds   String[]
-
-  // WHEN context
-  whenType    String?     // "someday", "this_year", "this_month", "specific_date"
+  whenType    String?
   targetDate  DateTime?
-
-  // Status
-  status      String      @default("pending") // "pending", "lived", "skipped"
+  status      String      @default("pending")
   livedAt     DateTime?
-
   lifeListId  String
-  lifeList    LifeList    @relation(fields: [lifeListId], references: [id], onDelete: Cascade)
-
-  experience  Experience?
-
   orderIndex  Int         @default(0)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  experience  Experience?
+  lifeList    LifeList    @relation(fields: [lifeListId], references: [id], onDelete: Cascade)
+
+  @@index([lifeListId])
 }
 
 model Person {
   id        String   @id @default(cuid())
   name      String
   avatarUrl String?
-
   userId    String
+  createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
+  @@index([userId])
 }
 
 model Experience {
-  id          String            @id @default(cuid())
-  reflection  String?
-  location    String?
-  date        DateTime
-  peopleIds   String[]          // WHO was actually there
-
-  itemId      String            @unique
-  item        LifeListItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  media       ExperienceMedia[]
-
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id         String            @id @default(cuid())
+  reflection String?
+  location   String?
+  date       DateTime
+  peopleIds  String[]
+  itemId     String            @unique
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  item       LifeListItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  media      ExperienceMedia[]
 }
 
 model ExperienceMedia {
   id           String     @id @default(cuid())
   url          String
-  type         String     // 'image', 'video', 'audio'
+  type         String
   size         Int        @default(0)
-
   experienceId String
-  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-
   orderIndex   Int        @default(0)
   createdAt    DateTime   @default(now())
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@index([experienceId])
 }
 
-// ==========================================
-// HABIT CHARM MODELS
-// ==========================================
-
 model Habit {
-  id          String         @id @default(cuid())
-  title       String
-  description String?
-  focusArea   String         // e.g., "Energy", "Movement", "Rest", "Mind"
-  
-  // Configuration
-  frequency   String         @default("daily") // "daily", "weekly"
-  targetDays  Int            @default(66)      // Days to graduation
-  
-  // Progress
-  currentStreak Int          @default(0)
-  longestStreak Int          @default(0)
-  totalCompletions Int       @default(0)
-  
-  // Status
-  isActive    Boolean        @default(true)
-  graduatedAt DateTime?
-  archivedAt  DateTime?
+  id               String     @id @default(cuid())
+  title            String
+  description      String?
+  focusArea        String
+  frequency        String     @default("daily")
+  targetDays       Int        @default(66)
+  currentStreak    Int        @default(0)
+  longestStreak    Int        @default(0)
+  totalCompletions Int        @default(0)
+  isActive         Boolean    @default(true)
+  graduatedAt      DateTime?
+  archivedAt       DateTime?
+  productId        String
+  userId           String
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  product          Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs             HabitLog[]
 
-  productId   String
-  product     Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  userId      String
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  logs        HabitLog[]
-
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  @@index([productId])
+  @@index([userId])
 }
 
 model HabitLog {
-  id          String   @id @default(cuid())
-  date        DateTime // The date of the log (normalized to start of day)
-  notes       String?  // Optional reflection
+  id        String   @id @default(cuid())
+  date      DateTime
+  notes     String?
+  habitId   String
+  createdAt DateTime @default(now())
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
 
-  habitId     String
-  habit       Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
-
-  createdAt   DateTime @default(now())
-
-  // Prevent duplicate logs for the same habit on the same day
   @@unique([habitId, date])
+  @@index([habitId])
+}
+
+enum CharmType {
+  MEMORY
+  LIFE
+  HABIT
+}
+
+enum CharmState {
+  ACTIVE
+  GRADUATED
+  CLOSED
 }

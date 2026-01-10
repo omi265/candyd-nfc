@@ -24,7 +24,6 @@ export async function getAdminStats() {
       _count: true,
     });
 
-    const memoryCharmCount = charmTypeCounts.find((c) => c.type === "MEMORY")?._count || 0;
     const lifeCharmCount = charmTypeCounts.find((c) => c.type === "LIFE")?._count || 0;
     const habitCharmCount = charmTypeCounts.find((c) => c.type === "HABIT")?._count || 0;
 
@@ -37,7 +36,6 @@ export async function getAdminStats() {
       memoryCount,
       lifeListCount,
       lifeListItemCount,
-      memoryCharmCount,
       lifeCharmCount,
       habitCharmCount,
       totalStorage,
@@ -51,7 +49,6 @@ export async function getAdminStats() {
       memoryCount: 0,
       lifeListCount: 0,
       lifeListItemCount: 0,
-      memoryCharmCount: 0,
       lifeCharmCount: 0,
       habitCharmCount: 0,
       totalStorage: 0,
@@ -80,7 +77,7 @@ export async function getAllUsers() {
 export async function createProduct(
   email: string,
   productName: string = "New Charm",
-  charmType: "MEMORY" | "LIFE" | "HABIT" = "MEMORY"
+  charmType: "LIFE" | "HABIT" = "LIFE"
 ) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
@@ -97,14 +94,12 @@ export async function createProduct(
 
   // Generate a unique token
   const token = crypto.randomUUID();
-  const guestToken = crypto.randomUUID();
 
   try {
     const product = await db.product.create({
       data: {
         name: productName,
         token,
-        guestToken,
         userId: user.id,
         type: charmType,
       },
@@ -122,24 +117,6 @@ export async function getProducts() {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
     throw new Error("Unauthorized");
-  }
-
-  // First, batch update any products missing guestToken (runs once, then no-op)
-  const productsWithoutToken = await db.product.findMany({
-    where: { guestToken: null },
-    select: { id: true },
-  });
-
-  if (productsWithoutToken.length > 0) {
-    // Update each product with a unique token using a transaction
-    await db.$transaction(
-      productsWithoutToken.map((p) =>
-        db.product.update({
-          where: { id: p.id },
-          data: { guestToken: crypto.randomUUID() },
-        })
-      )
-    );
   }
 
   // Now fetch all products with their tokens guaranteed

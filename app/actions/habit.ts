@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { createHabitSchema, logHabitSchema } from "@/lib/schemas";
 
 // ===========================================
 // HABIT SETUP & RETRIEVAL
@@ -19,6 +20,12 @@ export async function createHabit(
 ) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
+
+  const validated = createHabitSchema.safeParse(data);
+  if (!validated.success) {
+      return { error: validated.error.issues[0].message };
+  }
+  const { title, description, focusArea, targetDays } = validated.data;
 
   try {
     // Verify product ownership and type
@@ -46,10 +53,10 @@ export async function createHabit(
 
     const habit = await db.habit.create({
       data: {
-        title: data.title,
-        description: data.description,
-        focusArea: data.focusArea,
-        targetDays: data.targetDays || 66,
+        title,
+        description,
+        focusArea,
+        targetDays: targetDays || 66,
         productId,
         userId: session.user.id,
       },
@@ -97,6 +104,11 @@ export async function logHabit(habitId: string, notes?: string) {
     const session = await auth();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
+    const validated = logHabitSchema.safeParse({ notes });
+    if (!validated.success) {
+        return { error: validated.error.issues[0].message };
+    }
+
     try {
         const habit = await db.habit.findUnique({
             where: { id: habitId },
@@ -126,7 +138,7 @@ export async function logHabit(habitId: string, notes?: string) {
         await db.habitLog.create({
             data: {
                 date: today,
-                notes,
+                notes: validated.data.notes,
                 habitId
             }
         });

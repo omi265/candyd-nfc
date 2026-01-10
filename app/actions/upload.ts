@@ -3,13 +3,11 @@
 import cloudinary from "@/lib/cloudinary";
 import { auth } from "@/auth";
 import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
-import { getGuestSession } from "@/app/actions/guest"; // Import guest session checker
 
 export async function getCloudinarySignature(folder: string = "candyd_memories") {
   const session = await auth();
-  const guestId = await getGuestSession();
 
-  if (!session?.user?.id && !guestId) {
+  if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 
@@ -34,9 +32,8 @@ export async function getCloudinarySignature(folder: string = "candyd_memories")
 
 export async function deleteUploadedFile(url: string) {
   const session = await auth();
-  const guestId = await getGuestSession();
 
-    if (!session?.user?.id && !guestId) {
+    if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 

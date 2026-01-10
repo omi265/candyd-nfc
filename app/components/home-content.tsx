@@ -548,15 +548,86 @@ export default function HomeContent({ initialMemories, people = [], user, isGues
                         targetIndex = Math.round((offsetStart - current) / textContentSize);
                     }
 
-                    const clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
-                    const snapPoint = offsetStart - clampedIndex * textContentSize;
-                    const valueToAnimate = isX ? x : y;
+                    let clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
+                    
+                    // --- Snap to Valid Item Logic ---
+                    // Convert row/col back to 1D index to check gridData
+                    // But here we are dragging rows/cols independently? 
+                    // No, the grid is "repeat(currentGridSize)". We are moving the whole grid X or Y.
+                    // Actually, the grid layout `grid-template-columns` is `repeat(N, size)`.
+                    // The drag moves `x` and `y`.
+                    // We are snapping `x` to a column, and `y` to a row.
+                    
+                    // We need to ensure that the (targetRow, targetCol) cell is not empty.
+                    // But we are only animating ONE axis at a time based on drag direction? 
+                    // No, `dragDirectionLock` is false in the code (wait, it is true? "dragDirectionLock").
+                    // Actually it says `dragDirectionLock`. So user drags mostly X or mostly Y.
+                    // But the code updates `x` OR `y` in onDragEnd based on `isX`.
+                    // This means we are locking the OTHER axis to its current state? 
+                    // The other axis's motion value (`x` or `y`) retains its previous value.
+                    
+                    // Let's get the PROPOSED (Row, Col).
+                    // We need the current "snapped" value of the OTHER axis to know the full coordinate.
+                    // `x` corresponds to `col`. `y` corresponds to `row`.
+                    
+                    // Calculate current Row/Col from current X/Y values
+                    const getCurrentCol = (currentX: number) => {
+                         const startX = (containerSize.width - cellSize.width) / 2;
+                         return Math.round((startX - currentX) / cellSize.width);
+                    };
+                    const getCurrentRow = (currentY: number) => {
+                         const startY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET;
+                         return Math.round((startY - currentY) / cellSize.height);
+                    };
 
-                    animate(valueToAnimate, snapPoint, {
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 30
-                    });
+                    let targetCol = isX ? clampedIndex : getCurrentCol(x.get());
+                    let targetRow = !isX ? clampedIndex : getCurrentRow(y.get());
+                    
+                    // Clamp both
+                    targetCol = Math.max(0, Math.min(currentGridSize - 1, targetCol));
+                    targetRow = Math.max(0, Math.min(currentGridSize - 1, targetRow));
+
+                    // Check if (targetRow, targetCol) is empty
+                    // Grid is 1D array mapped to 2D: index = row * size + col
+                    const checkIndex = targetRow * currentGridSize + targetCol;
+                    const targetItem = gridData[checkIndex];
+
+                    if (!targetItem || targetItem.type === 'empty') {
+                        // Find nearest valid item
+                        let nearestDist = Infinity;
+                        let bestRow = targetRow;
+                        let bestCol = targetCol;
+
+                        // Search all cells
+                        for (let r = 0; r < currentGridSize; r++) {
+                            for (let c = 0; c < currentGridSize; c++) {
+                                const idx = r * currentGridSize + c;
+                                const item = gridData[idx];
+                                if (item && item.type !== 'empty') {
+                                    // Calculate distance in "grid steps"
+                                    const d = Math.abs(r - targetRow) + Math.abs(c - targetCol); // Manhattan dist
+                                    // Prefer moves along the drag axis if possible
+                                    const axisBias = isX ? (r === targetRow ? -0.5 : 0) : (c === targetCol ? -0.5 : 0); 
+                                    
+                                    if (d + axisBias < nearestDist) {
+                                        nearestDist = d + axisBias;
+                                        bestRow = r;
+                                        bestCol = c;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        targetRow = bestRow;
+                        targetCol = bestCol;
+                    }
+
+                    // Animate X and Y to the validated target
+                    const targetXPos = (containerSize.width - cellSize.width) / 2 - targetCol * cellSize.width;
+                    const targetYPos = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - targetRow * cellSize.height;
+
+                    animate(x, targetXPos, { type: "spring", stiffness: 300, damping: 30 });
+                    animate(y, targetYPos, { type: "spring", stiffness: 300, damping: 30 });
                 }}
               >
                  {gridData.map((item, index) => {

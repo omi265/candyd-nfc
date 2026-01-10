@@ -1,12 +1,11 @@
 "use client";
 
-import { createMemory, getUserProducts } from "@/app/actions/memories";
-import { createGuestMemory, getGuestSession } from "@/app/actions/guest";
+import { createMemory } from "@/app/actions/memories";
 import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
 import { getPeople, createPerson } from "@/app/actions/people";
 import { useAuth } from "@/lib/auth-context";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition, useRef, Suspense } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 import {
@@ -36,9 +35,10 @@ const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfo
 const EVENTS = ["Pre Wedding Celebrations", "Haldi", "Sangeet", "Mehendi", "Wedding"];
 const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet"];
 
-export default function MemoryUploadPage() {
-    const { user, isLoading } = useAuth(); // Keeping for frontend check, real auth is in server action
+function MemoryUploadContent() {
+    const { user, isLoading } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
     const [isUploading, setIsUploading] = useState(false);
 
@@ -77,53 +77,30 @@ export default function MemoryUploadPage() {
 
     const [optionalExpanded, setOptionalExpanded] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
-    const [selectedProductId, setSelectedProductId] = useState<string>("");
-
-    // Guest Mode State
-    const [isGuest, setIsGuest] = useState(false);
-    const [guestName, setGuestName] = useState("");
-    const [isLoadingGuest, setIsLoadingGuest] = useState(true);
-    const guestTokenRef = useRef<string | null>(null);
+    const [selectedProductId, setSelectedProductId] = useState<string>(searchParams.get("productId") || "");
 
     useEffect(() => {
-        // Check for guest session
-        getGuestSession().then(guestId => {
-            if (guestId) {
-                setIsGuest(true);
-                // Guest doesn't select product, it's fixed.
-            }
-            setIsLoadingGuest(false);
-        });
-
-        // Use searchParams to get token if passed from login redirect (Exhaustive fallback)
-        const params = new URLSearchParams(window.location.search);
-        const tokenFromUrl = params.get("guest_token");
-        if (tokenFromUrl) {
-            // Store it in a ref or state to send with submission
-            guestTokenRef.current = tokenFromUrl;
-            setIsGuest(true); // If we have a token, we are effectively a guest
+        const pidFromUrl = searchParams.get("productId");
+        if (pidFromUrl) {
+            setSelectedProductId(pidFromUrl);
         }
-
-        // Fetch products only if not guest (or maybe we don't need to fetch if guest)
-        getUserProducts().then(setProducts);
 
         // Fetch people
         getPeople().then(setPeople);
-    }, []);
+    }, [searchParams]);
 
     // Initial check for auth
      useEffect(() => {
-        if (!isLoadingGuest && !isGuest && !isLoading && !user) {
+        if (!isLoading && !user) {
           router.push("/login");
         }
-      }, [user, isLoading, isGuest, isLoadingGuest, router]);
+      }, [user, isLoading, router]);
 
     type MediaItem = {
         id: string;
         file: File;
         previewUrl: string;
-        type?: string; // Added for audio override
+        type?: string; 
         status: 'pending' | 'uploading' | 'completed' | 'error';
         cloudData?: { url: string; type: string; size: number };
     };
@@ -135,7 +112,7 @@ export default function MemoryUploadPage() {
             const newItems: MediaItem[] = files.map(file => ({
                 id: Math.random().toString(36).substring(7),
                 file,
-                previewUrl: URL.createObjectURL(file), // Note: Make sure to revoke these covers eventually if needed, though browsers handle it reasonably well for page lifetime
+                previewUrl: URL.createObjectURL(file),
                 status: 'uploading',
             }));
 
@@ -150,7 +127,6 @@ export default function MemoryUploadPage() {
 
     const uploadFile = async (item: MediaItem) => {
         try {
-            // Store promise in ref to await later if needed
             const uploadPromise = (async () => {
                 const signatureData = await getCloudinarySignature();
                 const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
@@ -210,7 +186,6 @@ export default function MemoryUploadPage() {
     const addCustomEmotion = () => {
         if (customEmotionInput.trim()) {
             const val = customEmotionInput.trim();
-            // Capitalize first letter strictly? Or keep user input? Let's Title case it nicely.
             const formatted = val.charAt(0).toUpperCase() + val.slice(1);
             if (!selectedEmotions.includes(formatted)) {
                 setSelectedEmotions(prev => [...prev, formatted]);
@@ -287,60 +262,26 @@ export default function MemoryUploadPage() {
         if (!title.trim()) missingFields.push("Title");
         if (!description.trim()) missingFields.push("Description");
         if (mediaItems.length === 0) missingFields.push("Media");
-        if (!isGuest && !selectedProductId) missingFields.push("Charm Link");
+        if (!selectedProductId) missingFields.push("Charm Link");
         
         if (missingFields.length > 0) {
             toast.error(`Please fill in the following details: ${missingFields.join(", ")}`);
             return;
         }
 
-        setIsUploading(true); // Using this for general "Saving..." state now
+        setIsUploading(true);
 
         try {
-            // Check for pending uploads
             const pendingUploads = mediaItems.filter(i => i.status === 'uploading' || i.status === 'pending');
             const failedUploads = mediaItems.filter(i => i.status === 'error');
 
             if (failedUploads.length > 0) {
-                // Retry failed? Or just block?
-                // For now, block and ask user to remove or retry (we need a retry button really, but let's just ask to remove for MVP speed)
                 toast.error("Some files failed to upload. Please remove them or try again.");
                 setIsUploading(false);
                 return;
             }
 
-            if (pendingUploads.length > 0) {
-               // toast.loading("Finishing uploads..."); // 'sonner' toast.loading returns an ID if we want to dismiss, but here we just wait
-               // Actually better to just show it in the button text or a separate indicator
-            }
-
-            // Wait for all current uploads to finish
-            // We can use the values in uploadPromisesRef
             await Promise.all(pendingUploads.map(item => uploadPromisesRef.current.get(item.id)).filter(Boolean));
-
-            // Re-read mediaItems to get the final URLs?
-            // Wait, state updates might not have flushed if we are in the same closure event...
-            // Actually, we need to rely on the *data* we just got or refetch state?
-            // 'mediaItems' here is closed over. 
-            // We can trust that since we awaited the promises, the side-effects (setting state) are queued, 
-            // BUT in this closure 'mediaItems' is STALE.
-            // However, we don't strictly need 'mediaItems' state if we knew the results. 
-            // But we don't have the results easily here without state.
-            
-            // CORRECT APPROACH in React 18+ with async handler:
-            // The state won't update mid-function.
-            // We can use a functional state update to inspect the latest, OR use a ref to track the items data.
-            // Let's use a Ref to track the *latest* mediaItems as well, or just rely on the fact that 
-            // we can wait for the promises and then... wait, how do we get the data?
-            // The promises function returns the data! 
-            
-            // Let's re-gather the data.
-            // We know existing completed items have cloudData.
-            // The ones we just awaited returned data.
-            // But mixing them is tricky.
-            
-            // Alternative: Use a Ref for `mediaItemsRef` that is always kept in sync with state, 
-            // so we can read the latest values here.
         } catch (err: any) {
             console.error("Wait for upload error", err);
             toast.error("Error finishing uploads");
@@ -348,23 +289,13 @@ export default function MemoryUploadPage() {
             return;
         }
         
-        // We need to access the LATEST items. 
-        // Let's use a function to get the actual data to submit.
-        // We can't access updated state here easily.
-        // Let's change the strategy slightly: 
-        // We will construct the final arrays by checking if we have cloudData in current state (already done) 
-        // OR by using the result of the promise we just awaited.
-        
-        // But simpler: just use a ref to hold the items data for submission reading.
         submitWithLatestData();
     };
     
-    // We need a ref to access latest media items inside the async handleSubmit
     const mediaItemsRef = useRef<MediaItem[]>(mediaItems);
     useEffect(() => { mediaItemsRef.current = mediaItems; }, [mediaItems]);
 
     const submitWithLatestData = async () => {
-         // Final check using REF
          const currentItems = mediaItemsRef.current;
          const pending = currentItems.filter(i => i.status === 'uploading');
          const failed = currentItems.filter(i => i.status === 'error');
@@ -376,14 +307,7 @@ export default function MemoryUploadPage() {
          }
 
          if (pending.length > 0) {
-             // We still have pending items? 
-             // If we just awaited them in the previous block... wait, I split the logic.
-             // Let's merge it:
-             
-             // 1. Identify which IDs are pending
              const pendingIds = pending.map(i => i.id);
-             
-             // 2. Wait for their specific promises
              try {
                 await Promise.all(pendingIds.map(id => uploadPromisesRef.current.get(id)));
              } catch (e) {
@@ -393,28 +317,11 @@ export default function MemoryUploadPage() {
              }
          }
          
-         // 3. NOW check ref again, they should be completed (because the promise resolution splits state update)
-         // Wait, React state updates are batched/async. Even after await, the re-render might not have happened 
-         // on the javascript thread before we continue? 
-         // Actually, if we await a promise, the microtask queue clears. The state setter was called. 
-         // But the component function hasn't re-run to update `mediaItemsRef`.
-         // So `mediaItemsRef.current` MIGHT BE STALE if we rely on useEffect to update it.
-         
-         // Fix: create a dedicated `completedUploads` Map ref that stores the data directly 
-         // as soon as it's available, independent of React state. 
-         // Use that for submission.
-         
          processSubmission();
     }
 
-    
-
-    // Update uploadFile to write to this ref
-    // (See uploadFile modification below in the full code)
-
     const processSubmission = () => {
         startTransition(async () => {
-            // Get all items from state
             const currentItems = mediaItemsRef.current;
             
             const finalUrls: string[] = [];
@@ -441,7 +348,7 @@ export default function MemoryUploadPage() {
             formData.append("time", time);
             formData.append("location", location);
             formData.append("emotions", selectedEmotions.join(","));
-            formData.append("events", selectedEvents.join(",")); // Add events
+            formData.append("events", selectedEvents.join(","));
             if (selectedMood) formData.append("mood", selectedMood);
 
             if (selectedPeople.length > 0) {
@@ -454,30 +361,15 @@ export default function MemoryUploadPage() {
                 formData.append("mediaSizes", JSON.stringify(finalSizes));
             }
 
-            let result;
-            
-            if (isGuest) {
-                console.log("UPLOAD: Submitting GUEST memory");
-                if (guestName) formData.append("guestName", guestName);
-                if (guestTokenRef.current) formData.append("guestToken", guestTokenRef.current);
-                result = await createGuestMemory(undefined, formData);
-            } else {
-                if (selectedProductId) formData.append("productId", selectedProductId);
-                console.log("UPLOAD: Submitting USER memory");
-                result = await createMemory(undefined, formData);
-            }
+            if (selectedProductId) formData.append("productId", selectedProductId);
+            const result = await createMemory(undefined, formData);
 
             if (result?.error) {
                 setError(result.error);
                 toast.error(result.error);
             } else if (result?.success) {
                 toast.success("Memory created successfully!");
-                if (isGuest) {
-                    const token = guestTokenRef.current;
-                    router.push(token ? `/guest/memories?guest_token=${token}` : "/guest/memories");
-                } else {
-                    router.push("/");
-                }
+                router.back(); 
             }
             setIsUploading(false);
         });
@@ -486,7 +378,6 @@ export default function MemoryUploadPage() {
     const hasMedia = mediaItems.length > 0;
 
     return (
-
         <div className="flex flex-col h-full bg-[#FDF2EC] font-[Outfit] relative">
              <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-[#FDF2EC] to-transparent z-10 pointer-events-none"></div>
 
@@ -507,20 +398,6 @@ export default function MemoryUploadPage() {
                     </div>
 
                     <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-                        {/* Guest Name Input */}
-                        {isGuest && (
-                            <div>
-                                <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Your Name<span className="text-[#C27A59]">*</span></label>
-                                <input
-                                    type="text"
-                                    value={guestName}
-                                    onChange={(e) => setGuestName(e.target.value)}
-                                    placeholder="Enter your name"
-                                    className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
-                                />
-                            </div>
-                        )}
-
                         {/* Title */}
                         <div>
                             <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Title<span className="text-[#C27A59]">*</span></label>
@@ -639,7 +516,6 @@ export default function MemoryUploadPage() {
                                             {mediaItems.some(i => i.status === 'uploading') && <span className="text-[#C27A59] ml-2 animate-pulse">Uploading...</span>}
                                         </span>
                                         <button type="button" onClick={() => { 
-                                            // Cleanup all completed uploads
                                             completedUploadsRef.current.forEach((data) => {
                                                 if (data.url) deleteUploadedFile(data.url);
                                             });
@@ -703,28 +579,6 @@ export default function MemoryUploadPage() {
                              </div>
                         </div>
 
-                        {/* Charm Selector */}
-                        {!isGuest && (
-                            <div className="mb-6">
-                                 <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Link to Charm (Optional)</label>
-                                 <div className="relative">
-                                    <select
-                                        value={selectedProductId}
-                                        onChange={(e) => setSelectedProductId(e.target.value)}
-                                        className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 pr-10 text-[#5B2D7D] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium appearance-none"
-                                    >
-                                        <option value="">Select a charm...</option>
-                                        {products.map(p => (
-                                            <option key={p.id} value={p.id}>{p.name}</option>
-                                        ))}
-                                    </select>
-                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                            <ChevronDown className="w-5 h-5 text-[#5B2D7D]" />
-                                    </div>
-                                 </div>
-                            </div>
-                        )}
-
                         {/* Events */}
                         <div className="mb-6">
                             <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Event</label>
@@ -745,7 +599,6 @@ export default function MemoryUploadPage() {
                                     </button>
                                 ))}
                                 
-                                {/* Custom Events Display */}
                                 {selectedEvents.filter(e => !EVENTS.includes(e)).map(event => (
                                      <button
                                         type="button"
@@ -898,7 +751,6 @@ export default function MemoryUploadPage() {
                                                 </button>
                                             ))}
                                             
-                                            {/* Custom Emotions Display */}
                                             {selectedEmotions.filter(e => !EMOTIONS.includes(e)).map(emotion => (
                                                 <button
                                                     type="button"
@@ -954,7 +806,6 @@ export default function MemoryUploadPage() {
                                                 </button>
                                             ))}
                                             
-                                            {/* Custom Mood Display - if selectedMood is not in MOODS */}
                                             {selectedMood && !MOODS.includes(selectedMood) && (
                                                 <button
                                                     type="button"
@@ -1014,7 +865,6 @@ export default function MemoryUploadPage() {
                                  <ArrowRight className="w-5 h-5" />
                             </button>
                         </div>
-                         {/* Spacer for safety */}
                         <div className="h-6"></div>
                     </form>
                 </div>
@@ -1023,3 +873,10 @@ export default function MemoryUploadPage() {
     );
 }
 
+export default function MemoryUploadPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <MemoryUploadContent />
+        </Suspense>
+    );
+}

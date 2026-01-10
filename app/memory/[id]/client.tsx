@@ -407,7 +407,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     }
 
     const handleCancel = () => {
-        router.push("/memories");
+        router.back();
     };
 
     const handleSave = async () => {

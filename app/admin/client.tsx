@@ -6,20 +6,19 @@ import { createProduct } from "@/app/actions/admin";
 import { toast } from "sonner";
 
 const CHARM_TYPES: Array<{
-  id: "MEMORY" | "LIFE" | "HABIT";
+  id: "LIFE" | "HABIT";
   label: string;
   emoji: string;
   description: string;
   disabled?: boolean;
 }> = [
-  { id: "MEMORY", label: "Memory Charm", emoji: "📸", description: "For storing memories with photos/videos" },
   { id: "LIFE", label: "Life Charm", emoji: "✨", description: "For bucket lists and experiences" },
   { id: "HABIT", label: "Habit Charm", emoji: "⚡", description: "For habit tracking and focus areas" },
 ];
 
 export function AdminDashboardClient({ users = [] }: { users: any[] }) {
   const [isPending, startTransition] = useTransition();
-  const [charmType, setCharmType] = useState<"MEMORY" | "LIFE" | "HABIT">("MEMORY");
+  const [charmType, setCharmType] = useState<"LIFE" | "HABIT">("LIFE");
   const [selectedEmail, setSelectedEmail] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,7 +35,7 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
       } else {
         toast.success("Product created successfully!");
         setSelectedEmail("");
-        setCharmType("MEMORY");
+        setCharmType("LIFE");
       }
     });
   };
