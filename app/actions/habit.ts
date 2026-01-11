@@ -9,6 +9,70 @@ import { createHabitSchema, logHabitSchema } from "@/lib/schemas";
 // HABIT SETUP & RETRIEVAL
 // ===========================================
 
+export async function createHabits(
+  productId: string,
+  habitsData: {
+    title: string;
+    description?: string;
+    focusArea: string;
+    targetDays?: number;
+  }[],
+  charmName?: string
+) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  if (habitsData.length === 0) return { error: "No habits provided" };
+  if (habitsData.length > 6) return { error: "Maximum 6 habits allowed" };
+
+  try {
+     // Verify product ownership and type
+    const product = await db.product.findUnique({
+      where: { id: productId },
+      select: { userId: true, type: true }
+    });
+
+    if (!product || product.userId !== session.user.id) {
+      return { error: "Unauthorized" };
+    }
+
+    if (product.type !== "HABIT") {
+      return { error: "This charm is not a Habit Charm" };
+    }
+
+    // Update product name if provided
+    if (charmName) {
+        await db.product.update({
+            where: { id: productId },
+            data: { name: charmName }
+        });
+    }
+
+    // Create all habits in a transaction
+    await db.$transaction(
+        habitsData.map(data => 
+            db.habit.create({
+                data: {
+                    title: data.title,
+                    description: data.description,
+                    focusArea: data.focusArea,
+                    targetDays: data.targetDays || 66,
+                    productId,
+                    userId: session.user.id
+                }
+            })
+        )
+    );
+
+    revalidatePath(`/habit-charm`);
+    return { success: true };
+
+  } catch (error) {
+      console.error("Create Habits Error:", error);
+      return { error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
+
 export async function createHabit(
   productId: string,
   data: {
@@ -70,6 +134,33 @@ export async function createHabit(
   }
 }
 
+export async function getHabits(productId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return [];
+
+  try {
+    const habits = await db.habit.findMany({
+      where: {
+        productId,
+        userId: session.user.id,
+        isActive: true
+      },
+      include: {
+        logs: {
+            orderBy: { date: 'desc' },
+            take: 365 // Get last year of logs
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    return habits;
+  } catch (error) {
+    console.error("Failed to get habits:", error);
+    return [];
+  }
+}
+
 export async function getHabit(productId: string) {
   const session = await auth();
   if (!session?.user?.id) return null;
@@ -99,6 +190,154 @@ export async function getHabit(productId: string) {
 // ===========================================
 // LOGGING & STREAK LOGIC
 // ===========================================
+
+export async function updateHabitStats(
+  habitId: string,
+  data: { currentStreak?: number; totalCompletions?: number }
+) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  try {
+    const habit = await db.habit.findUnique({
+      where: { id: habitId },
+      select: { userId: true },
+    });
+
+    if (!habit || habit.userId !== session.user.id) {
+      return { error: "Unauthorized" };
+    }
+
+    await db.habit.update({
+      where: { id: habitId },
+      data: {
+        ...(data.currentStreak !== undefined && { currentStreak: data.currentStreak }),
+        ...(data.totalCompletions !== undefined && { totalCompletions: data.totalCompletions }),
+      },
+    });
+
+    revalidatePath(`/habit-charm`);
+    return { success: true };
+  } catch (error) {
+    console.error("Update Habit Stats Error:", error);
+    return { error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
+
+export async function toggleHabitDate(habitId: string, date: Date) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const habit = await db.habit.findUnique({
+            where: { id: habitId },
+            select: { userId: true, currentStreak: true, targetDays: true, totalCompletions: true, productId: true, longestStreak: true }
+        });
+
+        if (!habit || habit.userId !== session.user.id) {
+            return { error: "Unauthorized" };
+        }
+
+        // Normalize date to start of day
+        const targetDate = new Date(date);
+        targetDate.setHours(0, 0, 0, 0);
+
+        // Check if log exists
+        const existingLog = await db.habitLog.findUnique({
+            where: {
+                habitId_date: {
+                    habitId,
+                    date: targetDate
+                }
+            }
+        });
+
+        let newTotal = habit.totalCompletions;
+
+        if (existingLog) {
+            // Remove log (Toggle OFF)
+            await db.habitLog.delete({
+                where: { id: existingLog.id }
+            });
+            newTotal = Math.max(0, newTotal - 1);
+        } else {
+            // Add log (Toggle ON)
+            await db.habitLog.create({
+                data: {
+                    habitId,
+                    date: targetDate
+                }
+            });
+            newTotal += 1;
+        }
+
+        // Recalculate Streak
+        // Fetch all logs again
+        const allLogs = await db.habitLog.findMany({
+            where: { habitId },
+            orderBy: { date: 'desc' },
+            select: { date: true }
+        });
+        
+        let streak = 0;
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (allLogs.length > 0) {
+            const lastLogDate = new Date(allLogs[0].date);
+            lastLogDate.setHours(0,0,0,0);
+            
+            // Streak is alive if last log is today or yesterday
+            // BUT if we just toggled OFF today/yesterday, the streak logic needs to check the NEXT available log.
+            // Actually, we just iterate from top log down.
+            
+            // Is the most recent log relevant?
+            // If the most recent log is older than yesterday, streak is 0.
+            if (lastLogDate.getTime() === today.getTime() || lastLogDate.getTime() === yesterday.getTime()) {
+                streak = 1;
+                for (let i = 0; i < allLogs.length - 1; i++) {
+                    const current = new Date(allLogs[i].date);
+                    const prev = new Date(allLogs[i+1].date);
+                    // Normalize
+                    current.setHours(0,0,0,0);
+                    prev.setHours(0,0,0,0);
+
+                    const diffTime = Math.abs(current.getTime() - prev.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    
+                    if (diffDays === 1) {
+                        streak++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        const updates: any = {
+            currentStreak: streak,
+            totalCompletions: newTotal
+        };
+        
+        if (streak > habit.longestStreak) {
+            updates.longestStreak = streak;
+        }
+
+        await db.habit.update({
+            where: { id: habitId },
+            data: updates
+        });
+
+        revalidatePath(`/habit-charm`);
+        return { success: true, newStreak: streak };
+
+    } catch (error) {
+        console.error("Toggle Habit Date Error:", error);
+        return { error: error instanceof Error ? error.message : "Unknown error" };
+    }
+}
 
 export async function logHabit(habitId: string, notes?: string) {
     const session = await auth();

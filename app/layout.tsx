@@ -39,17 +39,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const isGuest = cookieStore.has("guest_session");
-
+    const cookieStore = await cookies();
+  
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
-      >
+    <html lang="en" className={outfit.className}>
+      <body>
         <AuthProvider>
-          <ClientLayout isGuest={isGuest}>{children}</ClientLayout>
-          <Toaster />
+            <ClientLayout>{children}</ClientLayout>
+            <Toaster position="top-center" />
         </AuthProvider>
       </body>
     </html>

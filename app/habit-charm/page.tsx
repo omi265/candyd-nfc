@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getProductById } from "@/app/actions/life-charm";
-import { getHabit } from "@/app/actions/habit";
+import { getHabits } from "@/app/actions/habit";
 import HabitSetup from "./habit-setup";
 import HabitDashboard from "./habit-dashboard";
 
@@ -36,13 +36,13 @@ export default async function HabitCharmPage({
       redirect("/");
   }
 
-  // 2. Check for existing active habit
-  const habit = await getHabit(charmId);
+  // 2. Check for existing active habits
+  const habits = await getHabits(charmId);
 
   // 3. Render Setup or Dashboard
-  if (!habit) {
+  if (!habits || habits.length === 0) {
       return <HabitSetup product={product} />;
   }
 
-  return <HabitDashboard habit={habit} product={product} />;
+  return <HabitDashboard habits={habits} product={product} />;
 }

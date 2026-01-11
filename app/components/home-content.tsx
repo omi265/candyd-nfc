@@ -273,12 +273,10 @@ interface HomeContentProps {
   initialMemories?: any[];
   people?: any[];
   user?: any;
-  isGuest?: boolean;
-  guestToken?: string;
   forcedViewMode?: 'grid' | 'list';
 }
 
-export default function HomeContent({ initialMemories, people = [], user, isGuest = false, guestToken, forcedViewMode }: HomeContentProps) {
+export default function HomeContent({ initialMemories, people = [], user, forcedViewMode }: HomeContentProps) {
   const router = useRouter();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -455,11 +453,7 @@ export default function HomeContent({ initialMemories, people = [], user, isGues
 
 
   const handleAddMemory = () => {
-    if (isGuest && guestToken) {
-        router.push(`/upload-memory?guest_token=${guestToken}`);
-    } else {
-        router.push("/upload-memory");
-    }
+      router.push("/upload-memory");
   };
 
   const handleMemoryClick = (id: string) => {
@@ -752,8 +746,6 @@ export default function HomeContent({ initialMemories, people = [], user, isGues
         memory={selectedMemory}
         open={!!selectedMemory}
         onOpenChange={(open) => !open && setSelectedMemory(null)}
-        isGuest={isGuest}
-        guestToken={guestToken}
         people={people}
       />
     </div>
