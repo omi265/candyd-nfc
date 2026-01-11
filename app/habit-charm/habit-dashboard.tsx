@@ -113,7 +113,7 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
     const lastLogDate = lastLog ? new Date(lastLog.date) : null;
     if (lastLogDate) lastLogDate.setHours(0,0,0,0);
     
-    const isLoggedToday = lastLogDate && lastLogDate.getTime() === today.getTime();
+    const isLoggedToday = !!(lastLogDate && lastLogDate.getTime() === today.getTime());
 
     const handleLog = async () => {
         if (isLoggedToday || isLogging) return;
