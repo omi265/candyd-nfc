@@ -238,7 +238,7 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
                     <div className="bg-white p-6 rounded-[32px] shadow-sm mb-6">
                         <ContributionGraph 
                             logs={habit.logs} 
-                            startDate={new Date(new Date().setDate(new Date().getDate() - 120))} 
+                            startDate={new Date(new Date().setDate(new Date().getDate() - 28))} 
                             onToggle={handleToggleDate}
                         />
                     </div>
@@ -290,6 +290,8 @@ function ContributionGraph({ logs, startDate, onToggle }: { logs: HabitLog[], st
         gapClass = 'gap-1.5';
     }
 
+    const isCalendarMode = weeksCount <= 5;
+
     const handleDayClick = (date: Date) => {
         if (!onToggle) return;
         if (date.getTime() === today.getTime()) {
@@ -325,23 +327,42 @@ function ContributionGraph({ logs, startDate, onToggle }: { logs: HabitLog[], st
                 )}
             </AnimatePresence>
 
-            <div className="overflow-x-auto pb-2 custom-scrollbar">
-                <div className={`grid grid-rows-7 grid-flow-col ${gapClass} ${containerClass}`} style={{ gridTemplateColumns: weeksCount <= 5 ? `repeat(${weeksCount}, 1fr)` : `repeat(${weeksCount}, min-content)` }}>
-                    {dates.map((date) => {
-                        const isDone = logSet.has(date.toDateString());
-                        const isToday = date.getTime() === today.getTime();
-                        const isFuture = date > today;
-                        return (
-                            <button 
-                                key={date.toISOString()} 
-                                disabled={isFuture || !onToggle}
-                                onClick={() => handleDayClick(date)}
-                                className={`${cellSizeClass} transition-all flex items-center justify-center rounded-[3px] ${isDone ? 'bg-[#5B2D7D]' : 'bg-[#EADDDE]/50'} ${isToday ? 'ring-1 ring-[#5B2D7D] ring-offset-1 z-10' : ''} ${isFuture ? 'opacity-0' : ''}`} 
-                            />
-                        );
-                    })}
+            <div className="flex items-start gap-3">
+                {isCalendarMode && (
+                    <div className={`grid grid-rows-7 ${gapClass} shrink-0 pt-0.5`}>
+                        {['S','M','T','W','T','F','S'].map((d, i) => (
+                            <div key={i} className={`${cellSizeClass} flex items-center justify-center text-[10px] font-bold text-[#5B2D7D]/30`}>
+                                {d}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className="overflow-x-auto pb-2 custom-scrollbar flex-1">
+                    <div className={`grid grid-rows-7 grid-flow-col ${gapClass} ${containerClass}`} style={{ gridTemplateColumns: weeksCount <= 5 ? `repeat(${weeksCount}, 1fr)` : `repeat(${weeksCount}, min-content)` }}>
+                        {dates.map((date) => {
+                            const isDone = logSet.has(date.toDateString());
+                            const isToday = date.getTime() === today.getTime();
+                            const isFuture = date > today;
+                            return (
+                                <button 
+                                    key={date.toISOString()} 
+                                    disabled={isFuture || !onToggle}
+                                    onClick={() => handleDayClick(date)}
+                                    className={`${cellSizeClass} transition-all flex items-center justify-center rounded-[3px] ${isDone ? 'bg-[#5B2D7D]' : 'bg-[#EADDDE]/50'} ${isToday ? 'ring-1 ring-[#5B2D7D] ring-offset-1 z-10' : ''} ${isFuture ? 'opacity-0' : ''}`} 
+                                >
+                                    {isCalendarMode && (
+                                        <span className={`text-xs font-bold ${isDone ? 'text-white' : 'text-[#5B2D7D]/60'}`}>
+                                            {date.getDate()}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
+
             <div className="flex justify-between text-[10px] text-[#5B2D7D]/40 mt-2 px-1 font-bold uppercase tracking-tighter">
                 <span>{start.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })}</span>
                 <span>History Summary</span>
