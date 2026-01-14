@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { logHabit, toggleHabitDate, adjustHabitLogs } from "@/app/actions/habit";
-import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus } from "lucide-react";
+import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Habit, HabitLog, Product } from "@prisma/client";
 import {
@@ -67,15 +67,6 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
 }
 
 function HabitHistoryCard({ habit }: { habit: HabitWithLogs }) {
-    const handleAdjust = async (date: Date, adjustment: number) => {
-        try {
-            const result = await adjustHabitLogs(habit.id, date, adjustment);
-            if (result.error) toast.error(result.error);
-        } catch (e) {
-            toast.error("Failed to update");
-        }
-    };
-
     const today = new Date();
     const pastDate = new Date(today);
     pastDate.setDate(today.getDate() - 120);
@@ -95,7 +86,6 @@ function HabitHistoryCard({ habit }: { habit: HabitWithLogs }) {
             <ContributionGraph 
                 logs={habit.logs} 
                 startDate={startDate} 
-                onAdjust={handleAdjust}
             />
         </div>
     );
@@ -130,6 +120,15 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
             toast.error("Failed to log.");
         } finally {
             setIsLogging(false);
+        }
+    };
+
+    const handleAdjust = async (date: Date, adjustment: number) => {
+        try {
+            const result = await adjustHabitLogs(habit.id, date, adjustment);
+            if (result.error) toast.error(result.error);
+        } catch (e) {
+            toast.error("Failed to update");
         }
     };
 
@@ -246,7 +245,7 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
                         <ContributionGraph 
                             logs={habit.logs} 
                             startDate={new Date(new Date().setDate(new Date().getDate() - 28))} 
-                            onToggle={handleToggleDate}
+                            onAdjust={handleAdjust}
                         />
                     </div>
                     
@@ -269,6 +268,7 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
 
 function ContributionGraph({ logs, startDate, onAdjust }: { logs: HabitLog[], startDate: Date, onAdjust?: (date: Date, adj: number) => void }) {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [isAdjusting, setIsAdjusting] = useState(false);
     
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -313,6 +313,16 @@ function ContributionGraph({ logs, startDate, onAdjust }: { logs: HabitLog[], st
         setSelectedDate(date);
     };
 
+    const handleAdjustClick = async (date: Date, adj: number) => {
+        if (!onAdjust || isAdjusting) return;
+        setIsAdjusting(true);
+        try {
+            await onAdjust(date, adj);
+        } finally {
+            setIsAdjusting(false);
+        }
+    };
+
     const getOpacity = (count: number) => {
         if (count === 0) return 0; // Handled by class logic usually, but here useful
         if (count === 1) return 0.4;
@@ -338,23 +348,39 @@ function ContributionGraph({ logs, startDate, onAdjust }: { logs: HabitLog[], st
                         
                         <div className="flex items-center gap-3 w-full max-w-[120px]">
                             <button 
-                                onClick={() => onAdjust && onAdjust(selectedDate, -1)}
-                                className="w-8 h-8 rounded-full bg-white border border-[#EADDDE] flex items-center justify-center text-[#5B2D7D] hover:bg-red-50 hover:border-red-200 transition-colors"
+                                onClick={() => handleAdjustClick(selectedDate, -1)}
+                                disabled={isAdjusting}
+                                className="w-8 h-8 rounded-full bg-white border border-[#EADDDE] flex items-center justify-center text-[#5B2D7D] hover:bg-red-50 hover:border-red-200 transition-colors disabled:opacity-50"
                             >
                                 <Minus className="w-4 h-4" />
                             </button>
-                            <div className="flex-1 h-1 bg-[#EADDDE] rounded-full overflow-hidden">
+                            <div className="flex-1 h-1 bg-[#EADDDE] rounded-full overflow-hidden relative">
                                 <div className="h-full bg-[#5B2D7D]" style={{ width: '50%' }} /> 
+                                {isAdjusting && (
+                                    <div className="absolute inset-0 bg-[#5B2D7D]/20 animate-pulse" />
+                                )}
                             </div>
                             <button 
-                                onClick={() => onAdjust && onAdjust(selectedDate, 1)}
-                                className="w-8 h-8 rounded-full bg-white border border-[#EADDDE] flex items-center justify-center text-[#5B2D7D] hover:bg-green-50 hover:border-green-200 transition-colors"
+                                onClick={() => handleAdjustClick(selectedDate, 1)}
+                                disabled={isAdjusting}
+                                className="w-8 h-8 rounded-full bg-white border border-[#EADDDE] flex items-center justify-center text-[#5B2D7D] hover:bg-green-50 hover:border-green-200 transition-colors disabled:opacity-50"
                             >
                                 <Plus className="w-4 h-4" />
                             </button>
                         </div>
+
+                        {isAdjusting && (
+                            <div className="mt-2 flex items-center gap-2 text-[10px] font-bold text-[#5B2D7D]/60 uppercase tracking-widest">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Updating...
+                            </div>
+                        )}
                         
-                        <button onClick={() => setSelectedDate(null)} className="mt-4 text-[10px] font-bold text-[#5B2D7D]/40 uppercase tracking-wider hover:text-[#5B2D7D]">
+                        <button 
+                            disabled={isAdjusting}
+                            onClick={() => setSelectedDate(null)} 
+                            className="mt-4 text-[10px] font-bold text-[#5B2D7D]/40 uppercase tracking-wider hover:text-[#5B2D7D] disabled:opacity-30"
+                        >
                             Close
                         </button>
                     </motion.div>
