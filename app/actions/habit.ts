@@ -340,7 +340,7 @@ export async function toggleHabitDate(habitId: string, date: Date) {
     }
 }
 
-export async function adjustHabitLogs(habitId: string, date: Date, adjustment: number) {
+export async function adjustHabitLogs(habitId: string, dateStr: string, adjustment: number) {
     const session = await auth();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
@@ -354,8 +354,8 @@ export async function adjustHabitLogs(habitId: string, date: Date, adjustment: n
             return { error: "Unauthorized" };
         }
 
-        const targetDate = new Date(date);
-        targetDate.setHours(0, 0, 0, 0);
+        // Create UTC date from string (YYYY-MM-DD -> YYYY-MM-DDT00:00:00.000Z)
+        const targetDate = new Date(`${dateStr}T00:00:00.000Z`);
 
         if (adjustment > 0) {
             // Create logs

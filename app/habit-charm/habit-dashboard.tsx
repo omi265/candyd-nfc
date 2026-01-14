@@ -125,7 +125,9 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
 
     const handleAdjust = async (date: Date, adjustment: number) => {
         try {
-            const result = await adjustHabitLogs(habit.id, date, adjustment);
+            // Format date to YYYY-MM-DD in local time
+            const dateStr = date.toLocaleDateString('en-CA'); // en-CA gives YYYY-MM-DD
+            const result = await adjustHabitLogs(habit.id, dateStr, adjustment);
             if (result.error) toast.error(result.error);
         } catch (e) {
             toast.error("Failed to update");
