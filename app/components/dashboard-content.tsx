@@ -112,7 +112,7 @@ function CharmCard({
 
   return (
     <motion.div
-      onClick={onClick}
+      onTap={onClick}
       className={`w-full h-full relative flex flex-col justify-between shadow-xl rounded-none overflow-hidden cursor-pointer`}
       style={{
         opacity,
