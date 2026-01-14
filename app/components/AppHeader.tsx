@@ -62,11 +62,15 @@ function MenuDropdown({
   // Fetch products on open
   useEffect(() => {
     if (isOpen) {
-        setIsLoadingProducts(true);
-        getUserProducts().then((fetchedProducts: any) => {
-            setProducts(fetchedProducts);
-            setIsLoadingProducts(false);
-        });
+        // Defer state update to avoid cascading renders during effect execution
+        const timeoutId = setTimeout(() => {
+            setIsLoadingProducts(true);
+            getUserProducts().then((fetchedProducts: any) => {
+                setProducts(fetchedProducts);
+                setIsLoadingProducts(false);
+            });
+        }, 0);
+        return () => clearTimeout(timeoutId);
     }
   }, [isOpen]);
 

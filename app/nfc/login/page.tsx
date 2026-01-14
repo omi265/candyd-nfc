@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react";
 import { Zap, Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { getProductWithType } from "@/app/actions/life-charm";
 import { getProductOwnerInfo } from "@/app/actions/nfc";
 
@@ -18,6 +18,50 @@ function NFCLoginContent() {
   const [ownerInfo, setOwnerInfo] = useState<{ email: string; name: string | null } | null>(null);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  const handleRedirect = useCallback(async (currentToken: string) => {
+      const product = await getProductWithType(currentToken);
+      if (product) {
+          switch (product.type) {
+              case "LIFE":
+                  window.location.href = `/life-charm?charmId=${product.id}`;
+                  break;
+              case "HABIT":
+                  window.location.href = `/habit-charm?charmId=${product.id}`;
+                  break;
+              case "MEMORY":
+              default:
+                  window.location.href = "/";
+          }
+      } else {
+          window.location.href = "/";
+      }
+  }, []);
+
+  const performTokenLogin = useCallback(async (tokenToUse: string) => {
+      const result = await signIn("credentials", {
+          token: tokenToUse,
+          redirect: false
+      });
+
+      if (result?.error) {
+          setStatus("Tag invalid or expired.");
+          setIsLoading(false);
+          // If token login fails (maybe user revoked access?), we might want to clear trust
+          localStorage.removeItem(`trusted_tag_${tokenToUse}`);
+      } else {
+          setStatus("Success! Redirecting...");
+          await handleRedirect(tokenToUse);
+      }
+  }, [handleRedirect]);
+
+  // Helper to mask email
+  const maskEmail = (email: string) => {
+      const [name, domain] = email.split("@");
+      if (!name || !domain) return email;
+      const maskedName = name.length > 2 ? `${name.substring(0, 2)}***` : `${name}***`;
+      return `${maskedName}@${domain}`;
+  };
 
   useEffect(() => {
     if (!token) {
@@ -57,24 +101,7 @@ function NFCLoginContent() {
     };
 
     checkTrustAndLogin();
-  }, [token]);
-
-  const performTokenLogin = async (tokenToUse: string) => {
-      const result = await signIn("credentials", {
-          token: tokenToUse,
-          redirect: false
-      });
-
-      if (result?.error) {
-          setStatus("Tag invalid or expired.");
-          setIsLoading(false);
-          // If token login fails (maybe user revoked access?), we might want to clear trust
-          localStorage.removeItem(`trusted_tag_${tokenToUse}`);
-      } else {
-          setStatus("Success! Redirecting...");
-          await handleRedirect(tokenToUse);
-      }
-  };
+  }, [token, performTokenLogin]);
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -105,33 +132,6 @@ function NFCLoginContent() {
           setError("Login failed. Please try again.");
           setIsLoading(false);
       }
-  };
-
-  const handleRedirect = async (currentToken: string) => {
-      const product = await getProductWithType(currentToken);
-      if (product) {
-          switch (product.type) {
-              case "LIFE":
-                  window.location.href = `/life-charm?charmId=${product.id}`;
-                  break;
-              case "HABIT":
-                  window.location.href = `/habit-charm?charmId=${product.id}`;
-                  break;
-              case "MEMORY":
-              default:
-                  window.location.href = "/";
-          }
-      } else {
-          window.location.href = "/";
-      }
-  };
-
-  // Helper to mask email
-  const maskEmail = (email: string) => {
-      const [name, domain] = email.split("@");
-      if (!name || !domain) return email;
-      const maskedName = name.length > 2 ? `${name.substring(0, 2)}***` : `${name}***`;
-      return `${maskedName}@${domain}`;
   };
 
   if (isLoading && !needsPassword) {

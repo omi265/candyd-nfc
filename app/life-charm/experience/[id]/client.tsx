@@ -157,7 +157,7 @@ export default function ExperienceClient({
                   </div>
                 </div>
                 <p className="text-[#5B2D7D] leading-relaxed italic flex-1">
-                  "{experience.reflection}"
+                  &quot;{experience.reflection}&quot;
                 </p>
               </div>
             </motion.div>

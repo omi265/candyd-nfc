@@ -355,10 +355,8 @@ export default function HomeContent({ initialMemories, people = [], user, forced
       });
   }, [initialMemories, searchQuery, selectedFilter]);
 
-  // Initialize Grid Data
-  const [gridData, setGridData] = useState<GridItemType[]>([]);
-
-  useEffect(() => {
+  // Initialize Grid Data (Derived via useMemo)
+  const gridData = useMemo<GridItemType[]>(() => {
         const totalItems = filteredMemories.length;
         const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(totalItems)));
         const totalCells = currentGridSize * currentGridSize;
@@ -402,7 +400,7 @@ export default function HomeContent({ initialMemories, people = [], user, forced
                 mediaType
             };
         });
-        setGridData(newGrid);
+        return newGrid;
   }, [filteredMemories]);
 
 
@@ -542,7 +540,7 @@ export default function HomeContent({ initialMemories, people = [], user, forced
                         targetIndex = Math.round((offsetStart - current) / textContentSize);
                     }
 
-                    let clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
+                    const clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
                     
                     // --- Snap to Valid Item Logic ---
                     // Convert row/col back to 1D index to check gridData

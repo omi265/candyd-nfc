@@ -88,7 +88,7 @@ export default function AccountSettingsPage() {
                                 <h2 className="text-[#9A92A6] text-sm mb-2 self-start w-full">Deleting your profile</h2>
                                 <h3 className="text-[#3E1C56] text-3xl font-bold mb-4 self-start w-full">Close account</h3>
                                 <p className="text-[#9A92A6] mb-8 leading-relaxed">
-                                    We're sorry to see you go. Closing your account is permanent and cannot be undone.
+                                    We&apos;re sorry to see you go. Closing your account is permanent and cannot be undone.
                                 </p>
 
                                 {/* Download Data Card */}

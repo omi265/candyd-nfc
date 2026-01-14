@@ -265,7 +265,7 @@ export default function ItemDetailClient({
               {item.experience?.reflection && (
                 <div className="mb-5">
                   <p className="text-[#5B2D7D] italic text-lg leading-relaxed border-l-4 border-[#A4C538] pl-4">
-                    "{item.experience.reflection}"
+                    &quot;{item.experience.reflection}&quot;
                   </p>
                 </div>
               )}
@@ -362,7 +362,7 @@ export default function ItemDetailClient({
               Experience Complete!
             </h3>
             <p className="text-[#5B2D7D]/60 text-sm">
-              You've lived this experience. Great job!
+              You&apos;ve lived this experience. Great job!
             </p>
           </motion.div>
         )}
