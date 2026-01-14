@@ -37,19 +37,17 @@ export default async function LifeCharmPage({ searchParams }: PageProps) {
     redirect("/");
   }
 
-  // Get the life list for this charm
-  const lifeList = await getLifeList(charmId);
+  // Fetch data in parallel
+  const [lifeList, people, memories] = await Promise.all([
+    getLifeList(charmId),
+    getPeople(),
+    getMemories(charmId)
+  ]);
 
   // If no life list exists, redirect to setup
   if (!lifeList) {
     redirect(`/life-charm/setup?charmId=${charmId}`);
   }
-
-  // Get all people for displaying tags
-  const people = await getPeople();
-  
-  // Get standalone memories for this charm
-  const memories = await getMemories(charmId);
 
   return (
     <LifeCharmContent
