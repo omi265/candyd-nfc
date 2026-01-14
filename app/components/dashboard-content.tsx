@@ -151,14 +151,6 @@ function CharmCard({
           {product.name}
         </h2>
       </motion.div>
-
-      {/* Swipe hint */}
-      <motion.div
-        className="absolute bottom-6 left-1/2 -translate-x-1/2"
-        style={{ opacity: contentOpacity }}
-      >
-        <ChevronUp className="w-6 h-6 text-white/30 animate-bounce" />
-      </motion.div>
     </motion.div>
   );
 }
