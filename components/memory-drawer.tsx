@@ -21,9 +21,10 @@ interface MemoryDrawerProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     people?: any[];
+    onEdit?: () => void;
 }
 
-export function MemoryDrawer({ memory, open, onOpenChange, people = [] }: MemoryDrawerProps) {
+export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit }: MemoryDrawerProps) {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -39,7 +40,11 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [] }: Memory
         : [];
 
     const handleEdit = () => {
-        router.push(`/memory/${memory.id}`);
+        if (onEdit) {
+            onEdit();
+        } else {
+            router.push(`/memory/${memory.id}`);
+        }
     };
 
     return (

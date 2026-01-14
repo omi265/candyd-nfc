@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { LifeList, LifeListItem, Product, Person, Experience, ExperienceMedia, Memory, Media } from "@prisma/client";
 import { getOptimizedUrl } from "@/lib/media-helper";
+import { MemoryDrawer } from "@/components/memory-drawer";
 
 type LifeListItemWithExperience = LifeListItem & {
   experience: (Experience & { media: ExperienceMedia[] }) | null;
@@ -248,6 +249,20 @@ export default function LifeCharmContent({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const dragStartRef = useRef<{ col: number; row: number } | null>(null);
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedDrawerData, setSelectedDrawerData] = useState<any>(null);
+
+  const handleEditItem = () => {
+      if (!selectedDrawerData) return;
+      
+      if (selectedDrawerData.dataType === 'memory') {
+          router.push(`/memory/${selectedDrawerData.id}`);
+      } else {
+          router.push(`/life-charm/experience/${selectedDrawerData.id}?charmId=${product.id}`);
+      }
+      setDrawerOpen(false);
+  };
+
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -387,16 +402,39 @@ export default function LifeCharmContent({
   };
 
   const handleItemClick = (item: GridItem) => {
-    if (item.type === 'memory') {
-        router.push(`/memory/${item.id}`);
-    } else {
-        router.push(`/life-charm/experience/${item.id}?charmId=${product.id}`);
-    }
+    const isMemory = item.type === 'memory';
+    const raw = item.originalData as any;
+    
+    const data = {
+        dataType: item.type,
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        date: item.date,
+        location: isMemory ? raw.location : raw.experience?.location,
+        peopleIds: item.peopleIds,
+        media: isMemory ? raw.media : raw.experience?.media,
+        events: isMemory ? raw.events : [item.title] 
+    };
+    setSelectedDrawerData(data);
+    setDrawerOpen(true);
   };
 
   const handleListItemClick = (item: LifeListItemWithExperience) => {
       if (item.status === 'lived') {
-          router.push(`/life-charm/experience/${item.id}?charmId=${product.id}`);
+          const data = {
+            dataType: 'life_item',
+            id: item.id,
+            title: item.title,
+            description: item.experience?.reflection || item.description,
+            date: item.experience?.date,
+            location: item.experience?.location,
+            peopleIds: item.experience?.peopleIds || item.peopleIds,
+            media: item.experience?.media || [],
+            events: [item.title]
+          };
+          setSelectedDrawerData(data);
+          setDrawerOpen(true);
       } else {
           router.push(`/life-charm/item/${item.id}?charmId=${product.id}`);
       }
@@ -660,19 +698,6 @@ export default function LifeCharmContent({
         {/* Action Buttons */}
         {!isGraduated && (
             <div className="flex flex-col items-center gap-3 pointer-events-auto">
-            {/* Secondary: Add Experience (only in grid) */}
-            {viewMode === 'grid' && (
-                <motion.button
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                onClick={() => router.push(`/life-charm/add?charmId=${product.id}`)}
-                className="w-12 h-12 rounded-full bg-[#A4C538] flex items-center justify-center shadow-lg hover:bg-[#93B132] transition-colors"
-                title="Add Bucket List Item"
-                >
-                <Plus className="w-6 h-6 text-white" />
-                </motion.button>
-            )}
-
             {/* Primary: Add Memory (Grid) or Add Experience (List) */}
             <button
                 onClick={handleFabClick}
@@ -687,6 +712,14 @@ export default function LifeCharmContent({
             </div>
         )}
       </div>
+
+      <MemoryDrawer 
+        memory={selectedDrawerData} 
+        open={drawerOpen} 
+        onOpenChange={setDrawerOpen} 
+        people={people}
+        onEdit={handleEditItem}
+      />
     </div>
   );
 }
