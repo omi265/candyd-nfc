@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { logHabit, toggleHabitDate } from "@/app/actions/habit";
-import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { logHabit, toggleHabitDate, adjustHabitLogs } from "@/app/actions/habit";
+import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { Habit, HabitLog, Product } from "@prisma/client";
 import {
@@ -67,11 +67,10 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
 }
 
 function HabitHistoryCard({ habit }: { habit: HabitWithLogs }) {
-    const handleToggleDate = async (date: Date) => {
+    const handleAdjust = async (date: Date, adjustment: number) => {
         try {
-            const result = await toggleHabitDate(habit.id, date);
+            const result = await adjustHabitLogs(habit.id, date, adjustment);
             if (result.error) toast.error(result.error);
-            else toast.success("Updated history");
         } catch (e) {
             toast.error("Failed to update");
         }
@@ -96,7 +95,7 @@ function HabitHistoryCard({ habit }: { habit: HabitWithLogs }) {
             <ContributionGraph 
                 logs={habit.logs} 
                 startDate={startDate} 
-                onToggle={handleToggleDate}
+                onAdjust={handleAdjust}
             />
         </div>
     );
@@ -109,14 +108,15 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const lastLog = habit.logs[0];
-    const lastLogDate = lastLog ? new Date(lastLog.date) : null;
-    if (lastLogDate) lastLogDate.setHours(0,0,0,0);
-    
-    const isLoggedToday = !!(lastLogDate && lastLogDate.getTime() === today.getTime());
+    // Count logs for today
+    const todayCount = habit.logs.filter(l => {
+        const d = new Date(l.date);
+        d.setHours(0,0,0,0);
+        return d.getTime() === today.getTime();
+    }).length;
 
     const handleLog = async () => {
-        if (isLoggedToday || isLogging) return;
+        if (isLogging) return;
 
         setIsLogging(true);
         try {
@@ -124,7 +124,7 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
             if (result.error) {
                 toast.error(result.error);
             } else {
-                toast.success(`${habit.title} logged!`);
+                toast.success(`${habit.title} logged! (${todayCount + 1})`);
             }
         } catch (error) {
             toast.error("Failed to log.");
@@ -184,7 +184,7 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
                         <circle cx="50" cy="50" r="46" fill="none" stroke="#FDF2EC" strokeWidth="5" />
                         <motion.circle
                             cx="50" cy="50" r="46" fill="none"
-                            stroke={isLoggedToday ? "#A4C538" : "#5B2D7D"}
+                            stroke={todayCount > 0 ? "#A4C538" : "#5B2D7D"}
                             strokeWidth="5" strokeLinecap="round" pathLength="100"
                             initial={{ strokeDasharray: "0 100" }}
                             animate={{ strokeDasharray: `${progress} 100` }}
@@ -194,13 +194,20 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
 
                     <button
                         onClick={handleLog}
-                        disabled={isLogging || isLoggedToday}
+                        disabled={isLogging}
                         className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all shadow-xl active:scale-95 z-10 shrink-0 ${
-                            isLoggedToday ? 'bg-[#A4C538] text-[#5B2D7D] shadow-[#A4C538]/20' : 'bg-[#FDF2EC] text-[#5B2D7D] hover:bg-[#EADDDE] hover:shadow-2xl'
+                            todayCount > 0 ? 'bg-[#A4C538] text-[#5B2D7D] shadow-[#A4C538]/20' : 'bg-[#FDF2EC] text-[#5B2D7D] hover:bg-[#EADDDE] hover:shadow-2xl'
                         }`}
                     >
-                        <div className={`text-5xl transition-transform ${isLoggedToday ? 'scale-110' : ''}`}>
-                            {isLoggedToday ? <Check className="w-14 h-14" strokeWidth={4} /> : getIcon(habit.focusArea)}
+                        <div className={`flex flex-col items-center justify-center transition-transform ${todayCount > 0 ? 'scale-110' : ''}`}>
+                            {todayCount > 0 ? (
+                                <>
+                                    <span className="text-4xl font-black leading-none">{todayCount}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Times</span>
+                                </>
+                            ) : (
+                                <span className="text-5xl">{getIcon(habit.focusArea)}</span>
+                            )}
                         </div>
                         {isLogging && (
                             <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] rounded-full flex items-center justify-center">
@@ -214,7 +221,7 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
                 <div className="text-center w-full px-1">
                     <h3 className="font-bold text-[#5B2D7D] text-lg leading-tight mb-2 line-clamp-2">{habit.title}</h3>
                     <div className="flex items-center justify-center gap-1.5 bg-[#FDF2EC]/50 py-1.5 px-4 rounded-full mx-auto w-fit">
-                        <Flame className={`w-4 h-4 ${isLoggedToday ? 'text-orange-600' : 'text-[#5B2D7D]/40'}`} />
+                        <Flame className={`w-4 h-4 ${todayCount > 0 ? 'text-orange-600' : 'text-[#5B2D7D]/40'}`} />
                         <span className="text-sm font-black text-[#5B2D7D]/70">{habit.currentStreak} / {habit.targetDays}</span>
                     </div>
                 </div>
@@ -260,14 +267,16 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
     );
 }
 
-function ContributionGraph({ logs, startDate, onToggle }: { logs: HabitLog[], startDate: Date, onToggle?: (date: Date) => void }) {
-    const [confirmingDate, setConfirmingDate] = useState<Date | null>(null);
+function ContributionGraph({ logs, startDate, onAdjust }: { logs: HabitLog[], startDate: Date, onAdjust?: (date: Date, adj: number) => void }) {
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    
     const today = new Date();
     today.setHours(0,0,0,0);
     const start = new Date(startDate);
     start.setHours(0,0,0,0);
     const dayOfWeek = start.getDay();
     start.setDate(start.getDate() - dayOfWeek);
+    
     const dates: Date[] = [];
     const current = new Date(start);
     const end = new Date(today);
@@ -276,7 +285,14 @@ function ContributionGraph({ logs, startDate, onToggle }: { logs: HabitLog[], st
         dates.push(new Date(current));
         current.setDate(current.getDate() + 1);
     }
-    const logSet = new Set(logs.map(l => new Date(l.date).toDateString()));
+
+    // Count logs per day
+    const logCounts = new Map<string, number>();
+    logs.forEach(l => {
+        const d = new Date(l.date).toDateString();
+        logCounts.set(d, (logCounts.get(d) || 0) + 1);
+    });
+
     const weeksCount = Math.ceil(dates.length / 7);
     let cellSizeClass = 'w-3.5 h-3.5';
     let gapClass = 'gap-1';
@@ -293,36 +309,54 @@ function ContributionGraph({ logs, startDate, onToggle }: { logs: HabitLog[], st
     const isCalendarMode = weeksCount <= 5;
 
     const handleDayClick = (date: Date) => {
-        if (!onToggle) return;
-        if (date.getTime() === today.getTime()) {
-            onToggle(date);
-        } else {
-            setConfirmingDate(date);
-        }
+        if (!onAdjust) return;
+        setSelectedDate(date);
     };
 
-    const confirmToggle = () => {
-        if (confirmingDate && onToggle) {
-            onToggle(confirmingDate);
-            setConfirmingDate(null);
-        }
+    const getOpacity = (count: number) => {
+        if (count === 0) return 0; // Handled by class logic usually, but here useful
+        if (count === 1) return 0.4;
+        if (count === 2) return 0.6;
+        if (count === 3) return 0.8;
+        return 1;
     };
 
     return (
         <div className="relative">
             <AnimatePresence>
-                {confirmingDate && (
+                {selectedDate && (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="absolute inset-0 z-20 bg-[#FDF2EC]/95 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 text-center border border-[#5B2D7D]/10"
                     >
-                        <h3 className="text-sm font-bold text-[#5B2D7D] mb-1">Update {confirmingDate.toLocaleDateString()}?</h3>
-                        <div className="flex gap-2 w-full mt-2">
-                            <button onClick={() => setConfirmingDate(null)} className="flex-1 py-2 rounded-lg bg-white border text-xs font-bold">Cancel</button>
-                            <button onClick={confirmToggle} className="flex-1 py-2 rounded-lg bg-[#5B2D7D] text-white text-xs font-bold">Confirm</button>
+                        <h3 className="text-sm font-bold text-[#5B2D7D] mb-1">{selectedDate.toLocaleDateString()}</h3>
+                        <p className="text-xs text-[#5B2D7D]/60 mb-3 font-bold">
+                            Logs: {logCounts.get(selectedDate.toDateString()) || 0}
+                        </p>
+                        
+                        <div className="flex items-center gap-3 w-full max-w-[120px]">
+                            <button 
+                                onClick={() => onAdjust && onAdjust(selectedDate, -1)}
+                                className="w-8 h-8 rounded-full bg-white border border-[#EADDDE] flex items-center justify-center text-[#5B2D7D] hover:bg-red-50 hover:border-red-200 transition-colors"
+                            >
+                                <Minus className="w-4 h-4" />
+                            </button>
+                            <div className="flex-1 h-1 bg-[#EADDDE] rounded-full overflow-hidden">
+                                <div className="h-full bg-[#5B2D7D]" style={{ width: '50%' }} /> 
+                            </div>
+                            <button 
+                                onClick={() => onAdjust && onAdjust(selectedDate, 1)}
+                                className="w-8 h-8 rounded-full bg-white border border-[#EADDDE] flex items-center justify-center text-[#5B2D7D] hover:bg-green-50 hover:border-green-200 transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </button>
                         </div>
+                        
+                        <button onClick={() => setSelectedDate(null)} className="mt-4 text-[10px] font-bold text-[#5B2D7D]/40 uppercase tracking-wider hover:text-[#5B2D7D]">
+                            Close
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -341,18 +375,20 @@ function ContributionGraph({ logs, startDate, onToggle }: { logs: HabitLog[], st
                 <div className="overflow-x-auto pb-2 custom-scrollbar flex-1">
                     <div className={`grid grid-rows-7 grid-flow-col ${gapClass} ${containerClass}`} style={{ gridTemplateColumns: weeksCount <= 5 ? `repeat(${weeksCount}, 1fr)` : `repeat(${weeksCount}, min-content)` }}>
                         {dates.map((date) => {
-                            const isDone = logSet.has(date.toDateString());
+                            const count = logCounts.get(date.toDateString()) || 0;
                             const isToday = date.getTime() === today.getTime();
                             const isFuture = date > today;
+                            
                             return (
                                 <button 
                                     key={date.toISOString()} 
-                                    disabled={isFuture || !onToggle}
+                                    disabled={isFuture || !onAdjust}
                                     onClick={() => handleDayClick(date)}
-                                    className={`${cellSizeClass} transition-all flex items-center justify-center rounded-[3px] ${isDone ? 'bg-[#5B2D7D]' : 'bg-[#EADDDE]/50'} ${isToday ? 'ring-1 ring-[#5B2D7D] ring-offset-1 z-10' : ''} ${isFuture ? 'opacity-0' : ''}`} 
+                                    className={`${cellSizeClass} transition-all flex items-center justify-center rounded-[3px] ${count > 0 ? 'bg-[#5B2D7D]' : 'bg-[#EADDDE]/50'} ${isToday ? 'ring-1 ring-[#5B2D7D] ring-offset-1 z-10' : ''} ${isFuture ? 'opacity-0' : ''}`} 
+                                    style={{ opacity: count > 0 ? getOpacity(count) : 1 }}
                                 >
                                     {isCalendarMode && (
-                                        <span className={`text-xs font-bold ${isDone ? 'text-white' : 'text-[#5B2D7D]/60'}`}>
+                                        <span className={`text-xs font-bold ${count > 0 ? 'text-white' : 'text-[#5B2D7D]/60'}`}>
                                             {date.getDate()}
                                         </span>
                                     )}
