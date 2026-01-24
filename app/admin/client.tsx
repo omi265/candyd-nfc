@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition, useState } from "react";
-import { createProduct } from "@/app/actions/admin";
+import { createUserAndProduct } from "@/app/actions/admin";
 
 import { toast } from "sonner";
 
@@ -19,22 +19,26 @@ const CHARM_TYPES: Array<{
 export function AdminDashboardClient({ users = [] }: { users: any[] }) {
   const [isPending, startTransition] = useTransition();
   const [charmType, setCharmType] = useState<"LIFE" | "HABIT">("LIFE");
-  const [selectedEmail, setSelectedEmail] = useState("");
+  const [mode, setMode] = useState<"EXISTING" | "NEW">("EXISTING");
+  const [email, setEmail] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedEmail) {
-        toast.error("Please select a user");
+    if (!email) {
+        toast.error("Please provide an email");
         return;
     }
 
     startTransition(async () => {
-      const result = await createProduct(selectedEmail, "New Charm", charmType);
+      const result = await createUserAndProduct(email, "New Charm", charmType);
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Product created successfully!");
-        setSelectedEmail("");
+        const msg = result.isNewUser 
+            ? "User & Product created! (Pass: candyd123)" 
+            : "Product created for existing user!";
+        toast.success(msg);
+        setEmail("");
         setCharmType("LIFE");
       }
     });
@@ -42,22 +46,54 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Mode Toggle */}
+      <div className="flex bg-[#EADDDE]/30 p-1 rounded-xl">
+          <button
+            type="button"
+            onClick={() => { setMode("EXISTING"); setEmail(""); }}
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${mode === "EXISTING" ? "bg-white text-[#5B2D7D] shadow-sm" : "text-[#5B2D7D]/60 hover:text-[#5B2D7D]"}`}
+          >
+            Existing User
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("NEW"); setEmail(""); }}
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${mode === "NEW" ? "bg-white text-[#5B2D7D] shadow-sm" : "text-[#5B2D7D]/60 hover:text-[#5B2D7D]"}`}
+          >
+            New User
+          </button>
+      </div>
+
       <div>
-        <label className="block text-sm font-medium text-[#5B2D7D] mb-1">Select User</label>
-        <select
-          name="email"
-          required
-          value={selectedEmail}
-          onChange={(e) => setSelectedEmail(e.target.value)}
-          className="w-full px-4 py-3 bg-white border border-[#EADDDE] rounded-xl focus:ring-2 focus:ring-[#5B2D7D] outline-none text-[#5B2D7D] appearance-none font-[Outfit]"
-        >
-          <option value="" className="font-[Outfit]">-- Choose a user --</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.email} className="font-[Outfit]">
-              {user.name} ({user.email})
-            </option>
-          ))}
-        </select>
+        <label className="block text-sm font-medium text-[#5B2D7D] mb-1">
+            {mode === "EXISTING" ? "Select User" : "User Email"}
+        </label>
+        
+        {mode === "EXISTING" ? (
+            <select
+            name="email"
+            required={mode === "EXISTING"}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 bg-white border border-[#EADDDE] rounded-xl focus:ring-2 focus:ring-[#5B2D7D] outline-none text-[#5B2D7D] appearance-none font-[Outfit]"
+            >
+            <option value="" className="font-[Outfit]">-- Choose a user --</option>
+            {users.map((user) => (
+                <option key={user.id} value={user.email} className="font-[Outfit]">
+                {user.name} ({user.email})
+                </option>
+            ))}
+            </select>
+        ) : (
+            <input
+                type="email"
+                required={mode === "NEW"}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter new user email..."
+                className="w-full px-4 py-3 bg-white border border-[#EADDDE] rounded-xl focus:ring-2 focus:ring-[#5B2D7D] outline-none text-[#5B2D7D] font-[Outfit]"
+            />
+        )}
       </div>
 
       <div>

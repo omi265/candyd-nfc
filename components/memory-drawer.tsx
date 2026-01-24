@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles, Users } from "lucide-react";
 import AudioPlayer from "@/app/components/AudioPlayer";
 import { getOptimizedUrl } from "@/lib/media-helper";
+import Image from "next/image";
 
 interface MemoryDrawerProps {
     memory: any | null;
@@ -105,10 +106,11 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit }
                                     {media.type.startsWith('image') && (
                                         <div className="bg-white p-3 rounded-[32px] shadow-sm">
                                             <div className="relative aspect-square rounded-[24px] overflow-hidden bg-[#FDF2EC]">
-                                                <img 
+                                                <Image 
                                                     src={getOptimizedUrl(media.url, 'image', 600)} 
                                                     alt="Memory" 
-                                                    className="w-full h-full object-cover" 
+                                                    fill
+                                                    className="object-cover" 
                                                 />
                                             </div>
                                         </div>

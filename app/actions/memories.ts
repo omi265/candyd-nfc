@@ -113,6 +113,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
     }
 
     revalidatePath("/"); // Update home page
+    revalidatePath("/life-charm");
     return { success: true };
   } catch (error: any) {
     console.error("Database Error:", error);
@@ -139,7 +140,11 @@ export async function getMemories(productId?: string) {
         createdAt: 'desc',
       },
       include: {
-        media: true, // Will be empty for now
+        media: {
+          orderBy: {
+            orderIndex: "asc"
+          }
+        }
       }
     });
     return memories;
@@ -370,6 +375,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
         }
 
         revalidatePath("/");
+        revalidatePath("/life-charm");
         revalidatePath(`/memory/${id}`);
         return { success: true };
     } catch (error: any) {
@@ -402,6 +408,7 @@ export async function deleteMemory(id: string) {
 
         await db.memory.delete({ where: { id } });
         revalidatePath("/");
+        revalidatePath("/life-charm");
         return { success: true };
     } catch (error: any) {
          return { error: error.message };

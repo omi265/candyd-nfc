@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useMotionValue, animate, useTransform, MotionValue } from "motion/react";
 import { Mic, Heart, Zap, Plus, Image as ImageIcon, ChevronUp } from "lucide-react";
+import Image from "next/image";
 
 interface Product {
     id: string;
@@ -88,10 +89,10 @@ function CharmCard({
       icon = (
         <div className="relative w-20 h-20 flex items-center justify-center">
             <div className="absolute inset-0 bg-white/20 rounded-xl shadow-md border-2 border-white/30 -rotate-12 translate-x-[-15%] translate-y-[-5%] overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1518173946687-a4c8a9b746f5?auto=format&fit=crop&w=100&q=80" className="w-full h-full object-cover opacity-40" alt="" />
+                <Image src="https://images.unsplash.com/photo-1518173946687-a4c8a9b746f5?auto=format&fit=crop&w=100&q=80" fill className="object-cover opacity-40" alt="" sizes="80px" />
             </div>
             <div className="absolute inset-0 bg-white/20 rounded-xl shadow-md border-2 border-white/30 rotate-12 translate-x-[15%] translate-y-[5%] overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" className="w-full h-full object-cover opacity-40" alt="" />
+                <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" fill className="object-cover opacity-40" alt="" sizes="80px" />
             </div>
             <div className="relative z-10 w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg">
                 <ImageIcon className="w-8 h-8 text-[#5B2D7D]" />

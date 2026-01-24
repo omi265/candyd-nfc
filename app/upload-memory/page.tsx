@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
+import Image from "next/image";
 
 // --- Components ---
 
@@ -470,7 +471,7 @@ function MemoryUploadContent() {
                                                          <AudioPlayer src={item.previewUrl} className="w-full h-full bg-transparent! p-2!" />
                                                     </div>
                                                 ) : (
-                                                    <img src={item.previewUrl} alt="preview" className="w-full h-full object-cover" />
+                                                    <Image src={item.previewUrl} alt="preview" fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
                                                 )}
                                                 
                                                 {/* Status Indicators */}

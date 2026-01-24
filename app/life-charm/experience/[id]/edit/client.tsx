@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
-import { useRouter, useSearchParams, useParams } from "next/navigation";
+import { useState, useTransition, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -10,73 +10,74 @@ import {
   Calendar,
   Users,
   Image as ImageIcon,
-  Video,
   X,
   Upload,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
-import { getListItem, markAsLived } from "@/app/actions/life-charm";
-import { getPeople, createPerson } from "@/app/actions/people";
+import { 
+    updateExperience, 
+    addExperienceMedia, 
+    deleteExperienceMedia 
+} from "@/app/actions/life-charm";
+import { createPerson } from "@/app/actions/people";
 import { getCloudinarySignature } from "@/app/actions/upload";
-import { Person, LifeListItem } from "@prisma/client";
+import { Person, Experience, ExperienceMedia, LifeListItem } from "@prisma/client";
 import { toast } from "sonner";
+import { getOptimizedUrl } from "@/lib/media-helper";
 import Image from "next/image";
 
+type ExperienceWithRelations = Experience & {
+  media: ExperienceMedia[];
+  item: LifeListItem;
+};
+
+interface EditExperienceClientProps {
+  experience: ExperienceWithRelations;
+  people: Person[];
+  charmId: string;
+}
+
 interface MediaItem {
-  id: string;
+  id: string; // Database ID or Temp ID
   url: string;
   type: "image" | "video" | "audio";
   size: number;
-  status: "uploading" | "complete" | "error";
+  status: "existing" | "uploading" | "complete" | "error";
   progress: number;
+  isNew?: boolean;
 }
 
-export default function MarkAsLivedPage() {
+export default function EditExperienceClient({
+  experience,
+  people,
+  charmId,
+}: EditExperienceClientProps) {
   const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
-  const itemId = params.id as string;
-  const charmId = searchParams.get("charmId");
+  const [date, setDate] = useState(new Date(experience.date).toISOString().split("T")[0]);
+  const [location, setLocation] = useState(experience.location || "");
+  const [reflection, setReflection] = useState(experience.reflection || "");
+  const [selectedPeople, setSelectedPeople] = useState<string[]>(experience.peopleIds);
+  
+  // Initialize media state with existing media
+  const [media, setMedia] = useState<MediaItem[]>(
+      experience.media.map(m => ({
+          id: m.id,
+          url: m.url,
+          type: m.type as "image" | "video" | "audio",
+          size: m.size,
+          status: "existing",
+          progress: 100
+      }))
+  );
 
-  const [item, setItem] = useState<LifeListItem | null>(null);
-  const [people, setPeople] = useState<Person[]>([]);
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [location, setLocation] = useState("");
-  const [reflection, setReflection] = useState("");
-  const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
-  const [media, setMedia] = useState<MediaItem[]>([]);
   const [showPeopleSelector, setShowPeopleSelector] = useState(false);
   const [newPersonName, setNewPersonName] = useState("");
   const [isAddingPerson, setIsAddingPerson] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [peopleList, setPeopleList] = useState(people);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!charmId || !itemId) {
-      router.push("/");
-      return;
-    }
-
-    const fetchData = async () => {
-      const [itemData, peopleData] = await Promise.all([
-        getListItem(itemId),
-        getPeople(),
-      ]);
-
-      if (!itemData || itemData.status === "lived") {
-        router.push(`/life-charm?charmId=${charmId}`);
-        return;
-      }
-
-      setItem(itemData);
-      setPeople(peopleData);
-      // Pre-select people from the item
-      setSelectedPeople(itemData.peopleIds || []);
-    };
-
-    fetchData();
-  }, [itemId, charmId, router]);
 
   const handleAddPerson = async () => {
     if (!newPersonName.trim()) return;
@@ -88,9 +89,10 @@ export default function MarkAsLivedPage() {
     if (result.error) {
       toast.error(result.error);
     } else if (result.person) {
-      setPeople([...people, result.person]);
+      setPeopleList([...peopleList, result.person]);
       setSelectedPeople([...selectedPeople, result.person.id]);
       setNewPersonName("");
+      toast.success(`Added ${result.person.name}`);
     }
   };
 
@@ -113,20 +115,20 @@ export default function MarkAsLivedPage() {
         ? "video"
         : "audio";
 
-      const mediaId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const newMedia: MediaItem = {
-        id: mediaId,
+        id: tempId,
         url: "",
         type: mediaType,
         size: file.size,
         status: "uploading",
         progress: 0,
+        isNew: true
       };
 
       setMedia((prev) => [...prev, newMedia]);
 
       try {
-        // Get signature with specific folder
         const signatureData = await getCloudinarySignature("candyd/experiences");
         if (!signatureData || !signatureData.apiKey || !signatureData.cloudName) {
           throw new Error("Failed to get upload signature");
@@ -152,7 +154,7 @@ export default function MarkAsLivedPage() {
         if (data.secure_url) {
           setMedia((prev) =>
             prev.map((m) =>
-              m.id === mediaId
+              m.id === tempId
                 ? { ...m, url: data.secure_url, status: "complete", progress: 100 }
                 : m
             )
@@ -160,24 +162,37 @@ export default function MarkAsLivedPage() {
         } else {
           throw new Error("Upload failed");
         }
-      } catch (error) {
+      } catch {
         setMedia((prev) =>
           prev.map((m) =>
-            m.id === mediaId ? { ...m, status: "error" } : m
+            m.id === tempId ? { ...m, status: "error" } : m
           )
         );
         toast.error("Failed to upload file");
       }
     }
 
-    // Clear input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const removeMedia = (mediaId: string) => {
-    setMedia((prev) => prev.filter((m) => m.id !== mediaId));
+  const handleRemoveMedia = async (mediaItem: MediaItem) => {
+      if (mediaItem.status === "existing") {
+          // Delete from server immediately
+          if (confirm("Are you sure you want to remove this media?")) {
+              const result = await deleteExperienceMedia(mediaItem.id);
+              if (result.success) {
+                  setMedia(prev => prev.filter(m => m.id !== mediaItem.id));
+                  toast.success("Media removed");
+              } else {
+                  toast.error("Failed to remove media");
+              }
+          }
+      } else {
+          // Just remove from local state
+          setMedia(prev => prev.filter(m => m.id !== mediaItem.id));
+      }
   };
 
   const handleSubmit = () => {
@@ -192,49 +207,55 @@ export default function MarkAsLivedPage() {
       return;
     }
 
-    const completedMedia = media.filter((m) => m.status === "complete");
+    const newMediaItems = media.filter(m => m.isNew && m.status === "complete");
 
     startTransition(async () => {
-      const result = await markAsLived(itemId, {
+      // 1. Update basic info
+      const updateResult = await updateExperience(experience.id, {
         date,
         location: location.trim() || undefined,
         reflection: reflection.trim() || undefined,
-        peopleIds: selectedPeople.length > 0 ? selectedPeople : undefined,
-        mediaUrls: completedMedia.map((m) => m.url),
-        mediaTypes: completedMedia.map((m) => m.type),
-        mediaSizes: completedMedia.map((m) => m.size),
+        peopleIds: selectedPeople,
       });
 
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("Experience saved!");
-        router.push(`/life-charm?charmId=${charmId}&view=grid&focusId=${itemId}`);
+      if (updateResult.error) {
+        toast.error(updateResult.error);
+        return;
       }
+
+      // 2. Add new media if any
+      if (newMediaItems.length > 0) {
+          const mediaPayload = newMediaItems.map(m => ({
+              url: m.url,
+              type: m.type,
+              size: m.size
+          }));
+          
+          const addMediaResult = await addExperienceMedia(experience.id, mediaPayload);
+          if (addMediaResult.error) {
+              toast.error("Info updated, but failed to add new media");
+              return;
+          }
+      }
+
+      toast.success("Experience updated!");
+      router.push(`/life-charm/experience/${experience.id}?charmId=${charmId}`);
     });
   };
-
-  if (!item || !charmId) {
-    return (
-      <div className="min-h-dvh bg-[#FDF2EC] flex items-center justify-center">
-        <div className="animate-pulse text-[#5B2D7D]">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-dvh bg-[#FDF2EC] flex flex-col font-[Outfit]">
       {/* Header */}
-      <header className="flex items-center gap-4 px-6 py-4 border-b border-[#5B2D7D]/10">
+      <header className="flex items-center gap-4 px-6 py-4 border-b border-[#5B2D7D]/10 bg-[#FDF2EC]">
         <button
-          onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
+          onClick={() => router.push(`/life-charm/experience/${experience.id}?charmId=${charmId}`)}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
         >
           <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-[#5B2D7D]">Mark as Lived</h1>
-          <p className="text-sm text-[#5B2D7D]/60 line-clamp-1">{item.title}</p>
+          <h1 className="text-xl font-bold text-[#5B2D7D]">Edit Experience</h1>
+          <p className="text-sm text-[#5B2D7D]/60 line-clamp-1">{experience.item.title}</p>
         </div>
       </header>
 
@@ -282,7 +303,7 @@ export default function MarkAsLivedPage() {
             {selectedPeople.length > 0 ? (
               <span className="text-[#5B2D7D]">
                 {selectedPeople
-                  .map((id) => people.find((p) => p.id === id)?.name)
+                  .map((id) => peopleList.find((p) => p.id === id)?.name)
                   .filter(Boolean)
                   .join(", ")}
               </span>
@@ -302,7 +323,7 @@ export default function MarkAsLivedPage() {
               animate={{ opacity: 1, y: 0 }}
               className="mt-2 p-3 bg-white rounded-xl border border-[#5B2D7D]/10 space-y-2"
             >
-              {people.map((person) => (
+              {peopleList.map((person) => (
                 <button
                   key={person.id}
                   onClick={() => togglePerson(person.id)}
@@ -347,7 +368,7 @@ export default function MarkAsLivedPage() {
           <textarea
             value={reflection}
             onChange={(e) => setReflection(e.target.value)}
-            placeholder="Share your thoughts and feelings about this experience..."
+            placeholder="Share your thoughts and feelings..."
             rows={4}
             className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none focus:border-[#5B2D7D]/30 resize-none"
           />
@@ -357,51 +378,58 @@ export default function MarkAsLivedPage() {
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-[#5B2D7D]/60 mb-2">
             <ImageIcon className="w-4 h-4" />
-            Photos & Videos (optional)
+            Photos & Videos
           </label>
 
           {/* Media Grid */}
-          {media.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 mb-3">
-              {media.map((m) => (
-                <div
-                  key={m.id}
-                  className="aspect-square rounded-xl overflow-hidden bg-[#EADDDE] relative"
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {media.map((m) => (
+              <div
+                key={m.id}
+                className="aspect-square rounded-xl overflow-hidden bg-[#EADDDE] relative group"
+              >
+                {m.status === "uploading" ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="animate-spin w-6 h-6 border-2 border-[#5B2D7D] border-t-transparent rounded-full" />
+                  </div>
+                ) : m.status === "error" ? (
+                  <div className="w-full h-full flex items-center justify-center text-red-500">
+                    <X className="w-6 h-6" />
+                  </div>
+                ) : m.type === "image" ? (
+                  <Image
+                    src={getOptimizedUrl(m.url, "image", 200)}
+                    alt=""
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <video
+                    src={m.url}
+                    className="w-full h-full object-cover"
+                    muted
+                  />
+                )}
+                
+                <button
+                  onClick={() => handleRemoveMedia(m)}
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-md"
                 >
-                  {m.status === "uploading" ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="animate-spin w-6 h-6 border-2 border-[#5B2D7D] border-t-transparent rounded-full" />
-                    </div>
-                  ) : m.status === "error" ? (
-                    <div className="w-full h-full flex items-center justify-center text-red-500">
-                      <X className="w-6 h-6" />
-                    </div>
-                  ) : m.type === "image" ? (
-                    <Image
-                      src={m.url}
-                      alt=""
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <video
-                      src={m.url}
-                      className="w-full h-full object-cover"
-                      muted
-                    />
-                  )}
-                  <button
-                    onClick={() => removeMedia(m.id)}
-                    className="absolute top-1 right-1 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center"
-                  >
-                    <X className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+                  <Trash2 className="w-3 h-3 text-white" />
+                </button>
+              </div>
+            ))}
 
-          {/* Upload Button */}
+            {/* Upload Button Block */}
+            <button
+                onClick={() => fileInputRef.current?.click()}
+                className="aspect-square rounded-xl border-2 border-dashed border-[#5B2D7D]/20 flex flex-col items-center justify-center gap-1 text-[#5B2D7D]/60 hover:border-[#5B2D7D]/40 transition-colors bg-white/50"
+            >
+                <Upload className="w-6 h-6" />
+                <span className="text-xs">Add</span>
+            </button>
+          </div>
+
           <input
             ref={fileInputRef}
             type="file"
@@ -410,13 +438,6 @@ export default function MarkAsLivedPage() {
             onChange={handleFileSelect}
             className="hidden"
           />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full py-4 border-2 border-dashed border-[#5B2D7D]/20 rounded-xl flex items-center justify-center gap-2 text-[#5B2D7D]/60 hover:border-[#5B2D7D]/40 transition-colors"
-          >
-            <Upload className="w-5 h-5" />
-            <span>Add photos or videos</span>
-          </button>
         </div>
       </div>
 
@@ -427,14 +448,7 @@ export default function MarkAsLivedPage() {
           disabled={!date || isPending}
           className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#93B132] transition-colors disabled:opacity-50"
         >
-          {isPending ? (
-            "Saving..."
-          ) : (
-            <>
-              <Sparkles className="w-5 h-5" />
-              Save Experience
-            </>
-          )}
+          {isPending ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </div>

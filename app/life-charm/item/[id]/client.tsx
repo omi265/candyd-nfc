@@ -20,6 +20,7 @@ import { LifeListItem, Person, Experience, ExperienceMedia } from "@prisma/clien
 import { deleteListItem } from "@/app/actions/life-charm";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import { toast } from "sonner";
+import Image from "next/image";
 
 type ItemWithExperience = LifeListItem & {
   lifeList: { userId: string; productId: string };
@@ -88,10 +89,12 @@ export default function ItemDetailClient({
           {isLived && heroMedia ? (
             <>
               {heroMedia.type === "image" ? (
-                <img
+                <Image
                   src={getOptimizedUrl(heroMedia.url, "image", 800)}
                   alt=""
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  priority
                 />
               ) : heroMedia.type === "video" ? (
                 <video
@@ -307,10 +310,11 @@ export default function ItemDetailClient({
                       className="aspect-square rounded-2xl overflow-hidden bg-[#EADDDE] relative"
                     >
                       {media.type === "image" ? (
-                        <img
+                        <Image
                           src={getOptimizedUrl(media.url, "image", 200)}
                           alt=""
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       ) : media.type === "video" ? (
                         <video

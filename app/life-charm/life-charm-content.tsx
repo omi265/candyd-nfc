@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, useMotionValue, animate, useTransform, MotionValue } from "motion/react";
 import {
   Plus,
@@ -11,10 +11,13 @@ import {
   Users,
   ChevronUp,
   Image as ImageIcon,
+  Search,
+  X
 } from "lucide-react";
 import { LifeList, LifeListItem, Product, Person, Experience, ExperienceMedia, Memory, Media } from "@prisma/client";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import { MemoryDrawer } from "@/components/memory-drawer";
+import Image from "next/image";
 
 type LifeListItemWithExperience = LifeListItem & {
   experience: (Experience & { media: ExperienceMedia[] }) | null;
@@ -50,6 +53,58 @@ interface LifeCharmContentProps {
   people: Person[];
   user: { id?: string; name?: string | null; email?: string | null };
   memories: MemoryWithMedia[];
+}
+
+// --- Search / Filter Bar ---
+
+interface FilterBarProps {
+    searchQuery: string;
+    setSearchQuery: (q: string) => void;
+    isSearchOpen: boolean;
+    setIsSearchOpen: (open: boolean) => void;
+}
+
+function FilterBar({ searchQuery, setSearchQuery, isSearchOpen, setIsSearchOpen }: FilterBarProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+      if (isSearchOpen && inputRef.current) {
+          inputRef.current.focus();
+      }
+  }, [isSearchOpen]);
+
+  return (
+    <div className="flex items-center gap-3 px-5 py-3 z-30 relative">
+      <div className={`shrink-0 rounded-full bg-white shadow-sm border border-[#EADDDE] flex items-center transition-all duration-300 overflow-hidden h-10 ${isSearchOpen ? 'w-full px-4' : 'w-10 justify-center'}`}>
+         {isSearchOpen ? (
+             <>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search memories and items..."
+                    className="w-full h-full bg-transparent outline-none text-[#5B2D7D] text-sm placeholder-[#5B2D7D]/40 min-w-0"
+                    onBlur={() => !searchQuery && setIsSearchOpen(false)}
+                />
+                {searchQuery ? (
+                     <button onClick={() => setSearchQuery("")} className="ml-2">
+                        <X className="w-4 h-4 text-[#5B2D7D]/60" />
+                     </button>
+                ) : (
+                    <button onClick={() => setIsSearchOpen(false)} className="ml-2">
+                        <X className="w-4 h-4 text-[#5B2D7D]/60" />
+                    </button>
+                )}
+             </>
+         ) : (
+            <button onClick={() => setIsSearchOpen(true)} className="w-full h-full flex items-center justify-center">
+                <Search className="w-5 h-5 text-[#5B2D7D]" />
+            </button>
+         )}
+      </div>
+    </div>
+  );
 }
 
 // --- Helper for Distance Calculation ---
@@ -149,12 +204,19 @@ function GridCard({
       }}
     >
       {/* Background */}
-      {hasMedia && firstMedia?.type === "image" ? (
+      {hasMedia && (firstMedia?.type.includes("image") || firstMedia?.type.includes("video")) ? (
         <div className="absolute inset-0">
-          <img
-            src={getOptimizedUrl(firstMedia.url, "image", 600)}
+          <Image
+            src={getOptimizedUrl(
+                firstMedia.type.includes("video") 
+                ? (firstMedia.url.includes('.') ? firstMedia.url.replace(/\.[^/.]+$/, ".jpg") : `${firstMedia.url}.jpg`) 
+                : firstMedia.url, 
+                "image", 
+                600
+            )}
             alt=""
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         </div>
@@ -242,15 +304,32 @@ export default function LifeCharmContent({
   memories
 }: LifeCharmContentProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialView = searchParams.get('view') as 'grid' | 'list' | null;
+  const focusId = searchParams.get('focusId');
+  
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [cellSize, setCellSize] = useState({ width: 0, height: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(initialView === 'list' ? 'list' : 'grid');
   const dragStartRef = useRef<{ col: number; row: number } | null>(null);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedDrawerData, setSelectedDrawerData] = useState<any>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Update view mode if URL changes
+  useEffect(() => {
+      if (initialView && (initialView === 'grid' || initialView === 'list')) {
+          setViewMode(prev => {
+              if (prev !== initialView) return initialView;
+              return prev;
+          });
+      }
+  }, [initialView]);
 
   const handleEditItem = () => {
       if (!selectedDrawerData) return;
@@ -258,7 +337,7 @@ export default function LifeCharmContent({
       if (selectedDrawerData.dataType === 'memory') {
           router.push(`/memory/${selectedDrawerData.id}`);
       } else {
-          router.push(`/life-charm/experience/${selectedDrawerData.id}?charmId=${product.id}`);
+          router.push(`/life-charm/experience/${selectedDrawerData.id}/edit?charmId=${product.id}`);
       }
       setDrawerOpen(false);
   };
@@ -311,16 +390,55 @@ export default function LifeCharmContent({
           });
       });
 
-      // Sort by date descending (newest first)
-      unifiedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // Filter by searchQuery
+      let filtered = unifiedItems;
+      if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          filtered = unifiedItems.filter(item => {
+              const titleMatch = item.title.toLowerCase().includes(q);
+              const descMatch = item.description?.toLowerCase().includes(q);
+              
+              // Keywords/Tags match (Emotions, Events, Mood)
+              let tagMatch = false;
+              if (item.type === 'memory') {
+                  const mem = item.originalData as MemoryWithMedia;
+                  const emotions = Array.isArray(mem.emotions) ? mem.emotions : (typeof mem.emotions === 'string' ? mem.emotions.split(',') : []);
+                  const events = Array.isArray(mem.events) ? mem.events : (typeof mem.events === 'string' ? mem.events.split(',') : []);
+                  
+                  tagMatch = emotions.some((e: string) => e.toLowerCase().includes(q)) ||
+                             events.some((e: string) => e.toLowerCase().includes(q)) ||
+                             (mem.mood?.toLowerCase().includes(q) ?? false);
+              } else {
+                  // For life items, maybe search title as a tag too? 
+                  // Life items don't have separate tags in the schema yet, but title is the primary tag
+                  tagMatch = item.title.toLowerCase().includes(q);
+              }
 
-      return unifiedItems;
-  }, [lifeList.items, memories]);
+              return titleMatch || descMatch || tagMatch;
+          });
+      }
+
+      // Sort by date descending (newest first)
+      filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      return filtered;
+  }, [lifeList.items, memories, searchQuery]);
 
 
   // 2. List Items: All LifeList Items (Pending + Lived)
   const listItems = useMemo(() => {
-      const items = [...lifeList.items];
+      let items = [...lifeList.items];
+
+      // Filter by searchQuery
+      if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          items = items.filter(item => {
+              const titleMatch = item.title.toLowerCase().includes(q);
+              const descMatch = item.description?.toLowerCase().includes(q);
+              return titleMatch || descMatch;
+          });
+      }
+
       // Sort: Pending first, then Lived? Or Lived first?
       // Usually bucket lists show what's left to do first, or completed at bottom.
       // Let's sort by Status (Pending top) then OrderIndex
@@ -330,7 +448,7 @@ export default function LifeCharmContent({
           return a.orderIndex - b.orderIndex;
       });
       return items;
-  }, [lifeList.items]);
+  }, [lifeList.items, searchQuery]);
 
 
   // --- GRID LAYOUT LOGIC ---
@@ -340,6 +458,8 @@ export default function LifeCharmContent({
   const FILL_ORDER = getCenterOutOrder(currentGridSize);
 
   const gridData = useMemo(() => {
+    if (gridItems.length === 0 && searchQuery) return [];
+
     const grid: (GridItem | null)[] = Array(totalCells).fill(null);
     
     // Shuffle slightly or keep sorted?
@@ -352,7 +472,7 @@ export default function LifeCharmContent({
       }
     });
     return grid;
-  }, [gridItems, totalCells, FILL_ORDER]);
+  }, [gridItems, totalCells, FILL_ORDER, searchQuery]);
 
   // Measure cell size
   useEffect(() => {
@@ -376,18 +496,37 @@ export default function LifeCharmContent({
   // Set initial position
   useEffect(() => {
     if (cellSize.width === 0 || containerSize.width === 0) return;
+    if (gridData.length === 0) return;
 
-    // Center on the first item (which is in the middle due to center-out)
-    const centerIndex = FILL_ORDER[0];
-    const row = Math.floor(centerIndex / currentGridSize);
-    const col = centerIndex % currentGridSize;
+    let targetRow = 0;
+    let targetCol = 0;
+    let found = false;
 
-    const initialX = (containerSize.width - cellSize.width) / 2 - col * cellSize.width;
-    const initialY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - row * cellSize.height;
+    // If focusId is provided, try to find it in the grid
+    if (focusId && viewMode === 'grid') {
+        const index = gridData.findIndex(item => item?.id === focusId);
+        if (index !== -1) {
+            targetRow = Math.floor(index / currentGridSize);
+            targetCol = index % currentGridSize;
+            found = true;
+        }
+    }
+
+    if (!found) {
+        // Default: Center on the first item (which is in the middle due to center-out)
+        const centerIndex = FILL_ORDER[0];
+        if (centerIndex !== undefined && centerIndex < gridData.length) {
+            targetRow = Math.floor(centerIndex / currentGridSize);
+            targetCol = centerIndex % currentGridSize;
+        }
+    }
+
+    const initialX = (containerSize.width - cellSize.width) / 2 - targetCol * cellSize.width;
+    const initialY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - targetRow * cellSize.height;
 
     animate(x, initialX, { type: "spring", stiffness: 300, damping: 30, duration: 0 });
     animate(y, initialY, { type: "spring", stiffness: 300, damping: 30, duration: 0 });
-  }, [cellSize, containerSize, currentGridSize, x, y, FILL_ORDER]);
+  }, [cellSize, containerSize, currentGridSize, x, y, FILL_ORDER, focusId, gridData, viewMode]);
 
   // --- ACTIONS ---
 
@@ -467,9 +606,18 @@ export default function LifeCharmContent({
         </div>
       </header>
 
+      {/* Filter / Search Bar */}
+      <FilterBar 
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        isSearchOpen={isSearchOpen}
+        setIsSearchOpen={setIsSearchOpen}
+      />
+
       {/* Content */}
       <div className="flex-1 min-h-0 relative" ref={containerRef}>
         {viewMode === 'grid' ? (
+            gridData.length > 0 ? (
         <motion.div
           className="grid gap-0 absolute top-0 left-0 touch-none origin-top-left"
           style={{
@@ -528,7 +676,7 @@ export default function LifeCharmContent({
               targetIndex = Math.round((offsetStart - current) / textContentSize);
             }
 
-            let clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
+            const clampedIndex = Math.max(0, Math.min(currentGridSize - 1, targetIndex));
 
             // --- Snap to Valid Item Logic ---
             // Calculate current Row/Col from current X/Y values
@@ -626,11 +774,26 @@ export default function LifeCharmContent({
             );
           })}
         </motion.div>
+            ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-16 h-16 rounded-full bg-[#EADDDE]/30 flex items-center justify-center mb-4">
+                        <Search className="w-8 h-8 text-[#5B2D7D]/20" />
+                    </div>
+                    <h3 className="text-[#5B2D7D] font-bold text-lg">No results found</h3>
+                    <p className="text-[#5B2D7D]/60 text-sm max-w-[200px] mx-auto mt-1">We couldn&apos;t find anything matching your search.</p>
+                    <button 
+                        onClick={() => setSearchQuery("")}
+                        className="mt-6 text-[#5B2D7D] font-bold text-sm underline underline-offset-4"
+                    >
+                        Clear search
+                    </button>
+                </div>
+            )
         ) : (
             // List View
             <div className="w-full h-full overflow-y-auto px-4 pt-4 pb-32 no-scrollbar">
                 <div className="max-w-2xl mx-auto space-y-4">
-                    {listItems.map((item) => {
+                    {listItems.length > 0 ? listItems.map((item) => {
                          const isLived = item.status === 'lived';
                          const hasMedia = item.experience?.media && item.experience.media.length > 0;
                          const firstMedia = hasMedia ? item.experience!.media[0] : null;
@@ -641,9 +804,9 @@ export default function LifeCharmContent({
                                 onClick={() => handleListItemClick(item)}
                                 className="bg-white rounded-2xl p-4 shadow-sm border border-[#EADDDE] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
                             >
-                                <div className={`w-16 h-16 shrink-0 rounded-xl overflow-hidden ${isLived ? '' : 'bg-[#EADDDE]/30 flex items-center justify-center'}`}>
+                                <div className={`w-16 h-16 shrink-0 rounded-xl overflow-hidden relative ${isLived ? '' : 'bg-[#EADDDE]/30 flex items-center justify-center'}`}>
                                     {hasMedia && firstMedia?.type === 'image' ? (
-                                        <img src={getOptimizedUrl(firstMedia.url, 'image', 200)} alt="" className="w-full h-full object-cover" />
+                                        <Image src={getOptimizedUrl(firstMedia.url, 'image', 200)} alt="" fill className="object-cover" />
                                     ) : (
                                         <div className={`w-full h-full flex items-center justify-center ${isLived ? 'bg-[#A4C538]/20' : ''}`}>
                                             {isLived ? <Check className="w-6 h-6 text-[#A4C538]" /> : <div className="w-3 h-3 rounded-full bg-[#EADDDE]" />}
@@ -668,8 +831,22 @@ export default function LifeCharmContent({
                                 
                                 {isLived && <div className="w-2 h-2 rounded-full bg-[#A4C538]" />}
                             </div>
-                         );
-                    })}
+                         )
+                    }) : (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <div className="w-16 h-16 rounded-full bg-[#EADDDE]/30 flex items-center justify-center mb-4">
+                                <Search className="w-8 h-8 text-[#5B2D7D]/20" />
+                            </div>
+                            <h3 className="text-[#5B2D7D] font-bold text-lg">No results found</h3>
+                            <p className="text-[#5B2D7D]/60 text-sm max-w-[200px] mx-auto mt-1">We couldn&apos;t find anything matching your search.</p>
+                            <button 
+                                onClick={() => setSearchQuery("")}
+                                className="mt-6 text-[#5B2D7D] font-bold text-sm underline underline-offset-4"
+                            >
+                                Clear search
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         )}

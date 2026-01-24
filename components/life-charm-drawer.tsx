@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { getOptimizedUrl } from "@/lib/media-helper";
+import Image from "next/image";
 
 interface LifeCharmDrawerProps {
   lifeCharm: any | null;
@@ -301,12 +302,13 @@ function ListItemCard({
         {/* Thumbnail or Chevron */}
         <div className="shrink-0">
           {hasMedia && firstMedia ? (
-            <div className="w-12 h-12 rounded-xl overflow-hidden">
+            <div className="w-12 h-12 rounded-xl overflow-hidden relative">
               {firstMedia.type === "image" ? (
-                <img
+                <Image
                   src={getOptimizedUrl(firstMedia.url, "image", 96)}
                   alt=""
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               ) : firstMedia.type === "video" ? (
                 <video

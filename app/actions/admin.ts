@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { getCloudinaryUsage } from "@/lib/cloudinary-helper";
+import { hash } from "bcryptjs";
 
 export async function getAdminStats() {
   const session = await auth();
@@ -107,6 +108,61 @@ export async function createProduct(
 
     revalidatePath("/admin");
     return { success: true, product };
+  } catch (err) {
+    console.error(err);
+    return { error: "Failed to create product" };
+  }
+}
+
+export async function createUserAndProduct(
+  email: string,
+  productName: string = "New Charm",
+  charmType: "LIFE" | "HABIT" = "LIFE"
+) {
+  const session = await auth();
+  if (session?.user?.role !== "ADMIN") {
+    return { error: "Unauthorized" };
+  }
+
+  // Check if user exists
+  let user = await db.user.findUnique({
+    where: { email },
+  });
+
+  let isNewUser = false;
+
+  if (!user) {
+    // Create new user with default password
+    const hashedPassword = await hash("candyd123", 10);
+    try {
+            user = await db.user.create({
+              data: {
+                email,
+                password: hashedPassword,
+                name: email.split("@")[0], // Default name from email part
+                setupRequired: true,
+              },
+            });
+            isNewUser = true;    } catch {
+        return { error: "Failed to create user" };
+    }
+  }
+
+  // Generate a unique token
+  const token = crypto.randomUUID();
+
+  try {
+    const product = await db.product.create({
+      data: {
+        name: productName,
+        token,
+        userId: user.id,
+        type: charmType,
+      },
+    });
+
+    revalidatePath("/admin");
+    return { success: true, product, isNewUser };
   } catch (err) {
     console.error(err);
     return { error: "Failed to create product" };

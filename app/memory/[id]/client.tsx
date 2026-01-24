@@ -20,16 +20,19 @@ import {
     Trash2,
     Archive,
     ChevronDown,
+    ChevronUp,
     Pencil,
     Check,
     RefreshCw,
     GripVertical,
     X,
-    Users
+    Users,
+    Play
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
 import { getOptimizedUrl } from "@/lib/media-helper";
+import Image from "next/image";
 
 const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
 const EVENTS = ["Pre Wedding Celebrations", "Haldi", "Sangeet", "Mehendi", "Wedding"];
@@ -39,132 +42,157 @@ interface DraggableMediaItemProps {
     item: any;
     index: number;
     isReordering: boolean;
-    scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+    totalItems: number;
+    onMoveUp: () => void;
+    onMoveDown: () => void;
 }
 
-const DraggableMediaItem = ({ item, index, isReordering, scrollContainerRef }: DraggableMediaItemProps) => {
-    const contextControls = useDragControls();
-    
-    // Auto-scroll logic
-    const autoScrollId = useRef<number | null>(null);
-    const pointerY = useRef<number>(0);
-    const isDragging = useRef(false);
-
-    const checkAutoScroll = () => {
-        if (!isDragging.current || !scrollContainerRef.current) return;
-
-        const container = scrollContainerRef.current;
-        const { top, bottom } = container.getBoundingClientRect();
-        const y = pointerY.current;
-
-        const zoneHeight = 80; // slightly smaller zone
-        let scrollSpeed = 0;
-
-        if (y < top + zoneHeight) {
-             const dist = Math.max(0, (top + zoneHeight) - y);
-             // smoother easing?
-             scrollSpeed = -Math.min(dist * 0.3, 15); 
-        } else if (y > bottom - zoneHeight) {
-             const dist = Math.max(0, y - (bottom - zoneHeight));
-             scrollSpeed = Math.min(dist * 0.3, 15);
-        }
-
-        if (scrollSpeed !== 0) {
-            container.scrollTop += scrollSpeed;
-        }
-        
-        autoScrollId.current = requestAnimationFrame(checkAutoScroll);
-    };
-    
-    // We only want to allow drag if isReordering is true
-    // But dragControls.start(e) must be called from pointer down
-    
+const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, onMoveDown }: DraggableMediaItemProps) => {
     return (
-        <Reorder.Item
-            value={item}
-            dragListener={false}
-            dragControls={contextControls}
-            dragMomentum={false} 
-            onDragStart={() => {
-                isDragging.current = true;
-                autoScrollId.current = requestAnimationFrame(checkAutoScroll);
-            }}
-            onDrag={(e, info) => {
-                pointerY.current = info.point.y;
-            }}
-            onDragEnd={() => {
-                isDragging.current = false;
-                if (autoScrollId.current) {
-                    cancelAnimationFrame(autoScrollId.current);
-                    autoScrollId.current = null;
-                }
-            }}
-            className={`relative rounded-[20px] overflow-hidden bg-gray-200 select-none ${
-                item.type === 'audio' ? 'h-24' : ''
-            } ${isReordering ? "ring-2 ring-[#5B2D7D] ring-offset-2 ring-offset-[#FDF2EC]" : ""}`}
-            style={{ 
-                touchAction: "pan-y", 
-                WebkitUserSelect: "none",
-                WebkitTouchCallout: "none"
-            }} 
+        <motion.div
+            layout
+            initial={false}
+            className={`relative overflow-hidden bg-gray-200 select-none transition-all ${
+                isReordering 
+                ? "flex items-center h-28 rounded-xl ring-1 ring-[#EADDDE] bg-white p-0 overflow-hidden" 
+                : `rounded-[20px] ${item.type === 'audio' ? 'h-24' : 'h-48'}`
+            }`}
         >
-              {item.type?.includes('video') ? (
-                   <video src={getOptimizedUrl(item.url, 'video', 1080)} className="w-full h-48 object-cover pointer-events-none" />
-              ) : item.type === 'audio' ? (
-                    <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0] p-2 pointer-events-none">
-                        <div className="w-full pointer-events-auto" onPointerDown={(e) => e.stopPropagation()}>
-                            <AudioPlayer src={item.url} className="w-full bg-transparent! p-0! shadow-none" />
+            {isReordering ? (
+                // --- Row Layout (Reorder Mode) ---
+                <>
+                    {/* Move Up Button (Left) */}
+                    <button 
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
+                        disabled={index === 0}
+                        className="w-14 h-full flex items-center justify-center bg-[#A4C538]/20 text-[#5B2D7D] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#A4C538]/30 transition-colors active:scale-95 shrink-0"
+                    >
+                        <ChevronUp className="w-8 h-8" />
+                    </button>
+
+                    {/* Content */}
+                    <div className="flex-1 flex items-center gap-3 px-2 min-w-0 overflow-hidden">
+                        {/* Small Thumbnail */}
+                        <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden relative bg-[#FDF2EC]">
+                            {item.type?.includes('video') ? (
+                                <div className="w-full h-full relative">
+                                    {item.url.includes("cloudinary.com") ? (
+                                        <Image 
+                                            src={getOptimizedUrl(item.url.replace(/\.[^/.]+$/, ".jpg"), 'video', 400)}
+                                            alt="thumbnail"
+                                            fill
+                                            className="object-cover"
+                                            sizes="80px"
+                                        />
+                                    ) : (
+                                        <video src={item.url} className="w-full h-full object-cover" />
+                                    )}
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                        <Play className="w-5 h-5 text-white fill-white" />
+                                    </div>
+                                </div>
+                            ) : item.type === 'audio' ? (
+                                <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
+                                    <Mic className="w-8 h-8 text-[#5B2D7D]" />
+                                </div>
+                            ) : (
+                                <Image 
+                                    src={getOptimizedUrl(item.url, 'image', 400)} 
+                                    alt="thumbnail" 
+                                    fill 
+                                    className="object-cover" 
+                                    sizes="80px"
+                                />
+                            )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-bold text-[#5B2D7D] capitalize truncate">
+                                {item.type?.split('/')[0] || "Media"}
+                            </p>
+                            <p className="text-[10px] text-[#A68CAB] truncate">
+                                {index === 0 ? "Cover Media" : `Item ${index + 1}`}
+                            </p>
+                            {item.isNew && (
+                                <span className="inline-block mt-1 bg-[#A4C538]/20 text-[#5B2D7D] text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                                    NEW
+                                </span>
+                            )}
                         </div>
                     </div>
-              ) : (
-                   <img src={getOptimizedUrl(item.url, 'image', 1080)} alt="media" className="w-full h-auto object-cover pointer-events-none" />
-              )}
-              
-             {/* Upload Status */}
-             {item.status === 'uploading' && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
-                    <RefreshCw className="w-8 h-8 text-white animate-spin" />
-                </div>
-             )}
-             {item.status === 'error' && (
-                <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center z-20">
-                    <span className="text-white text-xs font-bold px-2">Upload Failed</span>
-                </div>
-             )}
 
-              {/* Indicators */}
-              <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start pointer-events-none z-10 transition-opacity duration-200">
-                  {index === 0 && (
-                      <span className="bg-[#5B2D7D] text-[#A4C538] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
-                          COVER
-                      </span>
-                  )}
-                  {item.isNew && (
-                      <span className={`bg-[#A4C538] text-[#5B2D7D] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm ${index === 0 ? 'ml-auto' : ''}`}>
-                          NEW
-                      </span>
-                  )}
-              </div>
-              
-              {/* Drag Handle Overlay */}
-              <AnimatePresence>
-                {isReordering && (
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-30 flex items-center justify-end pr-4 bg-black/10 backdrop-blur-[1px]"
+                    {/* Move Down Button (Right) */}
+                    <button 
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
+                        disabled={index === totalItems - 1}
+                        className="w-14 h-full flex items-center justify-center bg-[#5B2D7D]/10 text-[#5B2D7D] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#5B2D7D]/20 transition-colors active:scale-95 shrink-0"
                     >
-                        <div 
-                            className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
-                            onPointerDown={(e) => contextControls.start(e)}
-                        >
-                            <GripVertical className="w-6 h-6 text-[#5B2D7D]" />
+                        <ChevronDown className="w-8 h-8" />
+                    </button>
+                </>
+            ) : (
+                // --- Card Layout (View/Edit Mode) ---
+                <>
+                  {item.type?.includes('video') ? (
+                       <div className="relative w-full h-48 bg-black/5">
+                            {item.url.includes("cloudinary.com") ? (
+                                <Image 
+                                    src={getOptimizedUrl(item.url.replace(/\.[^/.]+$/, ".jpg"), 'video', 600)}
+                                    alt="video thumbnail"
+                                    fill
+                                    className="object-cover pointer-events-none"
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                />
+                            ) : (
+                                <video src={item.url} className="w-full h-full object-cover pointer-events-none" preload="metadata" />
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                 <div className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center shadow-sm border border-white/20">
+                                     <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                                 </div>
+                            </div>
+                       </div>
+                  ) : item.type === 'audio' ? (
+                        <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0] p-2 pointer-events-none">
+                            <div className="w-full pointer-events-auto" onPointerDown={(e) => e.stopPropagation()}>
+                                <AudioPlayer src={item.url} className="w-full bg-transparent! p-0! shadow-none" />
+                            </div>
                         </div>
-                    </motion.div>
-                )}
-              </AnimatePresence>
-        </Reorder.Item>
+                  ) : (
+                       <Image src={getOptimizedUrl(item.url, 'image', 1080)} alt="media" fill className="object-cover pointer-events-none" sizes="(max-width: 768px) 100vw, 50vw" />
+                  )}
+                  
+                 {/* Upload Status */}
+                 {item.status === 'uploading' && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
+                        <RefreshCw className="w-8 h-8 text-white animate-spin" />
+                    </div>
+                 )}
+                 {item.status === 'error' && (
+                    <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center z-20">
+                        <span className="text-white text-xs font-bold px-2">Upload Failed</span>
+                    </div>
+                 )}
+
+                  {/* Indicators */}
+                  <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start pointer-events-none z-10 transition-opacity duration-200">
+                      {index === 0 && (
+                          <span className="bg-[#5B2D7D] text-[#A4C538] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                              COVER
+                          </span>
+                      )}
+                      {item.isNew && (
+                          <span className={`bg-[#A4C538] text-[#5B2D7D] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm ${index === 0 ? 'ml-auto' : ''}`}>
+                              NEW
+                          </span>
+                      )}
+                  </div>
+                </>
+            )}
+        </motion.div>
     );
 };
 
@@ -410,6 +438,24 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         router.back();
     };
 
+    const handleMoveUp = (index: number) => {
+        if (index === 0) return;
+        setMediaItems(prev => {
+            const newList = [...prev];
+            [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
+            return newList;
+        });
+    };
+
+    const handleMoveDown = (index: number) => {
+        setMediaItems(prev => {
+            if (index === prev.length - 1) return prev;
+            const newList = [...prev];
+            [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
+            return newList;
+        });
+    };
+
     const handleSave = async () => {
         setIsUploading(true);
         // Clean errors first?
@@ -518,7 +564,12 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                     setIsUploading(false);
                     toast.dismiss(loadingToast);
                     toast.success("Memory saved successfully!");
-                    router.push("/memories");
+                    
+                    if (selectedProductId) {
+                        router.push(`/life-charm?charmId=${selectedProductId}&view=grid&focusId=${memory.id}`);
+                    } else {
+                        router.push("/memories");
+                    }
                     router.refresh(); 
                 } else {
                     console.error(result?.error);
@@ -631,22 +682,18 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                         
                           {/* Reorder List */}
                           <div className="space-y-3">
-                              <Reorder.Group 
-                                axis="y" 
-                                values={mediaItems} 
-                                onReorder={setMediaItems} 
-                                className="space-y-3"
-                              >
-                                  {mediaItems.map((item, index) => (
-                                      <DraggableMediaItem 
-                                        key={item.id} 
-                                        item={item} 
-                                        index={index} 
-                                        isReordering={isReordering}
-                                        scrollContainerRef={scrollContainerRef}
-                                      />
-                                  ))}
-                              </Reorder.Group>
+                              {mediaItems.map((item, index) => (
+                                  <DraggableMediaItem 
+                                    key={item.id} 
+                                    item={item} 
+                                    index={index} 
+                                    isReordering={isReordering}
+                                    totalItems={mediaItems.length}
+                                    onMoveUp={() => handleMoveUp(index)}
+                                    onMoveDown={() => handleMoveDown(index)}
+                                    scrollContainerRef={scrollContainerRef}
+                                  />
+                              ))}
 
                               {/* Add Button */}
                               <label className="block w-full bg-[#EADDDE]/50 border border-dashed border-[#5B2D7D]/20 rounded-[20px] p-4 text-center cursor-pointer hover:bg-[#EADDDE] transition-colors relative">

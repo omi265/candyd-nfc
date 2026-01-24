@@ -5,6 +5,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, useMotionValue, animate, useTransform, MotionValue, AnimatePresence } from "motion/react";
 import { MemoryDrawer } from "@/components/memory-drawer";
 import { getOptimizedUrl } from "@/lib/media-helper";
+import Image from "next/image";
 
 import { Plus, Search, LayoutGrid, List, Mic, X } from "lucide-react";
 
@@ -158,7 +159,7 @@ function MemoryCard({
                         </div>
                     </div>
                 ) : (
-                    <img src={item.mediaUrl} alt={item.title} className="w-full h-full object-cover" />
+                    <Image src={item.mediaUrl} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                 )}
 
                 {/* Gradient Overlay */}
@@ -240,7 +241,9 @@ function ListMemoryCard({ item, onClick }: { item: Extract<GridItemType, { type:
                         </div>
                      </div>
                 ) : (
-                    <img src={item.mediaUrl} alt={item.title} className="w-full h-auto object-cover block" />
+                    <div className="relative w-full h-auto">
+                        <Image src={item.mediaUrl} alt={item.title} width={500} height={500} className="w-full h-auto object-cover block" sizes="(max-width: 768px) 100vw, 33vw" />
+                    </div>
                 )}
             </div>
 

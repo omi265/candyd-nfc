@@ -15,10 +15,12 @@ import {
   Sparkles,
   Play,
   Image as ImageIcon,
+  Edit2,
 } from "lucide-react";
 import { Experience, ExperienceMedia, LifeListItem, Person } from "@prisma/client";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import AudioPlayer from "@/app/components/AudioPlayer";
+import Image from "next/image";
 
 type ExperienceWithRelations = Experience & {
   media: ExperienceMedia[];
@@ -96,6 +98,12 @@ export default function ExperienceClient({
               {experience.item.title}
             </h1>
           </div>
+          <button
+            onClick={() => router.push(`/life-charm/experience/${experience.item.id}/edit?charmId=${charmId}`)}
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
+          >
+            <Edit2 className="w-5 h-5 text-[#5B2D7D]" />
+          </button>
         </div>
       </header>
 
@@ -181,10 +189,11 @@ export default function ExperienceClient({
                     className="w-full bg-white p-3 rounded-[32px] shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="relative aspect-square rounded-[24px] overflow-hidden bg-[#FDF2EC]">
-                      <img
+                      <Image
                         src={getOptimizedUrl(media.url, "image", 600)}
                         alt=""
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     </div>
                   </button>
@@ -270,11 +279,14 @@ export default function ExperienceClient({
                   className="max-w-full max-h-full"
                 >
                   {experience.media[selectedMediaIndex].type === "image" ? (
-                    <img
-                      src={experience.media[selectedMediaIndex].url}
-                      alt=""
-                      className="max-w-full max-h-[80vh] object-contain rounded-2xl"
-                    />
+                    <div className="relative w-full h-[80vh]">
+                      <Image
+                        src={experience.media[selectedMediaIndex].url}
+                        alt=""
+                        fill
+                        className="object-contain rounded-2xl"
+                      />
+                    </div>
                   ) : experience.media[selectedMediaIndex].type === "video" ? (
                     <video
                       src={experience.media[selectedMediaIndex].url}
@@ -299,17 +311,18 @@ export default function ExperienceClient({
                   <button
                     key={media.id}
                     onClick={() => setSelectedMediaIndex(index)}
-                    className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 transition-all ${
+                    className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 transition-all relative ${
                       index === selectedMediaIndex
                         ? "ring-2 ring-white scale-110"
                         : "opacity-50 hover:opacity-80"
                     }`}
                   >
                     {media.type === "image" ? (
-                      <img
+                      <Image
                         src={getOptimizedUrl(media.url, "image", 100)}
                         alt=""
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     ) : media.type === "video" ? (
                       <video

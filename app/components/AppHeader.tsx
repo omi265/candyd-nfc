@@ -4,16 +4,18 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // --- Icons ---
 
 function Logo() {
   return (
     <div className="w-8 h-8 flex items-center justify-center relative">
-      <img
+      <Image
         src="/Candyd_logo.svg"
         alt="Candyd Logo"
-        className="w-full h-full object-contain"
+        fill
+        className="object-contain"
       />
     </div>
   );
@@ -24,10 +26,11 @@ import { Menu, ChevronDown, Check, Sparkles } from "lucide-react";
 function StarIcon() {
   return (
     <div className="w-6 h-6 flex items-center justify-center relative">
-      <img
+      <Image
         src="/Star.svg"
         alt="Star"
-        className="w-full h-full object-contain"
+        fill
+        className="object-contain"
       />
     </div>
   );

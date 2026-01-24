@@ -122,7 +122,7 @@ export default function AddItemPage() {
           toast.error(result.error);
         } else {
           toast.success("Item added!");
-          router.push(`/life-charm?charmId=${charmId}`);
+          router.push(`/life-charm?charmId=${charmId}&view=list`);
         }
       });
     } else {
@@ -138,7 +138,7 @@ export default function AddItemPage() {
           await addListItem(lifeListId!, { title: itemTitle });
         }
         toast.success(`Added ${selectedTemplateItems.length} items!`);
-        router.push(`/life-charm?charmId=${charmId}`);
+        router.push(`/life-charm?charmId=${charmId}&view=list`);
       });
     }
   };

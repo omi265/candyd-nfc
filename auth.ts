@@ -60,6 +60,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             const passwordsMatch = await bcrypt.compare(password, user.password);
 
             if (passwordsMatch) {
+                // Block login if setup is required (must use NFC/Gift flow first)
+                if (user.setupRequired) {
+                    return null;
+                }
+
                 return {
                     id: user.id,
                     email: user.email,
