@@ -691,7 +691,6 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                     totalItems={mediaItems.length}
                                     onMoveUp={() => handleMoveUp(index)}
                                     onMoveDown={() => handleMoveDown(index)}
-                                    scrollContainerRef={scrollContainerRef}
                                   />
                               ))}
 

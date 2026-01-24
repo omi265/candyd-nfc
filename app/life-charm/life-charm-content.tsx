@@ -402,8 +402,8 @@ export default function LifeCharmContent({
               let tagMatch = false;
               if (item.type === 'memory') {
                   const mem = item.originalData as MemoryWithMedia;
-                  const emotions = Array.isArray(mem.emotions) ? mem.emotions : (typeof mem.emotions === 'string' ? mem.emotions.split(',') : []);
-                  const events = Array.isArray(mem.events) ? mem.events : (typeof mem.events === 'string' ? mem.events.split(',') : []);
+                  const emotions = mem.emotions || [];
+                  const events = mem.events || [];
                   
                   tagMatch = emotions.some((e: string) => e.toLowerCase().includes(q)) ||
                              events.some((e: string) => e.toLowerCase().includes(q)) ||
