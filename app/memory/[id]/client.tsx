@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { updateMemory, deleteMemory } from "@/app/actions/memories";
-import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
+import { getUploadConfig, deleteUploadedFile } from "@/app/actions/upload";
 import { getPeople, createPerson } from "@/app/actions/people";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -321,33 +321,71 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
     const uploadFile = async (item: any) => {
         const processingPromise = (async () => {
-            const signatureData = await getCloudinarySignature();
-            const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
+            const config = await getUploadConfig();
+            
+            let data;
 
-            const formData = new FormData();
-            formData.append("file", item.file);
-            formData.append("api_key", apiKey!);
-            formData.append("timestamp", timestamp.toString());
-            formData.append("signature", signature);
-            formData.append("folder", folder);
+            if (config.provider === 'imagekit') {
+                const { signature, expire, token, publicKey } = config;
+                const formData = new FormData();
+                formData.append("file", item.file);
+                formData.append("fileName", item.file.name);
+                formData.append("publicKey", publicKey);
+                formData.append("signature", signature);
+                formData.append("expire", expire.toString());
+                formData.append("token", token);
+                formData.append("useUniqueFileName", "true");
+                formData.append("folder", "/candyd_memories");
 
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-                method: "POST",
-                body: formData,
-            });
+                const response = await fetch(`https://upload.imagekit.io/api/v1/files/upload`, {
+                    method: "POST",
+                    body: formData,
+                });
 
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || "Upload failed");
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message || "Upload failed");
+                }
+
+                const resData = await response.json();
+                data = {
+                    url: resData.url,
+                    resource_type: resData.fileType === 'image' ? 'image' : 'video',
+                    bytes: resData.size
+                };
+
+            } else {
+                const { signature, timestamp, folder, cloudName, apiKey } = config;
+                const formData = new FormData();
+                formData.append("file", item.file);
+                formData.append("api_key", apiKey);
+                formData.append("timestamp", timestamp.toString());
+                formData.append("signature", signature);
+                formData.append("folder", folder);
+
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || "Upload failed");
+                }
+
+                const resData = await response.json();
+                data = {
+                    url: resData.secure_url,
+                    resource_type: resData.resource_type,
+                    bytes: resData.bytes
+                };
             }
-
-            const data = await response.json();
 
             // Determine final type
             const finalType = (item.type === 'audio' || item.file?.type.startsWith('audio')) ? 'audio' : data.resource_type;
 
             const cloudData = { 
-                url: data.secure_url, 
+                url: data.url, 
                 type: finalType, 
                 size: data.bytes 
             };
@@ -356,7 +394,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
             setMediaItems(prev => prev.map(i => 
                 i.id === item.id 
-                ? { ...i, status: 'completed', cloudData, url: data.secure_url, type: finalType } 
+                ? { ...i, status: 'completed', cloudData, url: data.url, type: finalType } 
                 : i
             ));
             

@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import cloudinary from "@/lib/cloudinary";
-import { extractPublicId, deleteFromCloudinary, isValidCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { extractPublicId } from "@/lib/media-helper";
+import { deleteFromCloudinary, isValidCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { deleteFromImageKit, isValidImageKitUrl } from "@/lib/imagekit-helper";
 
 const createMemorySchema = z.object({
   title: z.string().min(1, "Title is required").max(15, "Title too long"),
@@ -91,7 +92,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
             const sizes = mediaSizes ? (JSON.parse(mediaSizes) as number[]) : [];
 
             if (Array.isArray(urls) && Array.isArray(types) && urls.length === types.length) {
-                // Filter to only valid Cloudinary URLs and prepare batch data
+                // Filter to only valid URLs (Cloudinary or ImageKit)
                 const mediaData = urls
                   .map((url, i) => ({
                     url,
@@ -100,7 +101,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
                     memoryId: memory.id,
                     orderIndex: i,
                   }))
-                  .filter((item) => isValidCloudinaryUrl(item.url));
+                  .filter((item) => isValidCloudinaryUrl(item.url) || isValidImageKitUrl(item.url));
 
                 if (mediaData.length > 0) {
                   await db.media.createMany({ data: mediaData });
@@ -492,19 +493,28 @@ export async function deleteProduct(id: string) {
             }
         });
 
-        const publicIds: string[] = [];
+        const cloudinaryIds: string[] = [];
+        const imageKitUrls: string[] = [];
+
         for (const mem of memories) {
             if (mem.media) {
                 mem.media.forEach(m => {
-                    const pid = extractPublicId(m.url);
-                    if (pid) publicIds.push(pid);
+                    if (isValidCloudinaryUrl(m.url)) {
+                        const pid = extractPublicId(m.url);
+                        if (pid) cloudinaryIds.push(pid);
+                    } else if (isValidImageKitUrl(m.url)) {
+                        imageKitUrls.push(m.url);
+                    }
                 });
             }
         }
 
-        // 2. Delete from Cloudinary
-        if (publicIds.length > 0) {
-            await deleteFromCloudinary(publicIds);
+        // 2. Delete from Providers
+        if (cloudinaryIds.length > 0) {
+            await deleteFromCloudinary(cloudinaryIds);
+        }
+        if (imageKitUrls.length > 0) {
+            await deleteFromImageKit(imageKitUrls);
         }
 
         // 3. Delete Product (Cascades to memories usually, but we can be explicit if needed)

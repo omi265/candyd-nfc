@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { getListItem, markAsLived } from "@/app/actions/life-charm";
 import { getPeople, createPerson } from "@/app/actions/people";
-import { getCloudinarySignature } from "@/app/actions/upload";
+import { getUploadConfig, deleteUploadedFile } from "@/app/actions/upload";
 import { Person, LifeListItem } from "@prisma/client";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -126,34 +126,62 @@ export default function MarkAsLivedPage() {
       setMedia((prev) => [...prev, newMedia]);
 
       try {
-        // Get signature with specific folder
-        const signatureData = await getCloudinarySignature("candyd/experiences");
-        if (!signatureData || !signatureData.apiKey || !signatureData.cloudName) {
-          throw new Error("Failed to get upload signature");
+        const config = await getUploadConfig("candyd/experiences");
+        
+        let response;
+        let data;
+
+        if (config.provider === 'imagekit') {
+            const { signature, expire, token, publicKey } = config;
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("fileName", file.name);
+            formData.append("publicKey", publicKey);
+            formData.append("signature", signature);
+            formData.append("expire", expire.toString());
+            formData.append("token", token);
+            formData.append("useUniqueFileName", "true");
+            formData.append("folder", "/candyd/experiences");
+
+            response = await fetch(`https://upload.imagekit.io/api/v1/files/upload`, {
+                method: "POST",
+                body: formData,
+            });
+            
+            if (!response.ok) throw new Error("Upload failed");
+            const resData = await response.json();
+            data = {
+                url: resData.url,
+                size: resData.size
+            };
+
+        } else {
+            const { signature, timestamp, folder, cloudName, apiKey } = config;
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("api_key", apiKey);
+            formData.append("timestamp", timestamp.toString());
+            formData.append("signature", signature);
+            formData.append("folder", folder);
+
+            response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error("Upload failed");
+            const resData = await response.json();
+            data = {
+                url: resData.secure_url,
+                size: resData.bytes
+            };
         }
 
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("api_key", signatureData.apiKey);
-        formData.append("timestamp", signatureData.timestamp.toString());
-        formData.append("signature", signatureData.signature);
-        formData.append("folder", signatureData.folder);
-
-        const response = await fetch(
-          `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-
-        const data = await response.json();
-
-        if (data.secure_url) {
+        if (data.url) {
           setMedia((prev) =>
             prev.map((m) =>
               m.id === mediaId
-                ? { ...m, url: data.secure_url, status: "complete", progress: 100 }
+                ? { ...m, url: data.url, status: "complete", progress: 100 }
                 : m
             )
           );

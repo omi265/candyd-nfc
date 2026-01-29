@@ -3,7 +3,9 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
+import { extractPublicId } from "@/lib/media-helper";
+import { deleteFromCloudinary, isValidCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { deleteFromImageKit, isValidImageKitUrl } from "@/lib/imagekit-helper";
 import { CharmType, CharmState } from "@prisma/client";
 import {
   createLifeListSchema,
@@ -396,14 +398,25 @@ export async function deleteListItem(itemId: string) {
       return { error: "Unauthorized" };
     }
 
-    // Delete media from Cloudinary if experience exists
+    // Delete media from providers if experience exists
     if (item.experience?.media && item.experience.media.length > 0) {
-      const publicIds = item.experience.media
-        .map((m) => extractPublicId(m.url))
-        .filter((id): id is string => id !== null);
+      const cloudinaryIds: string[] = [];
+      const imageKitUrls: string[] = [];
 
-      if (publicIds.length > 0) {
-        await deleteFromCloudinary(publicIds);
+      item.experience.media.forEach((m) => {
+        if (isValidCloudinaryUrl(m.url)) {
+            const pid = extractPublicId(m.url);
+            if (pid) cloudinaryIds.push(pid);
+        } else if (isValidImageKitUrl(m.url)) {
+            imageKitUrls.push(m.url);
+        }
+      });
+
+      if (cloudinaryIds.length > 0) {
+        await deleteFromCloudinary(cloudinaryIds);
+      }
+      if (imageKitUrls.length > 0) {
+        await deleteFromImageKit(imageKitUrls);
       }
     }
 
@@ -680,10 +693,14 @@ export async function deleteExperienceMedia(mediaId: string) {
       return { error: "Unauthorized" };
     }
 
-    // Delete from Cloudinary
-    const publicId = extractPublicId(media.url);
-    if (publicId) {
-      await deleteFromCloudinary([publicId]);
+    // Delete from Providers
+    if (isValidImageKitUrl(media.url)) {
+        await deleteFromImageKit([media.url]);
+    } else if (isValidCloudinaryUrl(media.url)) {
+        const publicId = extractPublicId(media.url);
+        if (publicId) {
+            await deleteFromCloudinary([publicId]);
+        }
     }
 
     await db.experienceMedia.delete({ where: { id: mediaId } });
