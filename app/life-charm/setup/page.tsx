@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "motion/react";
-import { Sparkles, Plus, ArrowRight, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Sparkles, Plus, ArrowRight, Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import { CURATED_TEMPLATES, LifeListTemplate } from "@/lib/life-list-templates";
 import { createLifeList } from "@/app/actions/life-charm";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ export default function LifeCharmSetupPage() {
   const [selectedItemTitles, setSelectedItemTitles] = useState<string[]>([]);
   const [customName, setCustomName] = useState("");
   const [showCustom, setShowCustom] = useState(false);
+  const [newItemText, setNewItemText] = useState("");
   const [isPending, startTransition] = useTransition();
 
   if (!charmId) {
@@ -38,7 +39,30 @@ export default function LifeCharmSetupPage() {
 
   const handleStartFromScratch = () => {
     setShowCustom(!showCustom);
-    setExpandedTemplateId(null);
+    if (!showCustom) {
+      setExpandedTemplateId(null);
+    }
+  };
+
+  const handleAddCustomItem = () => {
+    const trimmed = newItemText.trim();
+    if (!trimmed) return;
+    
+    if (selectedItemTitles.includes(trimmed)) {
+      toast.error("Item already added!");
+      return;
+    }
+
+    setSelectedItemTitles(prev => [...prev, trimmed]);
+    setNewItemText("");
+  };
+
+  const handleRemoveItem = (title: string) => {
+    setSelectedItemTitles(prev => prev.filter(t => t !== title));
+  };
+
+  const isCustomItem = (title: string) => {
+    return !CURATED_TEMPLATES.some(t => t.items.includes(title));
   };
 
   const handleCreate = () => {
@@ -140,56 +164,111 @@ export default function LifeCharmSetupPage() {
                 </button>
 
                 {/* Expanded Items */}
-                {isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    className="mt-2 bg-white/50 rounded-2xl p-2 space-y-1"
-                  >
-                    {template.items.map((item) => {
-                      const isSelected = selectedItemTitles.includes(item);
-                      return (
-                        <button
-                          key={item}
-                          onClick={() => toggleItem(item)}
-                          className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition-colors ${
-                            isSelected ? "bg-[#5B2D7D]/10" : "hover:bg-[#EADDDE]/30"
-                          }`}
-                        >
-                          <span className={`text-sm ${isSelected ? "text-[#5B2D7D] font-medium" : "text-[#5B2D7D]/70"}`}>
-                            {item}
-                          </span>
-                          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                            isSelected ? "bg-[#5B2D7D] border-[#5B2D7D]" : "border-[#5B2D7D]/20"
-                          }`}>
-                            {isSelected && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </motion.div>
-                )}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="mt-2 bg-white/50 rounded-2xl p-2 space-y-1 overflow-hidden"
+                    >
+                      {template.items.map((item) => {
+                        const isSelected = selectedItemTitles.includes(item);
+                        return (
+                          <button
+                            key={item}
+                            onClick={() => toggleItem(item)}
+                            className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition-colors ${
+                              isSelected ? "bg-[#5B2D7D]/10" : "hover:bg-[#EADDDE]/30"
+                            }`}
+                          >
+                            <span className={`text-sm ${isSelected ? "text-[#5B2D7D] font-medium" : "text-[#5B2D7D]/70"}`}>
+                              {item}
+                            </span>
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                              isSelected ? "bg-[#5B2D7D] border-[#5B2D7D]" : "border-[#5B2D7D]/20"
+                            }`}>
+                              {isSelected && <Check className="w-3 h-3 text-white" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
 
           {/* Start from scratch / Add custom option */}
-          <button
-            onClick={handleStartFromScratch}
-            className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed transition-all ${
-              showCustom ? "border-[#5B2D7D] bg-[#5B2D7D]/5" : "border-[#5B2D7D]/20"
-            }`}
-          >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              showCustom ? "bg-[#5B2D7D]" : "bg-[#EADDDE]"
-            }`}>
-              <Plus className={`w-5 h-5 ${showCustom ? "text-white" : "text-[#5B2D7D]"}`} />
-            </div>
-            <div className="text-left">
-              <h3 className="font-bold text-[#5B2D7D]">Add custom items</h3>
-              <p className="text-xs text-[#5B2D7D]/60">Start with your own ideas</p>
-            </div>
-          </button>
+          <div className="overflow-hidden">
+            <button
+              onClick={handleStartFromScratch}
+              className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed transition-all ${
+                showCustom ? "border-[#5B2D7D] bg-[#5B2D7D]/5" : "border-[#5B2D7D]/20"
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                showCustom ? "bg-[#5B2D7D]" : "bg-[#EADDDE]"
+              }`}>
+                <Plus className={`w-5 h-5 ${showCustom ? "text-white" : "text-[#5B2D7D]"}`} />
+              </div>
+              <div className="text-left">
+                <h3 className="font-bold text-[#5B2D7D]">Add custom items</h3>
+                <p className="text-xs text-[#5B2D7D]/60">Start with your own ideas</p>
+              </div>
+            </button>
+
+            <AnimatePresence>
+              {showCustom && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="mt-2 bg-white rounded-2xl p-4 shadow-sm space-y-4 overflow-hidden"
+                >
+                   {/* Input Area */}
+                   <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newItemText}
+                        onChange={(e) => setNewItemText(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddCustomItem()}
+                        placeholder="Type your dream..."
+                        className="flex-1 px-4 py-2 rounded-xl bg-[#FDF2EC] border border-[#5B2D7D]/10 text-[#5B2D7D] placeholder-[#5B2D7D]/30 focus:outline-none focus:border-[#5B2D7D]/30"
+                      />
+                      <button 
+                        onClick={handleAddCustomItem}
+                        disabled={!newItemText.trim()}
+                        className="p-2 bg-[#5B2D7D] text-white rounded-xl disabled:opacity-50"
+                      >
+                        <Plus className="w-6 h-6" />
+                      </button>
+                   </div>
+
+                   {/* Custom Items List */}
+                   <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-[#5B2D7D]/40 uppercase tracking-wider">Your Custom Items</h4>
+                      {selectedItemTitles.filter(isCustomItem).length === 0 ? (
+                        <p className="text-sm text-[#5B2D7D]/40 italic">No custom items added yet</p>
+                      ) : (
+                        selectedItemTitles.filter(isCustomItem).map((item) => (
+                          <div key={item} className="flex items-center justify-between p-3 bg-[#FDF2EC]/50 rounded-xl">
+                             <span className="text-[#5B2D7D] font-medium text-sm">{item}</span>
+                             <button 
+                                onClick={() => handleRemoveItem(item)}
+                                className="p-1 hover:bg-[#EADDDE] rounded-full text-[#5B2D7D]/60 transition-colors"
+                             >
+                                <X className="w-4 h-4" />
+                             </button>
+                          </div>
+                        ))
+                      )}
+                   </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 

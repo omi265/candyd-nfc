@@ -9,8 +9,9 @@ import {
   DrawerFooter,
 } from "@/components/ui/drawer";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { getCloudinarySignature } from "@/app/actions/upload";
+import { useRef, useState, useEffect, useTransition } from "react";
+import { toggleMemoryLike } from "@/app/actions/memories";
+import { toggleExperienceLike } from "@/app/actions/life-charm";
 import { toast } from "sonner";
 import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles, Users } from "lucide-react";
 import AudioPlayer from "@/app/components/AudioPlayer";
@@ -27,8 +28,14 @@ interface MemoryDrawerProps {
 
 export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit }: MemoryDrawerProps) {
     const router = useRouter();
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isUploading, setIsUploading] = useState(false);
+    const [isLiked, setIsLiked] = useState(false);
+    const [isPending, startTransition] = useTransition();
+
+    useEffect(() => {
+        if (memory) {
+            setIsLiked(!!memory.isLiked);
+        }
+    }, [memory]);
 
     if (!memory) return null;
 
@@ -46,6 +53,25 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit }
         } else {
             router.push(`/memory/${memory.id}`);
         }
+    };
+
+    const handleLike = () => {
+        const wasLiked = isLiked;
+        setIsLiked(!wasLiked); // Optimistic update
+
+        startTransition(async () => {
+            let result;
+            if (memory.dataType === 'life_item') {
+                 result = await toggleExperienceLike(memory.id);
+            } else {
+                 result = await toggleMemoryLike(memory.id);
+            }
+
+            if (result.error) {
+                setIsLiked(wasLiked); // Revert
+                toast.error(result.error);
+            }
+        });
     };
 
     return (
@@ -91,8 +117,15 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit }
                                  <button onClick={handleEdit} className="w-12 h-12 rounded-full bg-[#EADDDE] flex items-center justify-center hover:bg-[#D4C3D8] transition-colors">
                                      <Edit2 className="w-6 h-6 text-[#5B2D7D]" />
                                  </button>
-                                 <button className="w-12 h-12 rounded-full bg-[#FFF5F0] border border-[#EADDDE] flex items-center justify-center">
-                                     <Heart className="w-6 h-6 text-[#F37B55]" />
+                                 <button 
+                                    onClick={handleLike}
+                                    className={`w-12 h-12 rounded-full border flex items-center justify-center transition-colors ${
+                                        isLiked 
+                                        ? "bg-[#F37B55] border-[#F37B55]" 
+                                        : "bg-[#FFF5F0] border-[#EADDDE]"
+                                    }`}
+                                 >
+                                     <Heart className={`w-6 h-6 ${isLiked ? "text-white fill-white" : "text-[#F37B55]"}`} />
                                  </button>
                              </div>
                          </div>

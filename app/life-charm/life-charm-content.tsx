@@ -12,7 +12,8 @@ import {
   ChevronUp,
   Image as ImageIcon,
   Search,
-  X
+  X,
+  Heart
 } from "lucide-react";
 import { LifeList, LifeListItem, Product, Person, Experience, ExperienceMedia, Memory, Media } from "@prisma/client";
 import { getOptimizedUrl } from "@/lib/media-helper";
@@ -44,6 +45,7 @@ type GridItem = {
     date: Date;
     media: { url: string; type: string }[];
     peopleIds: string[];
+    isLiked: boolean;
     originalData: LifeListItemWithExperience | MemoryWithMedia;
 };
 
@@ -228,7 +230,7 @@ function GridCard({
       )}
 
       {/* Type Badge */}
-      <div className="relative z-10 p-6">
+      <div className="relative z-10 p-6 flex items-start justify-between">
         {item.type === 'life_item' ? (
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full">
             <Check className="w-4 h-4 text-white" />
@@ -243,6 +245,13 @@ function GridCard({
               Memory
             </span>
           </div>
+        )}
+
+        {/* Liked Indicator */}
+        {item.isLiked && (
+            <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                <Heart className="w-4 h-4 text-white fill-white" />
+            </div>
         )}
       </div>
 
@@ -363,6 +372,7 @@ export default function LifeCharmContent({
       // Add Lived List Items
       lifeList.items.forEach(item => {
           if (item.status === 'lived' && item.experience) {
+              const exp = item.experience as any; // Cast to access isLiked if not in type yet (it is on db type)
               unifiedItems.push({
                   id: item.id,
                   type: 'life_item',
@@ -371,6 +381,7 @@ export default function LifeCharmContent({
                   date: item.experience.date,
                   media: item.experience.media.map(m => ({ url: m.url, type: m.type })),
                   peopleIds: item.experience.peopleIds.length > 0 ? item.experience.peopleIds : item.peopleIds,
+                  isLiked: exp.isLiked || false,
                   originalData: item
               });
           }
@@ -378,6 +389,7 @@ export default function LifeCharmContent({
 
       // Add Standalone Memories
       memories.forEach(memory => {
+          const mem = memory as any;
           unifiedItems.push({
               id: memory.id,
               type: 'memory',
@@ -386,6 +398,7 @@ export default function LifeCharmContent({
               date: memory.date,
               media: memory.media.map(m => ({ url: m.url, type: m.type })),
               peopleIds: memory.peopleIds,
+              isLiked: mem.isLiked || false,
               originalData: memory
           });
       });
@@ -544,33 +557,48 @@ export default function LifeCharmContent({
     const isMemory = item.type === 'memory';
     const raw = item.originalData as any;
     
+    // For experiences (life_item), raw is LifeListItem which has experience property
+    // For memories, raw is Memory
+    
     const data = {
         dataType: item.type,
-        id: item.id,
+        id: item.type === 'life_item' ? (raw.experience?.id || item.id) : item.id, // ID should be experience ID for liking? Or Item ID? 
+        // NOTE: MemoryDrawer expects memory object or similar.
+        // For LifeItem, we should pass the Experience data + Item Title
         title: item.title,
         description: item.description,
         date: item.date,
         location: isMemory ? raw.location : raw.experience?.location,
         peopleIds: item.peopleIds,
         media: isMemory ? raw.media : raw.experience?.media,
-        events: isMemory ? raw.events : [item.title] 
+        events: isMemory ? raw.events : [item.title],
+        isLiked: item.isLiked // Pass isLiked
     };
+    
+    // Adjust ID for server actions: Memory Actions need memory.id, Experience Actions need experience.id
+    // If it's a life_item, `raw` is the item. `raw.experience` is the experience.
+    if (!isMemory && raw.experience) {
+        data.id = raw.experience.id; // Use experience ID for liking logic in drawer
+    }
+    
     setSelectedDrawerData(data);
     setDrawerOpen(true);
   };
 
   const handleListItemClick = (item: LifeListItemWithExperience) => {
       if (item.status === 'lived') {
+          const exp = item.experience as any;
           const data = {
             dataType: 'life_item',
-            id: item.id,
+            id: item.experience?.id, // Use Experience ID
             title: item.title,
             description: item.experience?.reflection || item.description,
             date: item.experience?.date,
             location: item.experience?.location,
             peopleIds: item.experience?.peopleIds || item.peopleIds,
             media: item.experience?.media || [],
-            events: [item.title]
+            events: [item.title],
+            isLiked: exp?.isLiked || false
           };
           setSelectedDrawerData(data);
           setDrawerOpen(true);

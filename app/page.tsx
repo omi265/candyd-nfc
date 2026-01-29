@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { getUserProducts } from "@/app/actions/memories";
+import { getDashboardProducts } from "@/app/actions/memories";
 import { redirect } from "next/navigation";
 import DashboardContent from "@/app/components/dashboard-content";
 
@@ -9,7 +9,7 @@ export default async function Dashboard() {
     redirect("/login");
   }
 
-  const products = await getUserProducts();
+  const products = await getDashboardProducts();
 
   return (
     <div className="h-dvh bg-[#FDF2EC]">

@@ -191,6 +191,32 @@ export async function getUserProducts() {
     }
 }
 
+export async function getDashboardProducts() {
+    const session = await auth();
+    if (!session?.user?.id) return [];
+
+    try {
+        const products = await db.product.findMany({
+            where: {
+                userId: session.user.id,
+                active: true,
+            },
+            select: {
+                id: true,
+                name: true,
+                type: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            }
+        });
+        return products;
+    } catch (error) {
+        console.error("Failed to fetch dashboard products:", error);
+        return [];
+    }
+}
+
 export async function getProductIdFromToken(token: string) {
     try {
         const product = await db.product.findUnique({
@@ -412,6 +438,34 @@ export async function deleteMemory(id: string) {
         return { success: true };
     } catch (error: any) {
          return { error: error.message };
+    }
+}
+
+export async function toggleMemoryLike(id: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const memory = await db.memory.findUnique({
+            where: { id },
+            select: { userId: true, isLiked: true }
+        });
+
+        if (!memory || memory.userId !== session.user.id) {
+            return { error: "Unauthorized" };
+        }
+
+        await db.memory.update({
+            where: { id },
+            data: { isLiked: !memory.isLiked }
+        });
+
+        revalidatePath("/");
+        revalidatePath("/life-charm");
+        revalidatePath(`/memory/${id}`);
+        return { success: true, isLiked: !memory.isLiked };
+    } catch (error: any) {
+        return { error: error.message };
     }
 }
 

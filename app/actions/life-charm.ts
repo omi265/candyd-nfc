@@ -696,6 +696,38 @@ export async function deleteExperienceMedia(mediaId: string) {
   }
 }
 
+export async function toggleExperienceLike(experienceId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  try {
+    const experience = await db.experience.findUnique({
+      where: { id: experienceId },
+      include: {
+        item: {
+          include: { lifeList: { select: { userId: true } } },
+        },
+      },
+    });
+
+    if (!experience || experience.item.lifeList.userId !== session.user.id) {
+      return { error: "Unauthorized" };
+    }
+
+    await db.experience.update({
+      where: { id: experienceId },
+      data: { isLiked: !experience.isLiked },
+    });
+
+    revalidatePath(`/life-charm`);
+    revalidatePath(`/life-charm/experience/${experienceId}`);
+    return { success: true, isLiked: !experience.isLiked };
+  } catch (error: any) {
+    console.error("Toggle Experience Like Error:", error);
+    return { error: error.message };
+  }
+}
+
 // ===========================================
 // CHARM GRADUATION
 // ===========================================

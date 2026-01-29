@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import ClientLayout from "./components/ClientLayout";
 import { Toaster } from "sonner";
+import { auth } from "@/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,11 +41,12 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
     const cookieStore = await cookies();
+    const session = await auth();
   
   return (
     <html lang="en" className={outfit.className}>
       <body>
-        <AuthProvider>
+        <AuthProvider session={session}>
             <ClientLayout>{children}</ClientLayout>
             <Toaster position="top-center" />
         </AuthProvider>

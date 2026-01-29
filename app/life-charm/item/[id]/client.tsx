@@ -137,7 +137,7 @@ export default function ItemDetailClient({
             {!isLived && (
               <button
                 onClick={() =>
-                  router.push(`/life-charm/edit/${item.id}?charmId=${charmId}`)
+                  router.push(`/life-charm/item/${item.id}/edit?charmId=${charmId}`)
                 }
                 className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20"
               >
