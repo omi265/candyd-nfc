@@ -1,8 +1,11 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getAdminStats, getProducts, createProduct, getAllUsers } from "@/app/actions/admin";
+import { getTickets } from "@/app/actions/support";
 import { AdminDashboardClient } from "./client";
 import { CopyButton } from "./CopyButton";
+import { SupportTicketStatus } from "./SupportTicketStatus";
+import { Product, SupportTicket } from "@prisma/client";
 
 export default async function AdminPage() {
   const session = await auth();
@@ -14,6 +17,7 @@ export default async function AdminPage() {
   const stats = await getAdminStats();
   const products = await getProducts();
   const users = await getAllUsers();
+  const { tickets } = await getTickets();
 
   return (
     <div className="min-h-screen bg-[#FDF2EC] p-8 font-[Outfit]">
@@ -32,10 +36,10 @@ export default async function AdminPage() {
           <StatCard title="Storage Used" value={formatBytes(stats.totalStorage)} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Create Product Form */}
           <div className="lg:col-span-1">
-             <div className="bg-white/40 backdrop-blur-xl rounded-[32px] shadow-sm p-6 border border-white/50">
+             <div className="bg-white/40 backdrop-blur-xl rounded-[32px] shadow-sm p-6 border border-white/50 h-full">
                 <h2 className="text-xl font-bold text-[#5B2D7D] mb-4">Create New Product</h2>
                 <AdminDashboardClient users={users} />
              </div>
@@ -43,7 +47,7 @@ export default async function AdminPage() {
 
           {/* User/Product List */}
           <div className="lg:col-span-2">
-            <div className="bg-white/40 backdrop-blur-xl rounded-[32px] shadow-sm p-6 border border-white/50">
+            <div className="bg-white/40 backdrop-blur-xl rounded-[32px] shadow-sm p-6 border border-white/50 h-full">
                 <h2 className="text-xl font-bold text-[#5B2D7D] mb-4">Recent Products</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
@@ -53,11 +57,10 @@ export default async function AdminPage() {
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Type</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Assigned To</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Token Link</th>
-                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Created</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {products.map((product: any) => (
+                      {products.map((product: Product & { user: { email: string, name: string | null } }) => (
                         <tr key={product.id} className="group hover:bg-white/50 transition-colors">
                           <td className="py-3 pr-4 text-[#5B2D7D]">{product.name}</td>
                           <td className="py-3 pr-4">
@@ -83,9 +86,6 @@ export default async function AdminPage() {
                                 <CopyButton token={product.token as string} />
                             </div>
                           </td>
-                          <td className="py-3 text-sm text-[#5B2D7D]/60">
-                            {new Date(product.createdAt).toLocaleDateString()}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -94,6 +94,53 @@ export default async function AdminPage() {
             </div>
           </div>
         </div>
+
+        {/* Support Tickets Section */}
+        <div className="bg-white/40 backdrop-blur-xl rounded-[32px] shadow-sm p-6 border border-white/50">
+            <h2 className="text-xl font-bold text-[#5B2D7D] mb-4">Support Tickets</h2>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="border-b border-[#5B2D7D]/10">
+                            <th className="pb-3 font-medium text-[#5B2D7D]/60">Date</th>
+                            <th className="pb-3 font-medium text-[#5B2D7D]/60">Status</th>
+                            <th className="pb-3 font-medium text-[#5B2D7D]/60">Subject</th>
+                            <th className="pb-3 font-medium text-[#5B2D7D]/60">User / Email</th>
+                            <th className="pb-3 font-medium text-[#5B2D7D]/60">Message</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {tickets?.map((ticket: SupportTicket & { user: { name: string | null, email: string } | null }) => (
+                            <tr key={ticket.id} className="group hover:bg-white/50 transition-colors">
+                                <td className="py-3 pr-4 text-sm text-[#5B2D7D]/60 whitespace-nowrap">
+                                    {new Date(ticket.createdAt).toLocaleDateString()}
+                                </td>
+                                <td className="py-3 pr-4">
+                                    <SupportTicketStatus 
+                                        ticketId={ticket.id} 
+                                        initialStatus={ticket.status} 
+                                    />
+                                </td>
+                                <td className="py-3 pr-4 font-bold text-[#5B2D7D]">{ticket.subject}</td>
+                                <td className="py-3 pr-4">
+                                    <div className="text-sm font-medium text-[#5B2D7D]">{ticket.user?.name || "Guest"}</div>
+                                    <div className="text-xs text-[#5B2D7D]/60">{ticket.email}</div>
+                                </td>
+                                <td className="py-3 pr-4 text-sm text-[#5B2D7D] max-w-md truncate">
+                                    {ticket.message}
+                                </td>
+                            </tr>
+                        ))}
+                        {(!tickets || tickets.length === 0) && (
+                            <tr>
+                                <td colSpan={5} className="py-8 text-center text-[#5B2D7D]/40">No tickets found</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
       </div>
     </div>
   );

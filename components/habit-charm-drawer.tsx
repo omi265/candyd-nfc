@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/drawer";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { HABIT_FOCUS_AREAS } from "@/lib/habit-templates";
+import { CORE_HABITS as HABIT_FOCUS_AREAS } from "@/lib/habit-templates";
 import { createHabit, logHabit } from "@/app/actions/habit";
 import { Loader2, ArrowRight, Check, Flame, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -143,17 +143,22 @@ function HabitSetupContent({ product }: { product: any }) {
                             </div>
 
                             <div className="flex flex-col gap-3">
-                                {selectedArea.microHabits.map((habit) => (
+                                {selectedArea.levels.map((lvl) => (
                                     <button
-                                        key={habit}
-                                        onClick={() => setSelectedHabit(habit)}
+                                        key={lvl.level}
+                                        onClick={() => setSelectedHabit(lvl.description)}
                                         className={`p-4 rounded-2xl border transition-all text-left font-medium ${
-                                            selectedHabit === habit 
+                                            selectedHabit === lvl.description 
                                             ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]' 
                                             : 'bg-white text-[#5B2D7D] border-transparent hover:border-[#5B2D7D]/20 shadow-sm'
                                         }`}
                                     >
-                                        {habit}
+                                        <div className="flex flex-col">
+                                            <span>{lvl.description}</span>
+                                            <span className={`text-[10px] uppercase tracking-widest mt-1 ${selectedHabit === lvl.description ? 'text-white/60' : 'text-[#5B2D7D]/40'}`}>
+                                                Level {lvl.level} • {lvl.duration}
+                                            </span>
+                                        </div>
                                     </button>
                                 ))}
                                 
@@ -206,8 +211,13 @@ function HabitSetupContent({ product }: { product: any }) {
 function HabitDashboardContent({ habit }: { habit: any }) {
     const [isLogging, setIsLogging] = useState(false);
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Virtual Today Logic (Cutoff 4 AM)
+    const now = new Date();
+    if (now.getHours() < 4) {
+        now.setDate(now.getDate() - 1);
+    }
+    now.setHours(0, 0, 0, 0);
+    const today = now;
     
     // Safety check for logs array
     const logs = habit.logs || [];
@@ -245,9 +255,18 @@ function HabitDashboardContent({ habit }: { habit: any }) {
                      <div className="text-lg">
                         {habit.focusArea === 'energy' && '⚡'}
                         {habit.focusArea === 'movement' && '🏃'}
+                        {habit.focusArea === 'move' && '🏃'}
                         {habit.focusArea === 'rest' && '🌙'}
                         {habit.focusArea === 'mind' && '🧠'}
+                        {habit.focusArea === 'reflect' && '🪞'}
                         {habit.focusArea === 'connection' && '❤️'}
+                        {habit.focusArea === 'connect' && '❤️'}
+                        {habit.focusArea === 'hydrate' && '💧'}
+                        {habit.focusArea === 'nourish' && '🥗'}
+                        {habit.focusArea === 'learn' && '📚'}
+                        {habit.focusArea === 'create' && '🎨'}
+                        {habit.focusArea === 'gratitude' && '🙏'}
+                        {habit.focusArea === 'breathe' && '💨'}
                      </div>
                  </div>
              </header>

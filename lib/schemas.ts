@@ -105,5 +105,6 @@ export const createHabitSchema = z.object({
 });
 
 export const logHabitSchema = z.object({
-    notes: z.string().optional()
+    notes: z.string().optional(),
+    logType: z.enum(['DONE', 'SICK', 'TRAVEL', 'STRESSED', 'BUSY', 'OTHER']).default('DONE')
 });

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Menu, ChevronDown, Check, Sparkles, LifeBuoy } from "lucide-react";
 
 // --- Icons ---
 
@@ -20,8 +21,6 @@ function Logo() {
     </div>
   );
 }
-
-import { Menu, ChevronDown, Check, Sparkles } from "lucide-react";
 
 function StarIcon() {
   return (
@@ -65,7 +64,6 @@ function MenuDropdown({
   // Fetch products on open
   useEffect(() => {
     if (isOpen) {
-        // Defer state update to avoid cascading renders during effect execution
         const timeoutId = setTimeout(() => {
             setIsLoadingProducts(true);
             getUserProducts().then((fetchedProducts: any) => {
@@ -77,7 +75,6 @@ function MenuDropdown({
     }
   }, [isOpen]);
 
-  // Derived state for display
   const currentProduct = products.find(p => p.id === currentCharmId);
   const displayLabel = currentProduct ? currentProduct.name : "All Charms";
 
@@ -116,7 +113,6 @@ function MenuDropdown({
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-      // Ignore clicks on the toggle button (let the button handle its own toggle)
       if (toggleButtonRef.current && toggleButtonRef.current.contains(target)) {
         return;
       }
@@ -177,7 +173,6 @@ function MenuDropdown({
                   className="overflow-hidden"
                 >
                   <div className="space-y-1 mt-2">
-                    {/* All Charms Option */}
                     <motion.button
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -191,7 +186,6 @@ function MenuDropdown({
                         {!currentCharmId && <Check className="w-4 h-4 text-[#5B2D7D]" />}
                     </motion.button>
                   
-                    {/* Product List */}
                     {products.map((product, index) => (
                       <motion.button
                         key={product.id}
@@ -297,13 +291,21 @@ export default function AppHeader({ userName, userRole }: { userName: string; us
             <p className="text-[#5B2D7D] font-semibold">Today, {formattedDate}</p>
           </div>
         </div>
-        <button
-          ref={menuButtonRef}
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
-        >
-            <Menu className="w-6 h-6 text-[#5B2D7D]" />
-        </button>
+        <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/support')}
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
+            >
+                <LifeBuoy className="w-5 h-5" />
+            </button>
+            <button
+              ref={menuButtonRef}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
+            >
+                <Menu className="w-6 h-6" />
+            </button>
+        </div>
       </header>
       <MenuDropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} toggleButtonRef={menuButtonRef} userRole={userRole} />
     </>

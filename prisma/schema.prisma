@@ -20,6 +20,7 @@ model User {
   memories  Memory[]
   people    Person[]
   products  Product[]
+  tickets   SupportTicket[]
 }
 
 model Product {
@@ -163,6 +164,9 @@ model Habit {
   currentStreak    Int        @default(0)
   longestStreak    Int        @default(0)
   totalCompletions Int        @default(0)
+  level            Int        @default(1)
+  phase            String     @default("initiation")
+  lastDeclinedUpgradeAt DateTime?
   isActive         Boolean    @default(true)
   graduatedAt      DateTime?
   archivedAt       DateTime?
@@ -181,12 +185,22 @@ model Habit {
 model HabitLog {
   id        String   @id @default(cuid())
   date      DateTime
+  logType   HabitLogType @default(DONE)
   notes     String?
   habitId   String
   createdAt DateTime @default(now())
   habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
 
   @@index([habitId, date])
+}
+
+enum HabitLogType {
+  DONE
+  SICK
+  TRAVEL
+  STRESSED
+  BUSY
+  OTHER
 }
 
 enum CharmType {
@@ -198,5 +212,25 @@ enum CharmType {
 enum CharmState {
   ACTIVE
   GRADUATED
+  CLOSED
+}
+
+model SupportTicket {
+  id        String        @id @default(cuid())
+  subject   String
+  message   String
+  status    SupportStatus @default(OPEN)
+  email     String?
+  userId    String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
   CLOSED
 }

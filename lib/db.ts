@@ -12,7 +12,10 @@ declare global {
 const pool = global.pgPool || new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 
-export const db = global.prisma || new PrismaClient({ adapter });
+// Force a new instance if we're in development to ensure new models like SupportTicket are loaded
+export const db = (process.env.NODE_ENV === "development") 
+  ? new PrismaClient({ adapter }) 
+  : (global.prisma || new PrismaClient({ adapter }));
 
 if (process.env.NODE_ENV !== "production") {
     global.prisma = db;
