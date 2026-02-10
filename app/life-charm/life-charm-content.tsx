@@ -18,6 +18,7 @@ import {
 import { LifeList, LifeListItem, Product, Person, Experience, ExperienceMedia, Memory, Media } from "@prisma/client";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import { MemoryDrawer } from "@/components/memory-drawer";
+import { toast } from "sonner";
 import Image from "next/image";
 
 type LifeListItemWithExperience = LifeListItem & {
@@ -53,7 +54,6 @@ interface LifeCharmContentProps {
   lifeList: LifeListWithItems;
   product: ProductWithState;
   people: Person[];
-  user: { id?: string; name?: string | null; email?: string | null };
   memories: MemoryWithMedia[];
 }
 
@@ -309,7 +309,6 @@ export default function LifeCharmContent({
   lifeList,
   product,
   people,
-  user,
   memories
 }: LifeCharmContentProps) {
   const router = useRouter();
@@ -333,12 +332,11 @@ export default function LifeCharmContent({
   // Update view mode if URL changes
   useEffect(() => {
       if (initialView && (initialView === 'grid' || initialView === 'list')) {
-          setViewMode(prev => {
-              if (prev !== initialView) return initialView;
-              return prev;
-          });
+          if (viewMode !== initialView) {
+              setViewMode(initialView);
+          }
       }
-  }, [initialView]);
+  }, [initialView, viewMode]);
 
   const handleEditItem = () => {
       if (!selectedDrawerData) return;
@@ -360,7 +358,8 @@ export default function LifeCharmContent({
   const stats = useMemo(() => {
     const total = lifeList.items.length;
     const lived = lifeList.items.filter((i) => i.status === "lived").length;
-    return { total, lived };
+    const pending = lifeList.items.filter((i) => i.status === "pending").length;
+    return { total, lived, pending };
   }, [lifeList.items]);
 
   // --- PREPARE DATA ---
@@ -549,6 +548,10 @@ export default function LifeCharmContent({
           router.push(`/upload-memory?productId=${product.id}`);
       } else {
           // List View -> Add Bucket List Item
+          if (stats.pending >= 5) {
+              toast.error("You can only have 5 unlived experiences at a time. Mark one as lived to add more!");
+              return;
+          }
           router.push(`/life-charm/add?charmId=${product.id}`);
       }
   };

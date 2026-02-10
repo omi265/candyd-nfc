@@ -54,7 +54,6 @@ export default async function LifeCharmPage({ searchParams }: PageProps) {
       lifeList={lifeList}
       product={product}
       people={people}
-      user={session.user}
       memories={memories}
     />
   );

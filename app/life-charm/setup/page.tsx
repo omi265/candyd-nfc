@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Plus, ArrowRight, Check, ChevronDown, ChevronUp, X } from "lucide-react";
-import { CURATED_TEMPLATES, LifeListTemplate } from "@/lib/life-list-templates";
+import { CURATED_TEMPLATES } from "@/lib/life-list-templates";
 import { createLifeList } from "@/app/actions/life-charm";
 import { toast } from "sonner";
 
@@ -30,11 +30,16 @@ export default function LifeCharmSetupPage() {
   };
 
   const toggleItem = (title: string) => {
-    setSelectedItemTitles(prev => 
-      prev.includes(title) 
-        ? prev.filter(t => t !== title)
-        : [...prev, title]
-    );
+    setSelectedItemTitles(prev => {
+      if (prev.includes(title)) {
+        return prev.filter(t => t !== title);
+      }
+      if (prev.length >= 5) {
+        toast.error("You can only pick up to 5 unlived experiences at a time.");
+        return prev;
+      }
+      return [...prev, title];
+    });
   };
 
   const handleStartFromScratch = () => {
@@ -50,6 +55,11 @@ export default function LifeCharmSetupPage() {
     
     if (selectedItemTitles.includes(trimmed)) {
       toast.error("Item already added!");
+      return;
+    }
+
+    if (selectedItemTitles.length >= 5) {
+      toast.error("You can only have up to 5 unlived experiences.");
       return;
     }
 
@@ -114,7 +124,7 @@ export default function LifeCharmSetupPage() {
           transition={{ delay: 0.2 }}
           className="text-[#5B2D7D]/60"
         >
-          Pick 10-15 experiences from different buckets
+          Pick up to 5 experiences to start your list
         </motion.p>
       </header>
 
@@ -135,7 +145,7 @@ export default function LifeCharmSetupPage() {
         </div>
 
         <div className="space-y-3">
-          {CURATED_TEMPLATES.map((template, index) => {
+          {CURATED_TEMPLATES.map((template) => {
             const isExpanded = expandedTemplateId === template.id;
             const selectedInTemplate = template.items.filter(item => selectedItemTitles.includes(item)).length;
 

@@ -148,6 +148,9 @@ export async function createLifeList(
         data: { name: name }
     });
 
+    // Enforce limit of 5 items
+    const itemsToCreate = items?.slice(0, 5) || [];
+
     // Create the life list
     const lifeList = await db.lifeList.create({
       data: {
@@ -160,12 +163,13 @@ export async function createLifeList(
     });
 
     // Add template items if provided - Optimized with createMany
-    if (items && items.length > 0) {
+    if (itemsToCreate.length > 0) {
       await db.lifeListItem.createMany({
-        data: items.map((title, i) => ({
+        data: itemsToCreate.map((title, i) => ({
           title,
           lifeListId: lifeList.id,
           orderIndex: i,
+          whenType: "someday",
         })),
       });
     }
@@ -270,11 +274,22 @@ export async function addListItem(
   try {
     const lifeList = await db.lifeList.findUnique({
       where: { id: listId },
-      select: { userId: true, items: { select: { orderIndex: true } } },
+      select: { 
+        userId: true, 
+        items: { 
+          select: { orderIndex: true, status: true } 
+        } 
+      },
     });
 
     if (!lifeList || lifeList.userId !== session.user.id) {
       return { error: "Unauthorized" };
+    }
+
+    // Check limit of unlived (pending) items
+    const pendingCount = lifeList.items.filter(item => item.status === "pending").length;
+    if (pendingCount >= 5) {
+      return { error: "You can only have 5 unlived experiences at a time. Mark one as lived to add more!" };
     }
 
     // Get next order index

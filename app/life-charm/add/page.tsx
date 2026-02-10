@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { ArrowLeft, Plus, X, Users, Calendar, ChevronDown, Sparkles, ChevronUp, Check } from "lucide-react";
+import { ArrowLeft, Plus, Users, Calendar, ChevronDown, Sparkles, ChevronUp, Check } from "lucide-react";
 import { addListItem, getLifeList } from "@/app/actions/life-charm";
 import { getPeople, createPerson } from "@/app/actions/people";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ export default function AddItemPage() {
   const [people, setPeople] = useState<Person[]>([]);
   const [newPersonName, setNewPersonName] = useState("");
   const [lifeListId, setLifeListId] = useState<string | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
   const [isPending, startTransition] = useTransition();
   const [isAddingPerson, setIsAddingPerson] = useState(false);
 
@@ -59,6 +60,9 @@ export default function AddItemPage() {
 
       setLifeListId(lifeList.id);
       setPeople(peopleData);
+      
+      const count = lifeList.items.filter(item => item.status === "pending").length;
+      setPendingCount(count);
     };
 
     fetchData();
@@ -90,17 +94,32 @@ export default function AddItemPage() {
   };
 
   const toggleTemplateItem = (title: string) => {
-    setSelectedTemplateItems(prev => 
-      prev.includes(title) 
-        ? prev.filter(t => t !== title)
-        : [...prev, title]
-    );
+    setSelectedTemplateItems(prev => {
+      if (prev.includes(title)) {
+        return prev.filter(t => t !== title);
+      }
+      if (pendingCount + prev.length >= 5) {
+        toast.error("You can only have up to 5 unlived experiences.");
+        return prev;
+      }
+      return [...prev, title];
+    });
   };
 
   const handleSubmit = () => {
     if (mode === 'custom') {
       if (!title.trim()) {
         toast.error("Please enter a title");
+        return;
+      }
+
+      if (!whenType) {
+        toast.error("Please select when you'd like to do this");
+        return;
+      }
+
+      if (whenType === "specific_date" && !targetDate) {
+        toast.error("Please select a specific date");
         return;
       }
 
@@ -114,7 +133,7 @@ export default function AddItemPage() {
           title: title.trim(),
           description: description.trim() || undefined,
           peopleIds: selectedPeople.length > 0 ? selectedPeople : undefined,
-          whenType: whenType || undefined,
+          whenType: whenType,
           targetDate: whenType === "specific_date" && targetDate ? targetDate : undefined,
         });
 
@@ -134,8 +153,12 @@ export default function AddItemPage() {
 
       startTransition(async () => {
         // Add all selected template items sequentially
+        // For template items, we default to "someday" as they are quick-adds
         for (const itemTitle of selectedTemplateItems) {
-          await addListItem(lifeListId!, { title: itemTitle });
+          await addListItem(lifeListId!, { 
+            title: itemTitle,
+            whenType: "someday" 
+          });
         }
         toast.success(`Added ${selectedTemplateItems.length} items!`);
         router.push(`/life-charm?charmId=${charmId}&view=list`);
@@ -182,6 +205,16 @@ export default function AddItemPage() {
 
       {/* Content */}
       <div className="flex-1 px-6 py-6 overflow-y-auto pb-32 no-scrollbar">
+        {pendingCount >= 5 && (
+          <div className="mb-6 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-orange-800">Limit reached</p>
+              <p className="text-xs text-orange-700/80">You can only have 5 unlived experiences at a time. Mark an item as lived to add more!</p>
+            </div>
+          </div>
+        )}
+
         {mode === 'custom' ? (
           <div className="space-y-6">
             {/* Title */}
@@ -363,19 +396,6 @@ export default function AddItemPage() {
                       className="w-full px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] outline-none mt-2"
                     />
                   )}
-
-                  {/* Clear button */}
-                  {whenType && (
-                    <button
-                      onClick={() => {
-                        setWhenType(null);
-                        setTargetDate("");
-                      }}
-                      className="w-full px-3 py-2 text-sm text-[#5B2D7D]/60 hover:text-[#5B2D7D]"
-                    >
-                      Clear selection
-                    </button>
-                  )}
                 </motion.div>
               )}
             </div>
@@ -451,11 +471,13 @@ export default function AddItemPage() {
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#FDF2EC] via-[#FDF2EC] to-transparent pt-12 shrink-0">
         <button
           onClick={handleSubmit}
-          disabled={(mode === 'custom' ? !title.trim() : selectedTemplateItems.length === 0) || isPending}
+          disabled={(mode === 'custom' ? !title.trim() : selectedTemplateItems.length === 0) || isPending || (mode === 'custom' && pendingCount >= 5)}
           className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#93B132] transition-colors disabled:opacity-50"
         >
           {isPending ? (
             "Adding..."
+          ) : pendingCount >= 5 && mode === 'custom' ? (
+            "Limit reached"
           ) : (
             <>
               {mode === 'custom' ? (

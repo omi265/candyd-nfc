@@ -59,17 +59,29 @@ export const createLifeListItemSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   description: z.string().optional(),
   peopleIds: z.array(z.string()).optional(),
-  whenType: z.string().optional(),
+  whenType: z.string().min(1, "Timing is required"),
   targetDate: z.string().optional(), // string format of date
+}).refine(data => {
+  if (data.whenType === 'specific_date' && !data.targetDate) return false;
+  return true;
+}, {
+  message: "Specific date is required",
+  path: ["targetDate"]
 });
 
 export const updateLifeListItemSchema = z.object({
   title: z.string().min(1).max(100).optional(),
   description: z.string().optional(),
   peopleIds: z.array(z.string()).optional(),
-  whenType: z.string().optional(),
+  whenType: z.string().min(1).optional(),
   targetDate: z.union([z.string(), z.null()]).optional(),
   status: z.enum(["pending", "lived", "skipped"]).optional(),
+}).refine(data => {
+  if (data.whenType === 'specific_date' && (data.targetDate === null || data.targetDate === "")) return false;
+  return true;
+}, {
+  message: "Specific date is required",
+  path: ["targetDate"]
 });
 
 // ===========================================

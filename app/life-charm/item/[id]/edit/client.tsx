@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { ArrowLeft, Save, X, Users, Calendar, ChevronDown } from "lucide-react";
+import { ArrowLeft, Save, Users, Calendar, ChevronDown } from "lucide-react";
 import { updateListItem } from "@/app/actions/life-charm";
 import { createPerson } from "@/app/actions/people";
 import { toast } from "sonner";
@@ -75,12 +75,22 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
       return;
     }
 
+    if (!whenType) {
+      toast.error("Please select when you'd like to do this");
+      return;
+    }
+
+    if (whenType === "specific_date" && !targetDate) {
+      toast.error("Please select a specific date");
+      return;
+    }
+
     startTransition(async () => {
       const result = await updateListItem(item.id, {
         title: title.trim(),
         description: description.trim() || undefined,
         peopleIds: selectedPeople,
-        whenType: whenType || undefined,
+        whenType: whenType,
         targetDate: whenType === "specific_date" && targetDate ? targetDate : null,
       });
 
@@ -290,19 +300,6 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                       onChange={(e) => setTargetDate(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] outline-none mt-2"
                     />
-                  )}
-
-                  {/* Clear button */}
-                  {whenType && (
-                    <button
-                      onClick={() => {
-                        setWhenType(null);
-                        setTargetDate("");
-                      }}
-                      className="w-full px-3 py-2 text-sm text-[#5B2D7D]/60 hover:text-[#5B2D7D]"
-                    >
-                      Clear selection
-                    </button>
                   )}
                 </motion.div>
               )}
