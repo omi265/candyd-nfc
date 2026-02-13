@@ -21,6 +21,7 @@ export const authConfig = {
       if (token.id && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.contact = token.contact as string;
       }
       return session;
     },
@@ -28,6 +29,7 @@ export const authConfig = {
       if (user && user.id) {
         token.id = user.id;
         token.role = user.role || "USER";
+        token.contact = user.contact;
       }
       return token;
     },

@@ -13,12 +13,37 @@ import {
     AlertTriangle, 
     CloudDownload, 
     X,
+    Loader2
 } from "lucide-react";
+
+
+import { deleteAccount } from "@/app/actions/auth";
+import { toast } from "sonner";
 
 
 export default function AccountSettingsPage() {
     const router = useRouter();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        if (!confirm("Are you absolutely sure you want to delete your account? This action cannot be undone.")) return;
+        
+        setIsDeleting(true);
+        try {
+            const result = await deleteAccount();
+            if (result?.success) {
+                toast.success("Account deleted successfully");
+                router.push("/login");
+            } else {
+                toast.error(result?.error || "Failed to delete account");
+            }
+        } catch (error) {
+            toast.error("An error occurred");
+        } finally {
+            setIsDeleting(false);
+        }
+    }
 
     return (
         <div className="min-h-screen bg-[#FDF2EC] font-[Outfit] text-[#5B2D7D] relative">
@@ -62,7 +87,7 @@ export default function AccountSettingsPage() {
                             animate={{ opacity: 0.5 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-black z-40"
-                            onClick={() => setIsDeleteModalOpen(false)}
+                            onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
                         />
                         <motion.div 
                             initial={{ y: "100%" }}
@@ -74,8 +99,9 @@ export default function AccountSettingsPage() {
                             <div className="relative flex flex-col items-center">
                                 {/* Close Button */}
                                 <button 
-                                    onClick={() => setIsDeleteModalOpen(false)}
-                                    className="absolute right-0 top-0"
+                                    onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
+                                    className="absolute right-0 top-0 disabled:opacity-50"
+                                    disabled={isDeleting}
                                 >
                                     <X className="w-6 h-6 text-[#3E1C56]" />
                                 </button>
@@ -103,13 +129,19 @@ export default function AccountSettingsPage() {
                                     </button>
                                 </div>
 
-                                <button className="text-[#F44336] font-semibold text-lg mb-6">
+                                <button 
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    className="text-[#F44336] font-semibold text-lg mb-6 flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    {isDeleting && <Loader2 className="w-5 h-5 animate-spin" />}
                                     Proceed to Delete
                                 </button>
                                 
                                 <button 
-                                    onClick={() => setIsDeleteModalOpen(false)}
-                                    className="text-[#3E1C56] font-bold text-lg"
+                                    onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
+                                    className="text-[#3E1C56] font-bold text-lg disabled:opacity-50"
+                                    disabled={isDeleting}
                                 >
                                     Go back
                                 </button>

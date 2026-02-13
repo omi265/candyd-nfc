@@ -2,22 +2,37 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { updateProfile } from "@/app/actions/auth"; // We might need to create this
+import { useActionState, useEffect, useState } from "react";
+import { updateProfile } from "@/app/actions/auth";
+import { toast } from "sonner";
 
 // --- Icons ---
-import { ChevronLeft, Menu, UserCircle } from "lucide-react";
+import { ChevronLeft, Menu, UserCircle, Save, Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
     const { user, isLoading } = useAuth();
     const router = useRouter();
-    const [name, setName] = useState(user?.name || "");
-    const [contact, setContact] = useState(""); // We might need to add this to user model if it doesn't exist
+    const [name, setName] = useState("");
+    const [contact, setContact] = useState("");
+
+    const [state, action, isPending] = useActionState(updateProfile, undefined);
 
     // Sync state once user loads
-    useState(() => {
-        if (user) setName(user.name || "");
-    });
+    useEffect(() => {
+        if (user) {
+            const u = user as any;
+            setName(u.name || "");
+            setContact(u.contact || "");
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (state?.success) {
+            toast.success("Profile updated successfully");
+        } else if (state?.error) {
+            toast.error(state.error);
+        }
+    }, [state]);
 
     if (isLoading) return <div className="min-h-screen bg-[#FDF2EC] flex items-center justify-center">Loading...</div>;
 
@@ -29,14 +44,16 @@ export default function ProfilePage() {
                     <ChevronLeft className="w-6 h-6 text-[#22005D]" />
                 </button>
                 <div /> 
-                {/* Menu icon in design but maybe not needed here? Keeping layout consistent */}
                 <button className="w-10 h-10 flex items-center justify-center bg-[#FDF2EC] rounded-full shadow-sm border border-[#EADDDE]">
                    <Menu className="w-6 h-6 text-[#5B2D7D]" />
                 </button>
             </header>
 
-            <main className="px-6">
-                <h1 className="text-3xl font-bold mb-8 text-[#3E1C56]">Profile</h1>
+            <main className="px-6 pb-20">
+                <div className="flex items-center justify-between mb-8">
+                    <h1 className="text-3xl font-bold text-[#3E1C56]">Profile</h1>
+                </div>
+
                 <p className="text-[#9A92A6] text-sm mb-8 leading-relaxed">
                     This information is visible to other members that are added in your charms.
                 </p>
@@ -51,21 +68,24 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Form Fields */}
-                <div className="space-y-6">
+                <form action={action} className="space-y-6">
                     <div>
                         <label className="block text-[#3E1C56] font-semibold mb-2">Name</label>
                         <input 
+                            name="name"
                             type="text" 
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Your Name"
                             className="w-full bg-[#FFF9F6] border border-[#EADDDE] rounded-xl px-4 py-3 text-[#3E1C56] focus:outline-none focus:border-[#5B2D7D]"
+                            required
                         />
                     </div>
 
                     <div>
                         <label className="block text-[#3E1C56] font-semibold mb-2">Contact Information</label>
                          <input 
+                            name="contact"
                             type="tel" 
                             value={contact}
                             onChange={(e) => setContact(e.target.value)}
@@ -73,7 +93,16 @@ export default function ProfilePage() {
                             className="w-full bg-[#FFF9F6] border border-[#EADDDE] rounded-xl px-4 py-3 text-[#3E1C56] focus:outline-none focus:border-[#5B2D7D]"
                         />
                     </div>
-                </div>
+
+                    <button
+                        type="submit"
+                        disabled={isPending}
+                        className="w-full bg-[#5B2D7D] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                    >
+                        {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                        Save Changes
+                    </button>
+                </form>
             </main>
         </div>
     )

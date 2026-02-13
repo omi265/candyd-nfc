@@ -82,7 +82,7 @@ function MenuDropdown({
     ...(userRole === "ADMIN" ? [{ label: "ADMIN DASHBOARD", href: "/admin" }] : []),
     { label: "SETTINGS", href: "/settings" },
     { label: "MANAGE CHARMS", href: "/manage-charms" },
-    { label: "HELP", href: "/help" },
+    { label: "HELP", href: "/support" },
     { label: "EXPLORE PRODUCTS", href: "/products" },
   ];
 

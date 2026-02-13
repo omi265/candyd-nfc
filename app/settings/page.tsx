@@ -4,12 +4,11 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { useState } from "react";
 import { logout } from "@/app/actions/auth";
 
 // --- Icons ---
 
-import { ChevronLeft, Menu, User, ChevronRight, Bell, Sliders, Lock, FileText, HelpCircle, MessageCircle, LogOut } from "lucide-react";
+import { ChevronLeft, Menu, User, ChevronRight, Sliders, Lock, FileText, LogOut } from "lucide-react";
 
 // --- Components ---
 
@@ -49,7 +48,6 @@ function MenuItem({ icon, label, onClick, isLink = false, href = "#", showToggle
 export default function SettingsPage() {
     const { user, isLoading } = useAuth();
     const router = useRouter();
-    const [pushNotifications, setPushNotifications] = useState(false);
 
     const handleLogout = async () => {
         await logout();
@@ -97,31 +95,26 @@ export default function SettingsPage() {
                             isLink 
                             href="/settings/account" 
                         />
-                        <div className="h-px bg-[#EADDDE] w-full" />
-                        <MenuItem 
-                            icon={<Bell className="w-6 h-6 text-[#5B2D7D]" />} 
-                            label="Push Notifications" 
-                            showToggle 
-                            isToggleOn={pushNotifications}
-                            onToggle={() => setPushNotifications(!pushNotifications)}
-                        />
                     </div>
-                    <p className="text-[#9A92A6] text-xs mt-3 px-4 leading-relaxed">
-                        We recommend keeping your notifications on to stay updated
-                    </p>
                 </div>
 
                 {/* Help & Support Section */}
                 <div className="mb-8">
                     <h3 className="text-[#3E1C56] font-semibold text-lg mb-4">Help & Support</h3>
                     <div className="bg-[#FFF9F6] rounded-3xl px-6 py-2 shadow-sm space-y-0">
-                        <MenuItem icon={<Lock className="w-6 h-6 text-[#5B2D7D]" />} label="Privacy policy" />
+                        <MenuItem 
+                            icon={<Lock className="w-6 h-6 text-[#5B2D7D]" />} 
+                            label="Privacy policy" 
+                            isLink
+                            href="/help/privacy"
+                        />
                          <div className="h-px bg-[#EADDDE] w-full" />
-                        <MenuItem icon={<FileText className="w-6 h-6 text-[#5B2D7D]" />} label="Terms and conditions" />
-                         <div className="h-px bg-[#EADDDE] w-full" />
-                        <MenuItem icon={<HelpCircle className="w-6 h-6 text-[#5B2D7D]" />} label="FAQs" />
-                         <div className="h-px bg-[#EADDDE] w-full" />
-                        <MenuItem icon={<MessageCircle className="w-6 h-6 text-[#5B2D7D]" />} label="Chat Support" />
+                        <MenuItem 
+                            icon={<FileText className="w-6 h-6 text-[#5B2D7D]" />} 
+                            label="Terms and conditions" 
+                            isLink
+                            href="/help/terms"
+                        />
                     </div>
                 </div>
 

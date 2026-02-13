@@ -6,10 +6,18 @@ import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
+import { revalidatePath } from "next/cache";
+import { deleteFromCloudinary, extractPublicId } from "@/lib/cloudinary-helper";
+
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+const updateProfileSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    contact: z.string().optional(),
 });
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
@@ -67,13 +75,88 @@ export async function logout() {
   await signOut({ redirectTo: "/login" });
 }
 
-export async function updateProfile(formData: FormData) {
+export async function updateProfile(prevState: any, formData: FormData) {
     const session = await auth(); 
-    if (!session?.user) return { error: "Not authenticated" };
+    if (!session?.user?.id) return { error: "Not authenticated" };
     
-    // Placeholder for actual update logic
-    // const name = formData.get("name");
-    // await db.user.update(...)
-    
-    return { success: true };
+    const validatedFields = updateProfileSchema.safeParse({
+        name: formData.get("name"),
+        contact: formData.get("contact"),
+    });
+
+    if (!validatedFields.success) {
+        return { error: "Invalid fields" };
+    }
+
+    const { name, contact } = validatedFields.data;
+
+    try {
+        await db.user.update({
+            where: { id: session.user.id },
+            data: { name, contact }
+        });
+        
+        revalidatePath("/settings");
+        revalidatePath("/settings/profile");
+        return { success: true };
+    } catch (error) {
+        return { error: "Failed to update profile" };
+    }
+}
+
+export async function deleteAccount() {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Not authenticated" };
+
+    try {
+        const userId = session.user.id;
+
+        // 1. Gather all media from user's memories
+        const memories = await db.memory.findMany({
+            where: { userId },
+            include: { media: true }
+        });
+
+        const publicIds: string[] = [];
+        memories.forEach(mem => {
+            mem.media.forEach(m => {
+                const pid = extractPublicId(m.url);
+                if (pid) publicIds.push(pid);
+            });
+        });
+
+        // 2. Gather media from experiences
+        const experiences = await db.experience.findMany({
+            where: {
+                item: {
+                    lifeList: {
+                        userId
+                    }
+                }
+            },
+            include: { media: true }
+        });
+
+        experiences.forEach(exp => {
+            exp.media.forEach(m => {
+                const pid = extractPublicId(m.url);
+                if (pid) publicIds.push(pid);
+            });
+        });
+
+        // 3. Delete from Cloudinary
+        if (publicIds.length > 0) {
+            await deleteFromCloudinary(publicIds);
+        }
+
+        // 4. Delete user (Cascades will handle DB cleanup)
+        await db.user.delete({
+            where: { id: userId }
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Delete Account Error:", error);
+        return { error: "Failed to delete account" };
+    }
 }

@@ -4,7 +4,6 @@ import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { 
-  Image as ImageIcon, 
   Heart, 
   Zap, 
   ArrowLeft, 
@@ -33,30 +32,6 @@ function StarBullet({ className }: { className?: string }) {
 
 const CHARMS = [
   {
-    id: "memory",
-    name: "Memory Charm",
-    type: "MEMORY",
-    emoji: "📸",
-    description: "Hold your most precious moments close. Store photos, videos, and audio notes directly on your jewelry.",
-              features: ["Instant NFC Tap Access", "Photo & Video Galleries", "Audio Voice Notes"],    bgColor: "bg-[#5B2D7D]",
-    accentColor: "text-[#5B2D7D]",
-    gradient: "from-[#5B2D7D] to-[#3A1D52]",
-    shopifyUrl: "https://your-shopify-store.com/products/memory-charm",
-    icon: (
-        <div className="relative w-20 h-20 flex items-center justify-center">
-            <div className="absolute inset-0 bg-white/20 rounded-xl shadow-md border-2 border-white/30 -rotate-12 translate-x-[-15%] translate-y-[-5%] overflow-hidden">
-                <Image src="https://images.unsplash.com/photo-1518173946687-a4c8a9b746f5?auto=format&fit=crop&w=100&q=80" fill className="object-cover opacity-60" alt="" sizes="80px" />
-            </div>
-            <div className="absolute inset-0 bg-white/20 rounded-xl shadow-md border-2 border-white/30 rotate-12 translate-x-[15%] translate-y-[5%] overflow-hidden">
-                <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" fill className="object-cover opacity-60" alt="" sizes="80px" />
-            </div>
-            <div className="relative z-10 w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                <ImageIcon className="w-8 h-8 text-[#5B2D7D]" />
-            </div>
-        </div>
-    )
-  },
-  {
     id: "life",
     name: "Life Charm",
     type: "LIFE",
@@ -66,7 +41,7 @@ const CHARMS = [
     bgColor: "bg-[#A4C538]",
     accentColor: "text-[#A4C538]",
     gradient: "from-[#A4C538] to-[#7A9B1E]",
-    shopifyUrl: "https://your-shopify-store.com/products/life-charm",
+    shopifyUrl: "https://candyd.co",
     icon: <div className="w-20 h-20 bg-white rounded-[24px] flex items-center justify-center shadow-lg"><Heart className="w-10 h-10 text-[#A4C538] fill-[#A4C538]" /></div>
   },
   {
@@ -79,7 +54,7 @@ const CHARMS = [
     bgColor: "bg-[#EA580C]",
     accentColor: "text-[#EA580C]",
     gradient: "from-[#EA580C] to-[#9A3412]",
-    shopifyUrl: "https://your-shopify-store.com/products/habit-charm",
+    shopifyUrl: "https://candyd.co",
     icon: <div className="w-20 h-20 bg-white rounded-[24px] flex items-center justify-center shadow-lg"><Zap className="w-10 h-10 text-[#EA580C] fill-[#EA580C]" /></div>
   }
 ];
@@ -187,7 +162,7 @@ export default function ProductsPage() {
                     className={`w-full py-6 px-8 ${charm.bgColor} text-white rounded-[24px] font-black text-xl flex items-center justify-center gap-3 shadow-xl hover:brightness-110 transition-all active:scale-[0.98] group/btn uppercase tracking-tight`}
                 >
                     <ShoppingBag className="w-6 h-6" />
-                    Get yours on Shopify
+                    Get yours on Candyd
                     <ChevronRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
                 </a>
               </div>

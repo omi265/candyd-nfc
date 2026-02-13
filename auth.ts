@@ -35,6 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     email: product.user.email,
                     name: product.user.name,
                     role: product.user.role,
+                    contact: product.user.contact,
                 };
               }
               return null;
@@ -70,6 +71,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     email: user.email,
                     name: user.name,
                     role: user.role,
+                    contact: user.contact,
                 };
             }
             
