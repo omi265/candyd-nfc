@@ -32,9 +32,8 @@ import Image from "next/image";
 
 // --- Components ---
 
-const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
-const EVENTS = ["Pre Wedding Celebrations", "Haldi", "Sangeet", "Mehendi", "Wedding"];
-const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet"];
+const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy", "Excited", "Content", "Hopeful", "Anxious", "Calm", "Relieved", "Proud", "Loved", "Vulnerable", "Fulfilled", "Overwhelmed", "Missed"];
+const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet", "Warm", "Intimate", "Reflective", "Emotional", "Lighthearted", "Cozy", "Energetic", "Sentimental", "Playful", "Soft", "Meaningful", "Heavy"];
 
 function MemoryUploadContent() {
     const { user, isLoading } = useAuth();
@@ -53,9 +52,6 @@ function MemoryUploadContent() {
     const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [time, setTime] = useState(() => new Date().toTimeString().slice(0, 5));
     const [location, setLocation] = useState("");
-    const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
-    const [customEventInput, setCustomEventInput] = useState("");
-    const [showCustomEvent, setShowCustomEvent] = useState(false);
     
     const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
     const [customEmotionInput, setCustomEmotionInput] = useState("");
@@ -197,24 +193,6 @@ function MemoryUploadContent() {
              setShowCustomEmotion(false);
         }
     };
-
-    const toggleEvent = (event: string) => {
-        setSelectedEvents(prev => prev.includes(event) ? prev.filter(e => e !== event) : [...prev, event]);
-    };
-
-    const addCustomEvent = () => {
-        if (customEventInput.trim()) {
-            const val = customEventInput.trim();
-            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
-            if (!selectedEvents.includes(formatted)) {
-                setSelectedEvents(prev => [...prev, formatted]);
-            }
-            setCustomEventInput("");
-            setShowCustomEvent(false);
-        } else {
-            setShowCustomEvent(false);
-        }
-    };
     
     const handleMoodSelect = (mood: string) => {
         setSelectedMood(mood);
@@ -349,7 +327,6 @@ function MemoryUploadContent() {
             formData.append("time", time);
             formData.append("location", location);
             formData.append("emotions", selectedEmotions.join(","));
-            formData.append("events", selectedEvents.join(","));
             if (selectedMood) formData.append("mood", selectedMood);
 
             if (selectedPeople.length > 0) {
@@ -390,9 +367,9 @@ function MemoryUploadContent() {
                                 <Feather className="w-7 h-7 text-[#5B2D7D]" />
                              </div>
                             <div>
-                                <h1 className="text-[28px] font-black text-[#5B2D7D] uppercase leading-[0.9] tracking-tight">LET&apos;S SAVE<br/> A MEMORY</h1>
+                                <h1 className="text-[28px] font-black text-[#5B2D7D] uppercase leading-[0.9] tracking-tight">PRESERVE YOUR<br/> MEMORY</h1>
                                 <p className="text-[#A68CAB] text-[11px] mt-2 leading-relaxed max-w-[280px]">
-                                    Tell us about one you&apos;d like your jewelry to hold. The more you share, the more vivid the moment becomes.
+                                    Add the memories your jewellery carries. Each one brings it to life.
                                 </p>
                             </div>
                          </div>
@@ -401,34 +378,34 @@ function MemoryUploadContent() {
                     <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                         {/* Title */}
                         <div>
-                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Title<span className="text-[#C27A59]">*</span></label>
+                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2 uppercase">TITLE<span className="text-[#C27A59]">*</span></label>
                             <input
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value.slice(0, 15))}
-                                placeholder="Give a title to your memory"
+                                placeholder="Name Your Memory"
                                 className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
                             />
-                            <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character limit : 15 letters</p>
+                            <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 15 Characters</p>
                         </div>
 
                         {/* Description */}
                         <div>
-                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Description<span className="text-[#C27A59]">*</span></label>
+                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2 uppercase">DESCRIPTION<span className="text-[#C27A59]">*</span></label>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Describe your memory"
+                                placeholder="Describe the moment"
                                 rows={2}
                                 className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none"
                             />
-                             <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Describe you memory in a line or two</p>
+                             <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 2 lines</p>
                         </div>
 
                         {/* Media */}
                         <div>
-                            <label className="block text-[#C27A59] text-[13px] font-bold mb-1">Media<span className="text-[#C27A59]">*</span></label>
-                            <p className="text-[#A68CAB] text-[10px] mb-3 ml-1">You can add and edit media later.</p>
+                            <label className="block text-[#C27A59] text-[13px] font-bold mb-1 uppercase">MEDIA<span className="text-[#C27A59]">*</span></label>
+                            <p className="text-[#A68CAB] text-[10px] mb-3 ml-1">You can add and edit the media later</p>
                             
                             {!hasMedia ? (
                                 <div className="border border-dashed border-[#5B2D7D]/20 bg-[#FFF5F0] rounded-[32px] p-6 flex flex-col items-center justify-center text-center min-h-[250px] gap-4">
@@ -580,61 +557,6 @@ function MemoryUploadContent() {
                              </div>
                         </div>
 
-                        {/* Events */}
-                        <div className="mb-6">
-                            <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Event</label>
-                            <p className="text-[#A68CAB] text-[10px] mb-3">Which event does this memory belong to?</p>
-                            <div className="flex flex-wrap gap-2">
-                                {EVENTS.map(event => (
-                                    <button
-                                        type="button"
-                                        key={event}
-                                        onClick={() => toggleEvent(event)}
-                                        className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
-                                            selectedEvents.includes(event)
-                                            ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
-                                            : 'bg-[#FFF5F0] text-[#5B2D7D] border-[#FBE0D6] hover:bg-[#F8E9F0]'
-                                        }`}
-                                    >
-                                        {event}
-                                    </button>
-                                ))}
-                                
-                                {selectedEvents.filter(e => !EVENTS.includes(e)).map(event => (
-                                     <button
-                                        type="button"
-                                        key={event}
-                                        onClick={() => toggleEvent(event)}
-                                        className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
-                                    >
-                                        {event}
-                                        <X className="w-3 h-3 text-white/70" />
-                                    </button>
-                                ))}
-
-                                {showCustomEvent ? (
-                                    <input 
-                                        type="text"
-                                        autoFocus
-                                        value={customEventInput}
-                                        onChange={(e) => setCustomEventInput(e.target.value)}
-                                        onBlur={addCustomEvent}
-                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEvent())}
-                                        placeholder="Type event..."
-                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[100px]"
-                                    />
-                                ) : (
-                                    <button 
-                                        type="button"
-                                        onClick={() => setShowCustomEvent(true)}
-                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
-                                    >
-                                        Other <Plus className="w-3 h-3" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
                         {/* People */}
                         <div className="mb-6">
                             <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">People</label>
@@ -734,7 +656,7 @@ function MemoryUploadContent() {
                                 >
                                     {/* Emotions */}
                                     <div>
-                                        <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Emotion(s) you felt</label>
+                                        <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">How did you feel in the moment ?</label>
                                         <p className="text-[#A68CAB] text-[10px] mb-3">What did you feel in that moment? Choose all that apply.</p>
                                         <div className="flex flex-wrap gap-2">
                                             {EMOTIONS.map(emotion => (
@@ -789,7 +711,7 @@ function MemoryUploadContent() {
 
                                     {/* Mood */}
                                     <div>
-                                        <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Mood</label>
+                                        <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Select a vibe that captures your memory</label>
                                         <p className="text-[#A68CAB] text-[10px] mb-3">Pick a mood that fits the vibe of the memory best.</p>
                                         <div className="flex flex-wrap gap-2">
                                             {MOODS.map(mood => (

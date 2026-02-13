@@ -2,11 +2,11 @@
 
 import { useRef } from "react";
 import { updateMemory, deleteMemory } from "@/app/actions/memories";
-import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
+import { getCloudinarySignature } from "@/app/actions/upload";
 import { getPeople, createPerson } from "@/app/actions/people";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 import {
     ChevronLeft,
@@ -14,8 +14,6 @@ import {
     Calendar,
     Clock,
     MapPin,
-    Image as ImageIcon,
-    Video as VideoIcon,
     Mic,
     Trash2,
     Archive,
@@ -24,7 +22,6 @@ import {
     Pencil,
     Check,
     RefreshCw,
-    GripVertical,
     X,
     Users,
     Play
@@ -34,9 +31,8 @@ import AudioPlayer from "@/app/components/AudioPlayer";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import Image from "next/image";
 
-const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy"];
-const EVENTS = ["Pre Wedding Celebrations", "Haldi", "Sangeet", "Mehendi", "Wedding"];
-const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet"];
+const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy", "Excited", "Content", "Hopeful", "Anxious", "Calm", "Relieved", "Proud", "Loved", "Vulnerable", "Fulfilled", "Overwhelmed", "Missed"];
+const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet", "Warm", "Intimate", "Reflective", "Emotional", "Lighthearted", "Cozy", "Energetic", "Sentimental", "Playful", "Soft", "Meaningful", "Heavy"];
 
 interface DraggableMediaItemProps {
     item: any;
@@ -217,10 +213,6 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     const [time, setTime] = useState(memory.time || "");
     const [location, setLocation] = useState(memory.location || "");
     
-    const [selectedEvents, setSelectedEvents] = useState<string[]>(memory.events || []);
-    const [customEventInput, setCustomEventInput] = useState("");
-    const [showCustomEvent, setShowCustomEvent] = useState(false);
-
     const [selectedEmotions, setSelectedEmotions] = useState<string[]>(memory.emotions || []);
     const [customEmotionInput, setCustomEmotionInput] = useState("");
     const [showCustomEmotion, setShowCustomEmotion] = useState(false);
@@ -398,24 +390,6 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         }
     };
 
-    const toggleEvent = (event: string) => {
-        setSelectedEvents(prev => prev.includes(event) ? prev.filter(e => e !== event) : [...prev, event]);
-    };
-
-    const addCustomEvent = () => {
-        if (customEventInput.trim()) {
-            const val = customEventInput.trim();
-            const formatted = val.charAt(0).toUpperCase() + val.slice(1);
-            if (!selectedEvents.includes(formatted)) {
-                setSelectedEvents(prev => [...prev, formatted]);
-            }
-            setCustomEventInput("");
-            setShowCustomEvent(false);
-        } else {
-            setShowCustomEvent(false);
-        }
-    };
-    
     const handleMoodSelect = (mood: string) => {
         setSelectedMood(mood);
         setShowCustomMood(false);
@@ -533,7 +507,6 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                 formData.append("time", time);
                 formData.append("location", location);
                 formData.append("emotions", selectedEmotions.join(","));
-                formData.append("events", selectedEvents.join(","));
                 if (selectedMood) formData.append("mood", selectedMood);
                 if (selectedProductId) formData.append("productId", selectedProductId);
 
@@ -731,62 +704,6 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                            </div>
                       </div>
 
-                       {/* Events */}
-                        <div className="mb-6">
-                            <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Event</label>
-                            <p className="text-[#A68CAB] text-[10px] mb-3">Which event does this memory belong to?</p>
-                            <div className="flex flex-wrap gap-2">
-                                {EVENTS.map(event => (
-                                    <button
-                                        type="button"
-                                        key={event}
-                                        onClick={() => toggleEvent(event)}
-                                        className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
-                                            selectedEvents.includes(event)
-                                            ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
-                                            : 'bg-[#FFF5F0] text-[#5B2D7D] border-[#FBE0D6] hover:bg-[#F8E9F0]'
-                                        }`}
-                                    >
-                                        {event}
-                                    </button>
-                                ))}
-                                
-                                {/* Custom Events Display */}
-                                {selectedEvents.filter(e => !EVENTS.includes(e)).map(event => (
-                                     <button
-                                        type="button"
-                                        key={event}
-                                        onClick={() => toggleEvent(event)}
-                                        className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
-                                    >
-                                        {event}
-                                        <X className="w-3 h-3 text-white/70" />
-                                    </button>
-                                ))}
-
-                                {showCustomEvent ? (
-                                    <input 
-                                        type="text"
-                                        autoFocus
-                                        value={customEventInput}
-                                        onChange={(e) => setCustomEventInput(e.target.value)}
-                                        onBlur={addCustomEvent}
-                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEvent())}
-                                        placeholder="Type event..."
-                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[100px]"
-                                    />
-                                ) : (
-                                    <button 
-                                        type="button"
-                                        onClick={() => setShowCustomEvent(true)}
-                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
-                                    >
-                                        Other <Plus className="w-3 h-3" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
                         {/* People */}
                         <div className="mb-6">
                             <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">People</label>
@@ -886,7 +803,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                             >
                                 {/* Emotions */}
                                 <div>
-                                    <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Emotion(s) you felt</label>
+                                    <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">How did you feel in the moment ?</label>
                                     <p className="text-[#A68CAB] text-[10px] mb-3">What did you feel in that moment? Choose all that apply.</p>
                                     <div className="flex flex-wrap gap-2">
                                         {EMOTIONS.map(emotion => (
@@ -942,7 +859,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
                                 {/* Mood */}
                                 <div>
-                                    <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Mood</label>
+                                    <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Select a vibe that captures your memory</label>
                                     <p className="text-[#A68CAB] text-[10px] mb-3">Pick a mood that fits the vibe of the memory best.</p>
                                     <div className="flex flex-wrap gap-2">
                                         {MOODS.map(mood => (

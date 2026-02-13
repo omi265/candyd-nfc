@@ -179,7 +179,7 @@ export default function AddItemPage() {
           >
             <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
           </button>
-          <h1 className="text-xl font-bold text-[#5B2D7D]">Add Experience</h1>
+          <h1 className="text-xl font-bold text-[#5B2D7D]">Add Bucket List Item</h1>
         </div>
 
         {/* Tab Switcher */}
@@ -324,7 +324,7 @@ export default function AddItemPage() {
             {/* When */}
             <div>
               <label className="block text-sm font-medium text-[#5B2D7D]/60 mb-2">
-                When feels right?
+                hope to tick this off by
               </label>
               <button
                 onClick={() => setShowWhenSelector(!showWhenSelector)}
