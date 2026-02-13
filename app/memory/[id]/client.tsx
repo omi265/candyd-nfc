@@ -601,32 +601,33 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                  <div className="space-y-6">
                       {/* Title */}
                       <div>
-                        <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Title<span className="text-[#C27A59]">*</span></label>
+                        <label className="block text-[#C27A59] text-[13px] font-bold mb-2 uppercase">TITLE<span className="text-[#C27A59]">*</span></label>
                         <input
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value.slice(0, 15))}
                             className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
                         />
-                        <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character limit : 15 letters</p>
+                        <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 15 Characters</p>
                       </div>
 
                       {/* Description */}
                       <div>
-                        <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Description<span className="text-[#C27A59]">*</span></label>
+                        <label className="block text-[#C27A59] text-[13px] font-bold mb-2 uppercase">DESCRIPTION</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Describe the moment"
                             rows={3}
                             className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none leading-relaxed"
                         />
-                         <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Describe you memory in a line or two</p>
+                         <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 2 lines</p>
                       </div>
 
                       {/* Media Section */}
                       <div>
                           <div className="flex items-center justify-between mb-1">
-                                <label className="block text-[#C27A59] text-[13px] font-bold">Media<span className="text-[#C27A59]">*</span></label>
+                                <label className="block text-[#C27A59] text-[13px] font-bold uppercase">MEDIA<span className="text-[#C27A59]">*</span></label>
                                 {mediaItems.length > 1 && (
                                     <button 
                                         type="button" 

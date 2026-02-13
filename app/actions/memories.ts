@@ -9,7 +9,7 @@ import { extractPublicId, deleteFromCloudinary, isValidCloudinaryUrl } from "@/l
 
 const createMemorySchema = z.object({
   title: z.string().min(1, "Title is required").max(15, "Title too long"),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().optional(),
   date: z.string(), // We will parse this to Date object
   time: z.string().optional(),
   location: z.string().optional(),
@@ -70,7 +70,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
     const memory = await db.memory.create({
       data: {
         title,
-        description,
+        description: description || "",
         date: parsedDate,
         time,
         location,
@@ -296,7 +296,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
             where: { id },
             data: {
                 title,
-                description,
+                description: description || "",
                 date: parsedDate,
                 time,
                 location,

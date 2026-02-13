@@ -239,7 +239,6 @@ function MemoryUploadContent() {
         // Validation
         const missingFields = [];
         if (!title.trim()) missingFields.push("Title");
-        if (!description.trim()) missingFields.push("Description");
         if (mediaItems.length === 0) missingFields.push("Media");
         if (!selectedProductId) missingFields.push("Charm Link");
         
@@ -391,7 +390,7 @@ function MemoryUploadContent() {
 
                         {/* Description */}
                         <div>
-                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2 uppercase">DESCRIPTION<span className="text-[#C27A59]">*</span></label>
+                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2 uppercase">DESCRIPTION</label>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
