@@ -17,6 +17,7 @@ export async function createHabits(
     title: string;
     description?: string;
     focusArea: string;
+    frequency?: string;
     targetDays?: number;
   }[],
   charmName?: string
@@ -25,7 +26,7 @@ export async function createHabits(
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   if (habitsData.length === 0) return { error: "No habits provided" };
-  if (habitsData.length > 6) return { error: "Maximum 6 habits allowed" };
+  if (habitsData.length > 10) return { error: "Maximum 10 habits allowed" };
 
   try {
     const product = await db.product.findUnique({
@@ -48,7 +49,7 @@ export async function createHabits(
         });
     }
 
-    // Create habits (defaults: Level 1, Initiation)
+    // Create habits
     await db.$transaction(
         habitsData.map(data => 
             db.habit.create({
@@ -56,6 +57,7 @@ export async function createHabits(
                     title: data.title,
                     description: data.description,
                     focusArea: data.focusArea,
+                    frequency: data.frequency || "daily",
                     targetDays: data.targetDays || 66,
                     productId,
                     userId: session.user.id,
@@ -81,6 +83,7 @@ export async function createHabit(
     title: string;
     description?: string;
     focusArea: string;
+    frequency?: string;
     targetDays?: number; 
   }
 ) {
@@ -91,7 +94,7 @@ export async function createHabit(
   if (!validated.success) {
       return { error: validated.error.issues[0].message };
   }
-  const { title, description, focusArea, targetDays } = validated.data;
+  const { title, description, focusArea, frequency, targetDays } = validated.data;
 
   try {
     const product = await db.product.findUnique({
@@ -112,6 +115,7 @@ export async function createHabit(
         title,
         description,
         focusArea,
+        frequency: frequency || "daily",
         targetDays: targetDays || 66,
         productId,
         userId: session.user.id,
@@ -155,11 +159,57 @@ export async function getHabits(productId: string) {
   }
 }
 
+export async function updateHabit(
+    habitId: string,
+    data: {
+        title?: string;
+        description?: string;
+        targetDays?: number;
+        isActive?: boolean;
+    }
+) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const habit = await db.habit.findUnique({ where: { id: habitId } });
+        if (!habit || habit.userId !== session.user.id) return { error: "Unauthorized" };
+
+        await db.habit.update({
+            where: { id: habitId },
+            data
+        });
+
+        revalidatePath(`/habit-charm`);
+        return { success: true };
+    } catch (error) {
+        return { error: "Failed to update habit" };
+    }
+}
+
+export async function deleteHabit(habitId: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const habit = await db.habit.findUnique({ where: { id: habitId } });
+        if (!habit || habit.userId !== session.user.id) return { error: "Unauthorized" };
+
+        await db.habit.delete({ where: { id: habitId } });
+
+        revalidatePath(`/habit-charm`);
+        return { success: true };
+    } catch (error) {
+        return { error: "Failed to delete habit" };
+    }
+}
+
 // ===========================================
 // PROGRESSION ENGINE
 // ===========================================
 
 async function checkProgression(habit: Habit & { logs: HabitLog[] }) {
+    if (habit.focusArea === "custom") return null;
     if (habit.level >= 4) return null; 
 
     // Don't suggest if declined recently (e.g. last 7 days)

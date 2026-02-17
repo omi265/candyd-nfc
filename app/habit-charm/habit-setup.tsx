@@ -4,49 +4,108 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CORE_HABITS } from "@/lib/habit-templates";
 import { createHabits } from "@/app/actions/habit";
-import { Loader2, ArrowRight, Check, Sparkles, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, ArrowRight, Check, Sparkles, X, Plus, Trash2, Calendar, Target, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Product } from "@prisma/client";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+} from "@/components/ui/drawer";
+
+interface CustomHabit {
+    tempId: string;
+    title: string;
+    description: string;
+    frequency: string;
+    targetDays: number;
+}
 
 export default function HabitSetup({ product }: { product: Product }) {
-    const [selectedHabitIds, setSelectedHabitIds] = useState<string[]>([]);
+    const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+    const [customHabits, setCustomHabits] = useState<CustomHabit[]>([]);
     const [charmName, setCharmName] = useState(product.name || "");
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [isCustomDrawerOpen, setIsCustomDrawerOpen] = useState(false);
+    const [newCustom, setNewCustom] = useState({
+        title: "",
+        description: "",
+        frequency: "daily",
+        targetDays: 66
+    });
 
     const router = useRouter();
 
-    const toggleHabit = (id: string) => {
-        if (selectedHabitIds.includes(id)) {
-            setSelectedHabitIds(prev => prev.filter(hid => hid !== id));
+    const totalSelected = selectedTemplateIds.length + customHabits.length;
+
+    const toggleTemplate = (id: string) => {
+        if (selectedTemplateIds.includes(id)) {
+            setSelectedTemplateIds(prev => prev.filter(hid => hid !== id));
         } else {
-            if (selectedHabitIds.length >= 3) {
-                toast.error("Start small. Choose up to 3 core habits.");
+            if (totalSelected >= 10) {
+                toast.error("Maximum 10 habits allowed.");
                 return;
             }
-            setSelectedHabitIds(prev => [...prev, id]);
+            setSelectedTemplateIds(prev => [...prev, id]);
         }
     };
 
+    const addCustomHabit = () => {
+        if (!newCustom.title.trim()) {
+            toast.error("Habit name is required");
+            return;
+        }
+        if (totalSelected >= 10) {
+            toast.error("Maximum 10 habits allowed.");
+            return;
+        }
+
+        const habit: CustomHabit = {
+            tempId: Math.random().toString(36).substring(7),
+            ...newCustom
+        };
+
+        setCustomHabits(prev => [...prev, habit]);
+        setNewCustom({ title: "", description: "", frequency: "daily", targetDays: 66 });
+        setIsCustomDrawerOpen(false);
+        toast.success("Custom habit added!");
+    };
+
+    const removeCustomHabit = (tempId: string) => {
+        setCustomHabits(prev => prev.filter(h => h.tempId !== tempId));
+    };
+
     const handleSubmit = async () => {
-        if (selectedHabitIds.length === 0) return;
+        if (totalSelected === 0) return;
 
         setIsSubmitting(true);
         
         try {
-            const habitsData = selectedHabitIds.map(id => {
-                const core = CORE_HABITS.find(h => h.id === id);
-                const level1 = core?.levels.find(l => l.level === 1);
-                
-                return {
-                    title: level1?.description || "Level 1 Habit",
-                    description: `Level 1: ${level1?.duration} • ${level1?.trigger}`,
-                    focusArea: id, // Core ID
-                    targetDays: 66, // Default to 66 for now
-                };
-            });
+            const habitsData = [
+                ...selectedTemplateIds.map(id => {
+                    const core = CORE_HABITS.find(h => h.id === id);
+                    const level1 = core?.levels.find(l => l.level === 1);
+                    return {
+                        title: level1?.description || core?.title || "Level 1 Habit",
+                        description: `Level 1: ${level1?.duration} • ${level1?.trigger}`,
+                        focusArea: id,
+                        frequency: "daily",
+                        targetDays: 66,
+                    };
+                }),
+                ...customHabits.map(h => ({
+                    title: h.title,
+                    description: h.description,
+                    focusArea: "custom",
+                    frequency: h.frequency,
+                    targetDays: h.targetDays
+                }))
+            ];
 
             const result = await createHabits(product.id, habitsData, charmName.trim() || "My Habit Charm");
 
@@ -74,8 +133,8 @@ export default function HabitSetup({ product }: { product: Product }) {
                 >
                     <Sparkles className="w-8 h-8 text-[#5B2D7D]" />
                 </motion.div>
-                <h1 className="text-2xl font-bold text-[#5B2D7D] mb-2">Build Your Foundation</h1>
-                <p className="text-[#5B2D7D]/60 max-w-xs mx-auto">Select 1-3 core habits to start your journey. We&apos;ll start small.</p>
+                <h1 className="text-2xl font-bold text-[#5B2D7D] mb-2">Build Your Ritual</h1>
+                <p className="text-[#5B2D7D]/60 max-w-xs mx-auto">Select up to 10 habits. Mix core foundations with your own custom goals.</p>
             </header>
 
             {/* Main Content */}
@@ -95,54 +154,66 @@ export default function HabitSetup({ product }: { product: Product }) {
                     />
                 </div>
 
-                {/* Grid of Core Habits */}
-                <div className="space-y-3">
-                    {CORE_HABITS.map((habit) => {
-                        const isSelected = selectedHabitIds.includes(habit.id);
-                        const isExpanded = expandedId === habit.id;
-                        const level1 = habit.levels.find(l => l.level === 1);
+                {/* Selected Summary */}
+                {totalSelected > 0 && (
+                    <div className="mb-8 bg-white/50 rounded-2xl p-4 border border-[#5B2D7D]/5">
+                        <div className="flex items-center justify-between mb-3 px-1">
+                            <span className="text-xs font-bold text-[#5B2D7D]/40 uppercase tracking-widest">Selected Habits ({totalSelected}/10)</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {selectedTemplateIds.map(id => (
+                                <div key={id} className="bg-[#5B2D7D] text-white px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-2">
+                                    {CORE_HABITS.find(h => h.id === id)?.icon} {CORE_HABITS.find(h => h.id === id)?.title}
+                                    <button onClick={() => toggleTemplate(id)}><X className="w-3 h-3" /></button>
+                                </div>
+                            ))}
+                            {customHabits.map(h => (
+                                <div key={h.tempId} className="bg-[#A4C538] text-[#5B2D7D] px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-2">
+                                    ✨ {h.title}
+                                    <button onClick={() => removeCustomHabit(h.tempId)}><X className="w-3 h-3" /></button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-                        return (
-                            <div key={habit.id} className="overflow-hidden">
+                {/* Grid of Core Habits */}
+                <div className="mb-6">
+                    <h3 className="text-sm font-bold text-[#5B2D7D]/40 uppercase tracking-widest mb-4 ml-1">Core Foundations</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        {CORE_HABITS.map((habit) => {
+                            const isSelected = selectedTemplateIds.includes(habit.id);
+                            return (
                                 <button
-                                    onClick={() => toggleHabit(habit.id)}
-                                    className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all shadow-sm border-2 ${
+                                    key={habit.id}
+                                    onClick={() => toggleTemplate(habit.id)}
+                                    className={`flex flex-col items-center justify-center p-4 rounded-3xl transition-all border-2 aspect-square ${
                                         isSelected 
-                                        ? "bg-white border-[#5B2D7D] ring-1 ring-[#5B2D7D]/20" 
-                                        : "bg-white border-transparent hover:border-[#5B2D7D]/10"
+                                        ? "bg-white border-[#5B2D7D] shadow-md" 
+                                        : "bg-white/40 border-transparent hover:border-[#5B2D7D]/10"
                                     }`}
                                 >
-                                    <div className="flex items-center gap-4 text-left">
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0 ${habit.color}`}>
-                                            {habit.icon}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-[#5B2D7D]">{habit.title}</h3>
-                                            <p className="text-xs text-[#5B2D7D]/50">{habit.description}</p>
-                                        </div>
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl mb-2 ${habit.color}`}>
+                                        {habit.icon}
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        {isSelected && (
-                                            <div className="w-6 h-6 bg-[#5B2D7D] rounded-full flex items-center justify-center">
-                                                <Check className="w-4 h-4 text-white" />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <span className="font-bold text-[#5B2D7D] text-sm">{habit.title}</span>
+                                    {isSelected && <Check className="w-4 h-4 text-[#5B2D7D] mt-1" />}
                                 </button>
-                                
-                                {/* Preview of Level 1 */}
-                                <div className={`px-4 transition-all duration-300 ${isSelected ? "max-h-20 opacity-100 pt-2 pb-2" : "max-h-0 opacity-0"}`}>
-                                    <div className="bg-[#5B2D7D]/5 rounded-xl p-3 flex items-start gap-3">
-                                        <div className="w-5 h-5 rounded-full bg-[#5B2D7D]/10 flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold text-[#5B2D7D]">1</div>
-                                        <div className="text-sm text-[#5B2D7D]">
-                                            <span className="font-bold">Start here:</span> {level1?.description}
-                                            <div className="text-xs opacity-60 mt-0.5">{level1?.duration} • {level1?.trigger}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Custom Habits Section */}
+                <div className="mb-12">
+                    <h3 className="text-sm font-bold text-[#5B2D7D]/40 uppercase tracking-widest mb-4 ml-1">Your Own Goals</h3>
+                    <button 
+                        onClick={() => setIsCustomDrawerOpen(true)}
+                        className="w-full py-4 bg-white border-2 border-dashed border-[#5B2D7D]/20 rounded-2xl flex items-center justify-center gap-2 text-[#5B2D7D]/60 font-bold hover:border-[#5B2D7D]/40 hover:text-[#5B2D7D] transition-all"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Add Custom Habit
+                    </button>
                 </div>
             </div>
 
@@ -151,20 +222,94 @@ export default function HabitSetup({ product }: { product: Product }) {
                 <div className="max-w-md mx-auto pointer-events-auto">
                     <button
                         onClick={handleSubmit}
-                        disabled={selectedHabitIds.length === 0 || isSubmitting}
+                        disabled={totalSelected === 0 || isSubmitting}
                         className="w-full py-4 bg-[#A4C538] text-white rounded-[24px] font-bold text-lg flex items-center justify-center gap-2 shadow-xl hover:bg-[#93B132] transition-colors disabled:opacity-50"
                     >
                         {isSubmitting ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
                             <>
-                                Begin with {selectedHabitIds.length} Habit{selectedHabitIds.length !== 1 ? 's' : ''}
+                                Activate {totalSelected} Habit{totalSelected !== 1 ? 's' : ''}
                                 <ArrowRight className="w-5 h-5" />
                             </>
                         )}
                     </button>
                 </div>
             </div>
+
+            {/* Custom Habit Drawer */}
+            <Drawer open={isCustomDrawerOpen} onOpenChange={setIsCustomDrawerOpen}>
+                <DrawerContent className="bg-[#FDF2EC] font-[Outfit]">
+                    <div className="p-6 pb-12">
+                        <DrawerHeader className="px-0">
+                            <DrawerTitle className="text-2xl font-bold text-[#5B2D7D]">Create Custom Habit</DrawerTitle>
+                            <DrawerDescription>Define your own ritual and target.</DrawerDescription>
+                        </DrawerHeader>
+
+                        <div className="space-y-6 mt-4">
+                            <div>
+                                <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2">What is the habit?</label>
+                                <input 
+                                    type="text"
+                                    value={newCustom.title}
+                                    onChange={(e) => setNewCustom({...newCustom, title: e.target.value})}
+                                    placeholder="e.g. Read for 20 minutes"
+                                    className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2">Brief details (optional)</label>
+                                <input 
+                                    type="text"
+                                    value={newCustom.description}
+                                    onChange={(e) => setNewCustom({...newCustom, description: e.target.value})}
+                                    placeholder="e.g. No screens, just paper"
+                                    className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2 flex items-center gap-1">
+                                        <Calendar className="w-3 h-3" /> Frequency
+                                    </label>
+                                    <select 
+                                        value={newCustom.frequency}
+                                        onChange={(e) => setNewCustom({...newCustom, frequency: e.target.value})}
+                                        className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none appearance-none"
+                                    >
+                                        <option value="daily">Every day</option>
+                                        <option value="weekday">Weekdays</option>
+                                        <option value="weekend">Weekends</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2 flex items-center gap-1">
+                                        <Target className="w-3 h-3" /> Goal (Days)
+                                    </label>
+                                    <select 
+                                        value={newCustom.targetDays}
+                                        onChange={(e) => setNewCustom({...newCustom, targetDays: parseInt(e.target.value)})}
+                                        className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none appearance-none"
+                                    >
+                                        <option value={21}>21 Days (Initiation)</option>
+                                        <option value={66}>66 Days (Habit forming)</option>
+                                        <option value={100}>100 Days (Mastery)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={addCustomHabit}
+                                className="w-full py-4 bg-[#5B2D7D] text-white rounded-2xl font-bold shadow-lg hover:bg-[#4A246A] transition-colors"
+                            >
+                                Add to Rituals
+                            </button>
+                        </div>
+                    </div>
+                </DrawerContent>
+            </Drawer>
         </div>
     );
 }

@@ -113,6 +113,7 @@ export const createHabitSchema = z.object({
   title: z.string().min(1, "Title is required").max(50),
   description: z.string().optional(),
   focusArea: z.string().min(1, "Focus area is required"),
+  frequency: z.string().default("daily"),
   targetDays: z.number().int().min(1).default(66),
 });
 
