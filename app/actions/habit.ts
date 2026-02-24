@@ -62,7 +62,8 @@ export async function createHabits(
                     productId,
                     userId: session.user.id,
                     level: 1,
-                    phase: "initiation"
+                    phase: "initiation",
+                    isActive: true
                 }
             })
         )
@@ -120,7 +121,8 @@ export async function createHabit(
         productId,
         userId: session.user.id,
         level: 1,
-        phase: "initiation"
+        phase: "initiation",
+        isActive: true
       },
     });
 
@@ -152,11 +154,82 @@ export async function getHabits(productId: string) {
       orderBy: { createdAt: 'asc' }
     });
 
-    return habits;
+    if (habits.length === 0) return [];
+
+    // Filter logs in memory based on resetAt
+    const habitsWithFilteredLogs = habits.map((habit) => {
+        if (!habit.resetAt) return habit;
+        
+        const resetTime = new Date(habit.resetAt).getTime();
+        const filteredLogs = habit.logs.filter(log => 
+            new Date(log.createdAt).getTime() > resetTime
+        );
+        
+        return { ...habit, logs: filteredLogs };
+    });
+
+    return habitsWithFilteredLogs;
   } catch (error) {
     console.error("Failed to get habits:", error);
     return [];
   }
+}
+
+export async function resetHabitCharm(productId: string) {
+    const session = await auth();
+    if (!session?.user?.id) {
+        console.error("Reset Charm: No Session");
+        return { error: "Unauthorized" };
+    }
+
+    try {
+        const product = await db.product.findUnique({
+            where: { id: productId },
+            include: { habits: true }
+        });
+
+        if (!product) {
+            console.error("Reset Charm: Product not found", productId);
+            return { error: "Product not found" };
+        }
+        if (product.userId !== session.user.id) {
+            console.error("Reset Charm: User mismatch", product.userId, session.user.id);
+            return { error: "Unauthorized" };
+        }
+
+        const now = new Date();
+
+        // Update all habits using a single updateMany for efficiency where possible,
+        // but since we need to set resetAt to now and individual streaks to 0,
+        // and we might want individual control later, we'll keep the transaction.
+        await db.$transaction([
+            db.product.update({
+                where: { id: productId },
+                data: { lastResetAt: now }
+            }),
+            db.habit.updateMany({
+                where: { productId: productId },
+                data: {
+                    resetAt: now,
+                    currentStreak: 0,
+                    longestStreak: 0,
+                    totalCompletions: 0,
+                    level: 1,
+                    phase: "initiation",
+                    lastDeclinedUpgradeAt: null,
+                    isActive: true,
+                    graduatedAt: null,
+                    archivedAt: null
+                }
+            })
+        ]);
+
+        revalidatePath(`/habit-charm`);
+        return { success: true };
+    } catch (error) {
+        console.error("Reset Charm Error:", error);
+        return { error: "Failed to reset charm" };
+    }
 }
 
 export async function updateHabit(
@@ -204,8 +277,50 @@ export async function deleteHabit(habitId: string) {
     }
 }
 
+export async function resetHabit(habitId: string) {
+    const session = await auth();
+    if (!session?.user?.id) {
+        console.error("Reset Habit: No Session");
+        return { error: "Unauthorized" };
+    }
+
+    try {
+        const habit = await db.habit.findUnique({ where: { id: habitId } });
+        if (!habit) {
+            console.error("Reset Habit: Habit not found", habitId);
+            return { error: "Habit not found" };
+        }
+        if (habit.userId !== session.user.id) {
+            console.error("Reset Habit: User mismatch", habit.userId, session.user.id);
+            return { error: "Unauthorized" };
+        }
+
+        await db.habit.update({
+            where: { id: habitId },
+            data: {
+                resetAt: new Date(),
+                currentStreak: 0,
+                longestStreak: 0,
+                totalCompletions: 0,
+                level: 1,
+                phase: "initiation",
+                lastDeclinedUpgradeAt: null,
+                isActive: true,
+                graduatedAt: null,
+                archivedAt: null
+            }
+        });
+
+        revalidatePath(`/habit-charm`);
+        return { success: true };
+    } catch (error) {
+        console.error("Reset Habit Error:", error);
+        return { error: "Failed to reset habit" };
+    }
+}
+
 // ===========================================
-// PROGRESSION ENGINE
+// HABIT ACTIONS & LOGIC
 // ===========================================
 
 async function checkProgression(habit: Habit & { logs: HabitLog[] }) {
@@ -300,27 +415,35 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
     try {
         const habit = await db.habit.findUnique({
             where: { id: habitId },
-            include: { logs: { orderBy: { date: 'desc' }, take: 1 } }
+            include: {
+                logs: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1
+                }
+            }
         });
 
         if (!habit || habit.userId !== session.user.id) {
             return { error: "Unauthorized" };
         }
 
-        // Normalize today to start of day, with 4 AM cutoff (Virtual Day)
+        // Fetch last log specifically after resetAt if it exists
+        let lastLog = habit.logs[0];
+        if (habit.resetAt && lastLog && new Date(lastLog.createdAt) <= new Date(habit.resetAt)) {
+            lastLog = undefined as any;
+        }
+
+        // Normalize today to UTC start of day, with 4 AM local cutoff (Virtual Day)
         const now = new Date();
         if (now.getHours() < 4) {
             now.setDate(now.getDate() - 1);
         }
-        now.setHours(0, 0, 0, 0);
-        const today = now;
+        const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
         // Check already logged
         let alreadyLoggedToday = false;
-        const lastLog = habit.logs[0];
         if (lastLog) {
             const lastLogDate = new Date(lastLog.date);
-            lastLogDate.setHours(0, 0, 0, 0);
             if (lastLogDate.getTime() === today.getTime()) {
                 alreadyLoggedToday = true;
             }
@@ -336,36 +459,21 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
             }
         });
 
-        // Streak Logic (Compassionate)
-        // If already logged today, streak doesn't change (unless we want to handle overwrites, but we just append logs)
-        // We only increment streak if it's the FIRST log of the day.
-        
+        // Streak Logic
         let newStreak = habit.currentStreak;
         let newTotal = habit.totalCompletions;
 
         if (!alreadyLoggedToday) {
-            newStreak = 1; // Default reset
+            newStreak = 1;
             const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
+            yesterday.setUTCDate(yesterday.getUTCDate() - 1);
 
             if (lastLog) {
                 const lastLogDate = new Date(lastLog.date);
-                lastLogDate.setHours(0, 0, 0, 0);
-
                 if (lastLogDate.getTime() === yesterday.getTime()) {
                     newStreak = habit.currentStreak + 1;
                 }
             }
-            
-            // Increment total only if DONE (not sick/travel)
-            // Wait, concept says "Streak protected".
-            // If I am SICK, I maintain streak. Do I increment it?
-            // "Sick first. Your streak is protected."
-            // If I have streak 5. Today Sick. Streak 5 or 6?
-            // If 6, then tomorrow Done -> 7.
-            // If 5, then tomorrow Done -> 6.
-            // Let's increment. It feels more supportive. "You checked in."
-            // But Total Completions should reflect ACTUAL work done?
             
             if (logType === 'DONE') {
                 newTotal += 1;
@@ -373,7 +481,7 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
         }
 
         // Check Progression
-        const updatedHabitMock = { ...habit, currentStreak: newStreak, logs: [ ...habit.logs ] }; 
+        const updatedHabitMock = { ...habit, currentStreak: newStreak, logs: lastLog ? [lastLog] : [] }; 
         const progression = await checkProgression(updatedHabitMock);
 
         const updates: Partial<Habit> = {
@@ -385,9 +493,6 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
             updates.longestStreak = newStreak;
         }
 
-        // Graduation Check (Target Days)
-        // If Phase is Initiation (21 days), switch to Consolidation?
-        // Or just use the 66 day target.
         if (newStreak >= habit.targetDays && !habit.graduatedAt) {
              updates.graduatedAt = new Date();
              updates.isActive = false; 
@@ -408,7 +513,7 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
             success: true, 
             newStreak, 
             graduated: !!updates.graduatedAt,
-            progression // Return suggestion to UI
+            progression 
         };
 
     } catch (error) {
@@ -417,81 +522,118 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
     }
 }
 
-// Keep other exports for compatibility if needed, or remove.
-// adjustHabitLogs, toggleHabitDate, updateHabitStats - keeping them as is generally safe.
 export async function adjustHabitLogs(habitId: string, dateStr: string, adjustment: number) {
-    // ... [Previous Implementation]
-    // Re-paste previous implementation if overwriting file
-    // For brevity in this tool call, I'll paste the previous implementation content below
     const session = await auth();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
+    console.log(`[adjustHabitLogs] Started for habit ${habitId} on ${dateStr} with adjustment ${adjustment}`);
+
     try {
         const habit = await db.habit.findUnique({
-            where: { id: habitId },
-            select: { userId: true, currentStreak: true, totalCompletions: true, longestStreak: true }
+            where: { id: habitId }
         });
 
-        if (!habit || habit.userId !== session.user.id) {
+        if (!habit) {
+            console.error(`[adjustHabitLogs] Habit not found: ${habitId}`);
+            return { error: "Habit not found" };
+        }
+
+        if (habit.userId !== session.user.id) {
+            console.error(`[adjustHabitLogs] Unauthorized access attempt by user ${session.user.id} for habit owned by ${habit.userId}`);
             return { error: "Unauthorized" };
         }
 
-        const targetDate = new Date(`${dateStr}T00:00:00.000Z`);
+        // Standard UTC date for the adjustment
+        const targetDate = new Date(`${dateStr}T00:00:00Z`);
+        console.log(`[adjustHabitLogs] Target Date (UTC): ${targetDate.toISOString()}`);
 
         if (adjustment > 0) {
-            await db.$transaction(
-                Array(adjustment).fill(null).map(() => 
-                    db.habitLog.create({
-                        data: { habitId, date: targetDate, logType: 'DONE' }
-                    })
-                )
-            );
-        } else if (adjustment < 0) {
-            const logsToDelete = await db.habitLog.findMany({
-                where: { habitId, date: targetDate },
-                orderBy: { createdAt: 'desc' },
-                take: Math.abs(adjustment)
+            console.log(`[adjustHabitLogs] Creating log...`);
+            await db.habitLog.create({
+                data: { 
+                    habitId, 
+                    date: targetDate, 
+                    logType: 'DONE' 
+                }
             });
-            if (logsToDelete.length > 0) {
-                await db.habitLog.deleteMany({
-                    where: { id: { in: logsToDelete.map(l => l.id) } }
+        } else if (adjustment < 0) {
+            console.log(`[adjustHabitLogs] Finding log to delete...`);
+            const lastLogForDay = await db.habitLog.findFirst({
+                where: { 
+                    habitId, 
+                    date: targetDate 
+                },
+                orderBy: { createdAt: 'desc' },
+                select: { id: true }
+            });
+
+            if (lastLogForDay) {
+                console.log(`[adjustHabitLogs] Deleting log ${lastLogForDay.id}`);
+                await db.habitLog.delete({
+                    where: { id: lastLogForDay.id }
                 });
+            } else {
+                console.log(`[adjustHabitLogs] No log found to delete for ${dateStr}`);
             }
         }
 
-        // Recalc (Simplified)
-        const allLogs = await db.habitLog.findMany({ where: { habitId }, orderBy: { date: 'desc' }, select: { date: true } });
-        let streak = 0;
-        const today = new Date(); today.setHours(0,0,0,0);
-        const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+        console.log(`[adjustHabitLogs] Recalculating stats...`);
+        const allLogs = await db.habitLog.findMany({ 
+            where: { habitId }, 
+            orderBy: { date: 'desc' }
+        });
 
-        if (allLogs.length > 0) {
-            const uniqueDates = Array.from(new Set(allLogs.map(l => {
-                const d = new Date(l.date); d.setHours(0,0,0,0); return d.getTime();
+        const activeLogs = habit.resetAt 
+            ? allLogs.filter(l => new Date(l.createdAt) > new Date(habit.resetAt!))
+            : allLogs;
+
+        let streak = 0;
+        const now = new Date();
+        const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        const yesterdayUTC = todayUTC - (1000 * 60 * 60 * 24);
+
+        if (activeLogs.length > 0) {
+            const uniqueDates = Array.from(new Set(activeLogs.map(l => {
+                return new Date(l.date).getTime();
             }))).sort((a, b) => b - a);
 
             if (uniqueDates.length > 0) {
                 const lastLogTime = uniqueDates[0];
-                if (lastLogTime === today.getTime() || lastLogTime === yesterday.getTime()) {
+                if (lastLogTime === todayUTC || lastLogTime === yesterdayUTC) {
                     streak = 1;
                     for (let i = 0; i < uniqueDates.length - 1; i++) {
                         const current = uniqueDates[i];
                         const prev = uniqueDates[i+1];
                         const diffTime = Math.abs(current - prev);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); 
                         if (diffDays === 1) streak++; else break;
                     }
                 }
             }
         }
 
+        console.log(`[adjustHabitLogs] New streak: ${streak}, Total: ${activeLogs.length}`);
+
         await db.habit.update({
             where: { id: habitId },
-            data: { currentStreak: streak, totalCompletions: allLogs.length }
+            data: { 
+                currentStreak: streak, 
+                totalCompletions: activeLogs.length,
+                longestStreak: streak > habit.longestStreak ? streak : habit.longestStreak
+            }
         });
+
         revalidatePath(`/habit-charm`);
         return { success: true };
-    } catch (e) { return { error: "Error" }; }
+    } catch (e) { 
+        console.error("[adjustHabitLogs] FATAL ERROR:", e);
+        if (e instanceof Error) {
+            console.error("[adjustHabitLogs] Name:", e.name);
+            console.error("[adjustHabitLogs] Message:", e.message);
+            console.error("[adjustHabitLogs] Stack:", e.stack);
+        }
+        return { error: e instanceof Error ? e.message : "Error adjusting logs" }; 
+    }
 }
 
 export async function toggleHabitDate(habitId: string, date: Date) {
@@ -522,7 +664,11 @@ export async function toggleHabitDate(habitId: string, date: Date) {
         // I will just copy the recalc logic or assume user refreshes. 
         // For brevity, I'll return success and let revalidate handle it or reuse adjust logic if I extracted it.
         // I'll reuse adjustHabitLogs for simplicity of this file rewrite.
-        return adjustHabitLogs(habitId, date.toISOString().split('T')[0], 0);
+        const dateStr = date.getFullYear() + '-' + 
+                        String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                        String(date.getDate()).padStart(2, '0');
+        
+        return adjustHabitLogs(habitId, dateStr, 0);
 
     } catch (error) { return { error: "Error" }; }
 }

@@ -7,22 +7,22 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  email     String     @unique
-  password  String
-  name      String?
-  image     String?
-  contact   String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  role      String     @default("USER")
-  setupRequired Boolean @default(false)
-  habits    Habit[]
-  lifeLists LifeList[]
-  memories  Memory[]
-  people    Person[]
-  products  Product[]
-  tickets   SupportTicket[]
+  id            String          @id @default(cuid())
+  email         String          @unique
+  password      String
+  name          String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  role          String          @default("USER")
+  setupRequired Boolean         @default(false)
+  contact       String?
+  image         String?
+  habits        Habit[]
+  lifeLists     LifeList[]
+  memories      Memory[]
+  people        Person[]
+  products      Product[]
+  tickets       SupportTicket[]
 }
 
 model Product {
@@ -35,6 +35,7 @@ model Product {
   graduatedAt DateTime?
   state       CharmState @default(ACTIVE)
   type        CharmType  @default(MEMORY)
+  lastResetAt DateTime?
   habits      Habit[]
   lifeLists   LifeList[]
   memories    Memory[]
@@ -79,8 +80,6 @@ model Media {
 
   @@index([memoryId])
 }
-
-
 
 model LifeList {
   id          String         @id @default(cuid())
@@ -135,10 +134,10 @@ model Experience {
   location   String?
   date       DateTime
   peopleIds  String[]
-  isLiked    Boolean           @default(false)
   itemId     String            @unique
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
+  isLiked    Boolean           @default(false)
   item       LifeListItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
   media      ExperienceMedia[]
 }
@@ -157,43 +156,58 @@ model ExperienceMedia {
 }
 
 model Habit {
-  id               String     @id @default(cuid())
-  title            String
-  description      String?
-  focusArea        String
-  frequency        String     @default("daily")
-  targetDays       Int        @default(66)
-  currentStreak    Int        @default(0)
-  longestStreak    Int        @default(0)
-  totalCompletions Int        @default(0)
-  level            Int        @default(1)
-  phase            String     @default("initiation")
+  id                    String     @id @default(cuid())
+  title                 String
+  description           String?
+  focusArea             String
+  frequency             String     @default("daily")
+  targetDays            Int        @default(66)
+  currentStreak         Int        @default(0)
+  longestStreak         Int        @default(0)
+  totalCompletions      Int        @default(0)
+  isActive              Boolean    @default(true)
+  graduatedAt           DateTime?
+  archivedAt            DateTime?
+  productId             String
+  userId                String
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
   lastDeclinedUpgradeAt DateTime?
-  isActive         Boolean    @default(true)
-  graduatedAt      DateTime?
-  archivedAt       DateTime?
-  productId        String
-  userId           String
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  product          Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  logs             HabitLog[]
+  level                 Int        @default(1)
+  phase                 String     @default("initiation")
+  resetAt               DateTime?
+  product               Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs                  HabitLog[]
 
   @@index([productId])
   @@index([userId])
 }
 
 model HabitLog {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   date      DateTime
-  logType   HabitLogType @default(DONE)
   notes     String?
   habitId   String
-  createdAt DateTime @default(now())
-  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  logType   HabitLogType @default(DONE)
+  habit     Habit        @relation(fields: [habitId], references: [id], onDelete: Cascade)
 
   @@index([habitId, date])
+}
+
+model SupportTicket {
+  id        String        @id @default(cuid())
+  subject   String
+  message   String
+  status    SupportStatus @default(OPEN)
+  email     String?
+  userId    String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User?         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 enum HabitLogType {
@@ -215,20 +229,6 @@ enum CharmState {
   ACTIVE
   GRADUATED
   CLOSED
-}
-
-model SupportTicket {
-  id        String        @id @default(cuid())
-  subject   String
-  message   String
-  status    SupportStatus @default(OPEN)
-  email     String?
-  userId    String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
 }
 
 enum SupportStatus {

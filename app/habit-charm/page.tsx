@@ -5,6 +5,8 @@ import { getHabits } from "@/app/actions/habit";
 import HabitSetup from "./habit-setup";
 import HabitDashboard from "./habit-dashboard";
 
+export const dynamic = "force-dynamic";
+
 export default async function HabitCharmPage({
   searchParams,
 }: {

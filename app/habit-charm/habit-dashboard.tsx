@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { logHabit, toggleHabitDate, adjustHabitLogs, upgradeHabit, declineUpgrade, updateHabit, deleteHabit, createHabit } from "@/app/actions/habit";
-import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2, Plane, BedDouble, Frown, Briefcase, HelpCircle, ArrowUpCircle, Trash2, Target, Save, X } from "lucide-react";
+import { logHabit, toggleHabitDate, adjustHabitLogs, upgradeHabit, declineUpgrade, updateHabit, deleteHabit, createHabit, resetHabitCharm, resetHabit } from "@/app/actions/habit";
+import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2, Plane, BedDouble, Frown, Briefcase, HelpCircle, ArrowUpCircle, Trash2, Target, Save, X, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { Habit, HabitLog, Product, HabitLogType } from "@prisma/client";
 import { CORE_HABITS } from "@/lib/habit-templates";
 import {
@@ -19,8 +20,10 @@ import {
 type HabitWithLogs = Habit & { logs: HabitLog[] };
 
 export default function HabitDashboard({ habits, product }: { habits: HabitWithLogs[], product: Product }) {
+    const router = useRouter();
     const [viewMode, setViewMode] = useState<'cards' | 'history'>('cards');
     const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+    const [isResetDrawerOpen, setIsResetDrawerOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-[#FDF2EC] flex flex-col font-[Outfit] relative overflow-hidden">
@@ -35,6 +38,12 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                      <h1 className="text-2xl font-bold text-[#5B2D7D]">{product.name}</h1>
                  </div>
                  <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => setIsResetDrawerOpen(true)}
+                        className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#5B2D7D] hover:bg-[#EADDDE] transition-colors"
+                    >
+                        <RotateCcw className="w-5 h-5" />
+                    </button>
                     <button 
                         onClick={() => setViewMode(prev => prev === 'cards' ? 'history' : 'cards')}
                         className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#5B2D7D] hover:bg-[#EADDDE] transition-colors"
@@ -57,7 +66,7 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                  {viewMode === 'cards' ? (
                      <div className="grid grid-cols-2 gap-3 w-full">
                         {habits.map(habit => (
-                            <HabitCard key={habit.id} habit={habit} />
+                            <HabitCard key={habit.id} habit={habit} router={router} />
                         ))}
                         {habits.length < 10 && (
                             <motion.button 
@@ -85,30 +94,110 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                 productId={product.id} 
                 isOpen={isAddDrawerOpen} 
                 onClose={() => setIsAddDrawerOpen(false)} 
+                router={router}
+             />
+
+             <ResetCharmDrawer 
+                productId={product.id} 
+                isOpen={isResetDrawerOpen} 
+                onClose={() => setIsResetDrawerOpen(false)} 
+                router={router}
              />
         </div>
     );
 }
 
-function AddHabitDrawer({ productId, isOpen, onClose }: { productId: string, isOpen: boolean, onClose: () => void }) {
+function ResetCharmDrawer({ productId, isOpen, onClose, router }: { productId: string, isOpen: boolean, onClose: () => void, router: any }) {
+    const [isResetting, setIsResetting] = useState(false);
+
+    const handleReset = async () => {
+        setIsResetting(true);
+        try {
+            const res = await resetHabitCharm(productId);
+            if (res.success) {
+                toast.success("Charm reset! New beginning.");
+                onClose();
+                router.refresh();
+            } else {
+                toast.error(res.error || "Failed");
+            }
+        } catch (e) {
+            toast.error("Error");
+        } finally {
+            setIsResetting(false);
+        }
+    };
+
+    return (
+        <Drawer open={isOpen} onOpenChange={onClose}>
+            <DrawerContent className="bg-[#FDF2EC] font-[Outfit]">
+                <div className="p-8 pb-12 flex flex-col items-center text-center">
+                    <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-6 text-orange-600">
+                        <AlertTriangle className="w-10 h-10" />
+                    </div>
+                    <DrawerTitle className="text-2xl font-bold text-[#5B2D7D] mb-2">Reset This Charm?</DrawerTitle>
+                    <DrawerDescription className="text-[#5B2D7D]/60 mb-8 max-w-xs">
+                        This will archive your current streaks and logs for a fresh start. You won&apos;t see previous history, but it will be saved in our system.
+                    </DrawerDescription>
+
+                    <div className="flex flex-col gap-3 w-full">
+                        <button 
+                            onClick={handleReset}
+                            disabled={isResetting}
+                            className="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            {isResetting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Yes, Reset Everything"}
+                        </button>
+                        <button 
+                            onClick={onClose}
+                            className="w-full py-3 rounded-xl font-bold text-[#5B2D7D]/40 hover:bg-[#5B2D7D]/5 transition-colors"
+                        >
+                            Keep My Progress
+                        </button>
+                    </div>
+                </div>
+            </DrawerContent>
+        </Drawer>
+    );
+}
+
+function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: string, isOpen: boolean, onClose: () => void, router: any }) {
+    const [mode, setMode] = useState<'template' | 'custom'>('template');
     const [title, setTitle] = useState("");
     const [targetDays, setTargetDays] = useState(66);
     const [isSaving, setIsSaving] = useState(false);
 
-    const handleAdd = async () => {
-        if (!title.trim()) return;
+    const handleAdd = async (templateId?: string) => {
         setIsSaving(true);
         try {
-            const res = await createHabit(productId, {
-                title: title.trim(),
-                focusArea: "custom",
-                targetDays,
-                frequency: "daily"
-            });
+            let habitData;
+
+            if (templateId) {
+                const core = CORE_HABITS.find(h => h.id === templateId);
+                const level1 = core?.levels.find(l => l.level === 1);
+                habitData = {
+                    title: level1?.description || core?.title || "Level 1 Habit",
+                    focusArea: templateId,
+                    targetDays: 66,
+                    frequency: "daily"
+                };
+            } else {
+                if (!title.trim()) return;
+                habitData = {
+                    title: title.trim(),
+                    focusArea: "custom",
+                    targetDays,
+                    frequency: "daily"
+                };
+            }
+
+            const res = await createHabit(productId, habitData);
             if (res.success) {
                 toast.success("Habit started!");
                 onClose();
                 setTitle("");
+                setMode('template');
+                router.refresh();
             } else {
                 toast.error(res.error || "Failed");
             }
@@ -121,48 +210,82 @@ function AddHabitDrawer({ productId, isOpen, onClose }: { productId: string, isO
 
     return (
         <Drawer open={isOpen} onOpenChange={onClose}>
-            <DrawerContent className="bg-[#FDF2EC] font-[Outfit]">
-                <div className="p-6 pb-12">
+            <DrawerContent className="bg-[#FDF2EC] font-[Outfit] max-h-[90vh]">
+                <div className="p-6 pb-12 overflow-y-auto no-scrollbar">
                     <DrawerHeader className="px-0 text-left">
-                        <DrawerTitle className="text-2xl font-bold text-[#5B2D7D]">New Habit</DrawerTitle>
-                        <DrawerDescription>Consistency is the key to transformation.</DrawerDescription>
+                        <DrawerTitle className="text-2xl font-bold text-[#5B2D7D]">Add New Habit</DrawerTitle>
+                        <DrawerDescription>Mix core foundations with your own goals.</DrawerDescription>
                     </DrawerHeader>
 
-                    <div className="space-y-6 mt-4">
-                        <div>
-                            <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2">What is the habit?</label>
-                            <input 
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="e.g. Morning Meditation"
-                                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2 flex items-center gap-1">
-                                <Target className="w-3 h-3" /> Goal (Days)
-                            </label>
-                            <select 
-                                value={targetDays}
-                                onChange={(e) => setTargetDays(parseInt(e.target.value))}
-                                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none appearance-none"
-                            >
-                                <option value={21}>21 Days (Initiation)</option>
-                                <option value={66}>66 Days (Habit forming)</option>
-                                <option value={100}>100 Days (Mastery)</option>
-                            </select>
-                        </div>
-
+                    {/* Tab Switcher */}
+                    <div className="flex bg-white rounded-2xl p-1 mb-6 border border-[#5B2D7D]/5 shadow-sm">
                         <button 
-                            onClick={handleAdd}
-                            disabled={isSaving || !title.trim()}
-                            className="w-full py-4 bg-[#5B2D7D] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                            onClick={() => setMode('template')}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${mode === 'template' ? 'bg-[#5B2D7D] text-white shadow-md' : 'text-[#5B2D7D]/40'}`}
                         >
-                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Start Journey"}
+                            Templates
+                        </button>
+                        <button 
+                            onClick={() => setMode('custom')}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${mode === 'custom' ? 'bg-[#5B2D7D] text-white shadow-md' : 'text-[#5B2D7D]/40'}`}
+                        >
+                            Custom
                         </button>
                     </div>
+
+                    {mode === 'template' ? (
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                            {CORE_HABITS.map((habit) => (
+                                <button
+                                    key={habit.id}
+                                    onClick={() => handleAdd(habit.id)}
+                                    disabled={isSaving}
+                                    className="flex flex-col items-center justify-center p-4 bg-white rounded-3xl transition-all border-2 border-transparent active:border-[#5B2D7D]/20 shadow-sm aspect-square active:scale-95 disabled:opacity-50"
+                                >
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl mb-2 ${habit.color}`}>
+                                        {habit.icon}
+                                    </div>
+                                    <span className="font-bold text-[#5B2D7D] text-[11px] uppercase tracking-wider">{habit.title}</span>
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2">What is the habit?</label>
+                                <input 
+                                    type="text"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    placeholder="e.g. Morning Meditation"
+                                    className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2 flex items-center gap-1">
+                                    <Target className="w-3 h-3" /> Goal (Days)
+                                </label>
+                                <select 
+                                    value={targetDays}
+                                    onChange={(e) => setTargetDays(parseInt(e.target.value))}
+                                    className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none appearance-none"
+                                >
+                                    <option value={21}>21 Days (Initiation)</option>
+                                    <option value={66}>66 Days (Habit forming)</option>
+                                    <option value={100}>100 Days (Mastery)</option>
+                                </select>
+                            </div>
+
+                            <button 
+                                onClick={() => handleAdd()}
+                                disabled={isSaving || !title.trim()}
+                                className="w-full py-4 bg-[#5B2D7D] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Start Journey"}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </DrawerContent>
         </Drawer>
@@ -203,14 +326,13 @@ function HabitHistoryCard({ habit }: { habit: HabitWithLogs }) {
                 <ContributionGraph 
                     logs={habit.logs} 
                     startDate={pastDate} 
-                    viewRange={range}
                 />
             </div>
         </div>
     );
 }
 
-function HabitCard({ habit }: { habit: HabitWithLogs }) {
+function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
     const [isLogging, setIsLogging] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [showAnomaly, setShowAnomaly] = useState(false);
@@ -226,14 +348,12 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
     if (now.getHours() < 4) {
         now.setDate(now.getDate() - 1);
     }
-    now.setHours(0, 0, 0, 0);
-    const today = now;
+    const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
     
     // Count logs for today
     const todayLog = habit.logs.find(l => {
         const d = new Date(l.date);
-        d.setHours(0,0,0,0);
-        return d.getTime() === today.getTime();
+        return d.getTime() === todayUTC;
     });
 
     const isLogged = !!todayLog;
@@ -258,6 +378,7 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
                 if (result.progression) {
                     setUpgradeData(result.progression);
                 }
+                router.refresh();
             }
         } catch (error) {
             toast.error("Failed to log.");
@@ -269,9 +390,14 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
     const handleUpdate = async () => {
         setIsLogging(true);
         try {
-            await updateHabit(habit.id, { title: editTitle, targetDays: editTarget });
-            toast.success("Habit updated!");
-            setIsEditMode(false);
+            const res = await updateHabit(habit.id, { title: editTitle, targetDays: editTarget });
+            if (res.success) {
+                toast.success("Habit updated!");
+                setIsEditMode(false);
+                router.refresh();
+            } else {
+                toast.error(res.error || "Failed");
+            }
         } catch (e) {
             toast.error("Failed to update");
         } finally {
@@ -283,11 +409,52 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
         if (!confirm("Are you sure? This will delete all history for this habit.")) return;
         setIsLogging(true);
         try {
-            await deleteHabit(habit.id);
-            toast.success("Habit deleted");
-            setShowHistory(false);
+            const res = await deleteHabit(habit.id);
+            if (res.success) {
+                toast.success("Habit deleted");
+                setShowHistory(false);
+                router.refresh();
+            } else {
+                toast.error(res.error || "Failed");
+            }
         } catch (e) {
             toast.error("Failed to delete");
+        } finally {
+            setIsLogging(false);
+        }
+    };
+
+    const handleResetProgress = async () => {
+        if (!confirm("Reset progress? Current streaks and logs will be archived for a fresh start.")) return;
+        setIsLogging(true);
+        try {
+            const res = await resetHabit(habit.id);
+            if (res.success) {
+                toast.success("Progress reset!");
+                setIsEditMode(false);
+                router.refresh();
+            } else {
+                toast.error(res.error || "Failed");
+            }
+        } catch (e) {
+            toast.error("Failed to reset");
+        } finally {
+            setIsLogging(false);
+        }
+    };
+
+    const handleAdjustHistory = async (dateStr: string, adjustment: number) => {
+        setIsLogging(true);
+        try {
+            const res = await adjustHabitLogs(habit.id, dateStr, adjustment);
+            if (res.success) {
+                toast.success("History adjusted");
+                router.refresh();
+            } else {
+                toast.error(res.error || "Failed to adjust history");
+            }
+        } catch (e) {
+            toast.error("Error adjusting history");
         } finally {
             setIsLogging(false);
         }
@@ -299,6 +466,7 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
             await upgradeHabit(habit.id);
             toast.success("Level Up! New habit set.");
             setUpgradeData(null);
+            router.refresh();
         } catch(e) {
             toast.error("Failed");
         } finally {
@@ -457,10 +625,16 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
                                         <Trash2 className="w-4 h-4" /> Delete
                                     </button>
                                     <button 
+                                        onClick={handleResetProgress}
+                                        className="flex-1 bg-orange-50 text-orange-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                                    >
+                                        <RotateCcw className="w-4 h-4" /> Reset
+                                    </button>
+                                    <button 
                                         onClick={handleUpdate}
                                         className="flex-[2] bg-[#5B2D7D] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"
                                     >
-                                        <Save className="w-4 h-4" /> Save Changes
+                                        <Save className="w-4 h-4" /> Save
                                     </button>
                                 </div>
                             </div>
@@ -479,9 +653,59 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
                             <div className="bg-white p-5 rounded-[32px] shadow-sm mb-6 overflow-x-auto no-scrollbar">
                                 <ContributionGraph 
                                     logs={habit.logs} 
-                                    startDate={new Date(new Date().setDate(new Date().getDate() - 21))} 
-                                    viewRange={21}
+                                    startDate={new Date(new Date().setDate(new Date().getDate() - 56))} 
                                 />
+                            </div>
+
+                            {/* Manual Log Adjustment Section */}
+                            <div className="bg-white p-6 rounded-[32px] shadow-sm mb-6">
+                                <h3 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Adjust History</h3>
+                                <div className="space-y-4">
+                                    {[0, 1, 2, 3, 4].map(daysAgo => {
+                                        const date = new Date();
+                                        date.setDate(date.getDate() - daysAgo);
+                                        // Format as UTC YYYY-MM-DD for consistency
+                                        const year = date.getFullYear();
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        const dateStr = `${year}-${month}-${day}`;
+                                        
+                                        const logsForDay = habit.logs.filter(l => {
+                                            const d = new Date(l.date);
+                                            const lStr = d.getUTCFullYear() + '-' + 
+                                                         String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+                                                         String(d.getUTCDate()).padStart(2, '0');
+                                            return lStr === dateStr;
+                                        });
+                                        
+                                        return (
+                                            <div key={daysAgo} className="flex items-center justify-between">
+                                                <div className="flex flex-col text-left">
+                                                    <span className="text-sm font-bold text-[#5B2D7D]">
+                                                        {daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                                    </span>
+                                                    <span className="text-[10px] text-[#5B2D7D]/40 font-black uppercase tracking-widest">{logsForDay.length} logs</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button 
+                                                        onClick={() => handleAdjustHistory(dateStr, -1)}
+                                                        disabled={isLogging}
+                                                        className="w-8 h-8 rounded-full bg-[#FDF2EC] flex items-center justify-center text-[#5B2D7D] active:scale-90 transition-all disabled:opacity-50"
+                                                    >
+                                                        <Minus className="w-4 h-4" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleAdjustHistory(dateStr, 1)}
+                                                        disabled={isLogging}
+                                                        className="w-8 h-8 rounded-full bg-[#5B2D7D] flex items-center justify-center text-white active:scale-90 transition-all disabled:opacity-50"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">
@@ -568,52 +792,73 @@ function HabitCard({ habit }: { habit: HabitWithLogs }) {
     );
 }
 
-function ContributionGraph({ logs, startDate, viewRange = 30 }: { logs: HabitLog[], startDate: Date, viewRange?: number }) {
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const start = new Date(startDate);
-    start.setHours(0,0,0,0);
+function ContributionGraph({ logs, startDate }: { logs: HabitLog[], startDate: Date }) {
+    const now = new Date();
+    // Use UTC for "today"
+    const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
     
-    // For weekly/monthly view, we want to show exactly the range
-    const dates: Date[] = [];
-    const current = new Date(start);
-    while (current <= today) {
-        dates.push(new Date(current));
-        current.setDate(current.getDate() + 1);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to end (latest dates)
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+        }
+    }, [logs]);
+
+    // Data Processing: Group by Month (using UTC)
+    const monthsData: { name: string, dates: (Date|null)[] }[] = [];
+    
+    // Create a UTC start date
+    const start = new Date(startDate);
+    let current = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+
+    while (current.getTime() <= todayUTC) {
+        const monthName = current.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+        let monthObj = monthsData.find(m => m.name === monthName);
+        
+        if (!monthObj) {
+            monthObj = { name: monthName, dates: [] };
+            // Add padding for the first week of the month (UTC Sunday = 0)
+            const firstDayOfMonth = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), 1)).getUTCDay();
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                monthObj.dates.push(null);
+            }
+            monthsData.push(monthObj);
+        }
+        
+        monthObj.dates.push(new Date(current));
+        current.setUTCDate(current.getUTCDate() + 1);
     }
 
-    // Map logs by date and calculate streaks per date for shading
+    // Streak mapping (Safe UTC comparison)
     const logMap = new Map<string, { type: HabitLogType, streakAtDate: number }>();
-    
-    // Sort logs ascending to calculate historical streaks
     const sortedLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
     let runningStreak = 0;
-    let lastDate: string | null = null;
+    let lastDateStr: string | null = null;
 
     sortedLogs.forEach(l => {
         const d = new Date(l.date);
-        d.setHours(0,0,0,0);
-        const dateStr = d.toDateString();
-
-        if (lastDate) {
-            const prev = new Date(lastDate);
-            const curr = new Date(dateStr);
-            const diff = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+        const dateStr = d.getUTCFullYear() + '-' + 
+                        String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+                        String(d.getUTCDate()).padStart(2, '0');
+        
+        if (lastDateStr) {
+            const prev = new Date(lastDateStr + 'T00:00:00Z');
+            const curr = new Date(dateStr + 'T00:00:00Z');
+            const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
             if (diff === 1) runningStreak++;
             else if (diff > 1) runningStreak = 1;
         } else {
             runningStreak = 1;
         }
-        
         logMap.set(dateStr, { type: l.logType, streakAtDate: runningStreak });
-        lastDate = dateStr;
+        lastDateStr = dateStr;
     });
 
     const getColor = (data?: { type: HabitLogType, streakAtDate: number }) => {
         if (!data) return 'bg-[#EADDDE]/50';
         if (data.type !== 'DONE') return 'bg-[#EAB308]'; 
-        
         const streak = data.streakAtDate;
         if (streak <= 3) return 'bg-[#D6BCFA]'; 
         if (streak <= 6) return 'bg-[#9F7AEA]'; 
@@ -621,27 +866,86 @@ function ContributionGraph({ logs, startDate, viewRange = 30 }: { logs: HabitLog
         return 'bg-[#44337A]'; 
     };
 
-    const cellSizeClass = viewRange <= 7 ? 'w-11 h-11 rounded-xl' : 'w-9 h-9 rounded-lg';
-    const gapClass = 'gap-2';
+    const cellSize = '26px';
+    const cellGap = '4px';
 
     return (
-        <div className="flex items-center">
-            <div className={`flex flex-nowrap ${gapClass} pb-2`}>
-                {dates.map((date) => {
-                    const data = logMap.get(date.toDateString());
-                    const colorClass = getColor(data);
-                    
-                    return (
-                        <div 
-                            key={date.toISOString()} 
-                            className={`${cellSizeClass} ${colorClass} transition-all flex flex-col items-center justify-center relative shrink-0`}
-                        >
-                            <span className={`text-[10px] font-black ${data ? 'text-white' : 'text-[#5B2D7D]/30'}`}>
-                                {date.getDate()}
-                            </span>
+        <div className="flex gap-3 select-none">
+            {/* Y-Axis: Days (Fixed) */}
+            <div 
+                className="flex flex-col pt-6 pb-1 justify-between text-[10px] font-black text-[#5B2D7D]/30 uppercase tracking-tighter w-6 shrink-0"
+                style={{ height: `calc(7 * ${cellSize} + 6 * ${cellGap} + 24px)` }}
+            >
+                <span>Sun</span>
+                <span>Tue</span>
+                <span>Thu</span>
+                <span>Sat</span>
+            </div>
+
+            {/* Scrollable Area */}
+            <div 
+                ref={scrollRef}
+                className="overflow-x-auto no-scrollbar scroll-smooth flex-1"
+            >
+                <div className="flex gap-6 min-w-max pb-2">
+                    {monthsData.map((month, mIdx) => (
+                        <div key={mIdx} className="flex flex-col gap-2">
+                            {/* Month Label */}
+                            <div className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest px-1">
+                                {month.name}
+                            </div>
+                            
+                            {/* Month Grid */}
+                            <div 
+                                className="grid grid-rows-7 grid-flow-col"
+                                style={{ gap: cellGap }}
+                            >
+                                {month.dates.map((date, dIdx) => {
+                                    if (!date) return <div key={`pad-${dIdx}`} style={{ width: cellSize, height: cellSize }} />;
+                                    
+                                    const dateStr = date.getUTCFullYear() + '-' + 
+                                                    String(date.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+                                                    String(date.getUTCDate()).padStart(2, '0');
+                                    
+                                    const data = logMap.get(dateStr);
+                                    const colorClass = getColor(data);
+                                    const isFuture = date.getTime() > todayUTC;
+                                    
+                                    return (
+                                        <div 
+                                            key={dIdx} 
+                                            className={`rounded-[6px] transition-all ${colorClass} ${isFuture ? 'opacity-0' : 'group relative'} flex items-center justify-center`}
+                                            style={{ width: cellSize, height: cellSize }}
+                                        >
+                                            {!isFuture && (
+                                                <>
+                                                    <span className={`text-[8px] font-black leading-none ${data ? 'text-white' : 'text-[#5B2D7D]/20'}`}>
+                                                        {date.getUTCDate()}
+                                                    </span>
+                                                    
+                                                    {/* Tooltip */}
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#5B2D7D] text-white text-[9px] rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity shadow-xl border border-white/10 flex flex-col items-center">
+                                                        <div className="font-black leading-none mb-1">
+                                                            {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                                                        </div>
+                                                        {data ? (
+                                                            <div className="text-[8px] opacity-80 leading-none">
+                                                                {data.type === 'DONE' ? `Streak: ${data.streakAtDate}` : `Paused: ${data.type}`}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-[8px] opacity-80 leading-none">No activity</div>
+                                                        )}
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#5B2D7D]" />
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    );
-                })}
+                    ))}
+                </div>
             </div>
         </div>
     );

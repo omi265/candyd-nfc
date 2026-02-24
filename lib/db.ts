@@ -4,22 +4,16 @@ import { PrismaClient } from '@prisma/client';
 
 const connectionString = process.env.DATABASE_URL;
 
+const prismaClientSingleton = () => {
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
+  return new PrismaClient({ adapter });
+};
+
 declare global {
-  var prisma: PrismaClient | undefined;
-  var pgPool: Pool | undefined;
+  var prismaGlobal: ReturnType<typeof prismaClientSingleton> | undefined;
 }
 
-const pool = global.pgPool || new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+export const db = globalThis.prismaGlobal ?? prismaClientSingleton();
 
-// Force a new instance if we're in development to ensure new models like SupportTicket are loaded
-export const db = (process.env.NODE_ENV === "development") 
-  ? new PrismaClient({ adapter }) 
-  : (global.prisma || new PrismaClient({ adapter }));
-
-if (process.env.NODE_ENV !== "production") {
-    global.prisma = db;
-    global.pgPool = pool;
-}
-
-// Force reload for new models
+if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = db;
