@@ -544,20 +544,21 @@ export async function markAsLived(
     return { error: error.message };
   }
 }
-
-export async function getExperience(itemId: string) {
+export async function getExperience(id: string) {
   const session = await auth();
   if (!session?.user?.id) return null;
 
   try {
     const experience = await db.experience.findUnique({
-      where: { itemId },
+      where: { id },
       include: {
-        media: { orderBy: { orderIndex: "asc" } },
         item: {
           include: {
-            lifeList: { select: { userId: true, productId: true } },
+            lifeList: true,
           },
+        },
+        media: {
+          orderBy: { orderIndex: "asc" },
         },
       },
     });
@@ -565,14 +566,12 @@ export async function getExperience(itemId: string) {
     if (!experience || experience.item.lifeList.userId !== session.user.id) {
       return null;
     }
-
     return experience;
   } catch (error) {
     console.error("Failed to get experience:", error);
     return null;
   }
 }
-
 export async function updateExperience(
   experienceId: string,
   data: {

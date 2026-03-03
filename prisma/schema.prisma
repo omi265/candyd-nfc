@@ -61,7 +61,7 @@ model Memory {
   peopleIds   String[]
   isLiked     Boolean  @default(false)
   media       Media[]
-  product     Product? @relation(fields: [productId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -90,7 +90,7 @@ model LifeList {
   userId      String
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
-  product     Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product     Product        @relation(fields: [productId], references: [id])
   user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   items       LifeListItem[]
 
@@ -176,7 +176,7 @@ model Habit {
   level                 Int        @default(1)
   phase                 String     @default("initiation")
   resetAt               DateTime?
-  product               Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product               Product    @relation(fields: [productId], references: [id])
   user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   logs                  HabitLog[]
 
