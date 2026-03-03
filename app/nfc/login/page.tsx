@@ -162,7 +162,7 @@ function NFCLoginContent() {
 
   if (!token) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FDF2EC] font-[Outfit]">
+        <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
           <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                  <Zap className="w-8 h-8 text-red-500" />
@@ -176,7 +176,7 @@ function NFCLoginContent() {
 
   if (isLoading && !needsPassword && !isSetupMode) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FDF2EC] font-[Outfit]">
+        <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
             <div className="text-center">
                  <Loader2 className="w-10 h-10 text-[#5B2D7D] animate-spin mx-auto mb-4" />
                  <p className="text-[#5B2D7D] font-medium animate-pulse">{status}</p>
@@ -187,7 +187,7 @@ function NFCLoginContent() {
 
   if (isSetupMode && ownerInfo) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FDF2EC] font-[Outfit] p-4">
+        <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit] p-4">
             <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50">
                 <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6">
                     <Zap className="w-6 h-6 text-[#5B2D7D]" />
@@ -248,7 +248,7 @@ function NFCLoginContent() {
 
   if (needsPassword && ownerInfo) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FDF2EC] font-[Outfit] p-4">
+        <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit] p-4">
             <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50">
                 <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6">
                     <Lock className="w-6 h-6 text-[#5B2D7D]" />
@@ -300,7 +300,7 @@ function NFCLoginContent() {
 
   // Fallback / Error State
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FDF2EC] font-[Outfit]">
+    <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
       <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
              <Zap className="w-8 h-8 text-red-500" />

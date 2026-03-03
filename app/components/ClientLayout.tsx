@@ -7,20 +7,22 @@ import { useEffect, useState, useRef } from "react";
 import { getUserProducts } from "@/app/actions/memories";
 import { motion, useScroll, useTransform, useSpring } from "motion/react";
 
-function AuthenticatedLayout({ 
+function GlobalLayout({ 
     children, 
     user, 
     contextTitle, 
-    backHref 
+    backHref,
+    hideHeader = false
 }: { 
     children: React.ReactNode, 
-    user: any, 
+    user?: any, 
     contextTitle?: string, 
-    backHref?: string 
+    backHref?: string,
+    hideHeader?: boolean
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  // Initialize useScroll only within this component where the ref is guaranteed to be used
+  // Initialize useScroll for parallax
   const { scrollYProgress } = useScroll({
     container: scrollRef,
   });
@@ -56,14 +58,16 @@ function AuthenticatedLayout({
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#EADDDE]/50 rounded-full blur-[120px]" />
       </div>
 
-      <div className="shrink-0 z-50 relative bg-transparent">
-          <AppHeader 
-            userName={user?.name || "User"} 
-            userRole={user?.role} 
-            contextTitle={contextTitle}
-            backHref={backHref}
-          />
-      </div>
+      {!hideHeader && user && (
+        <div className="shrink-0 z-50 relative bg-transparent">
+            <AppHeader 
+                userName={user?.name || "User"} 
+                userRole={user?.role} 
+                contextTitle={contextTitle}
+                backHref={backHref}
+            />
+        </div>
+      )}
       
       <div 
         ref={scrollRef}
@@ -109,7 +113,7 @@ export default function ClientLayout({
       });
   }, [charmId, pathname]);
 
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname.startsWith("/nfc/login");
 
   if (isLoading) {
       return (
@@ -121,17 +125,15 @@ export default function ClientLayout({
       );
   }
 
-  if (!user || isAuthPage) {
-    return <>{children}</>;
-  }
-
+  // Always use the GlobalLayout but hide header on login/register or if not logged in
   return (
-    <AuthenticatedLayout 
+    <GlobalLayout 
         user={user} 
         contextTitle={contextTitle} 
         backHref={backHref}
+        hideHeader={isAuthPage || !user}
     >
         {children}
-    </AuthenticatedLayout>
+    </GlobalLayout>
   );
 }
