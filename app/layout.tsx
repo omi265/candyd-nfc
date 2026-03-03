@@ -22,8 +22,10 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Candyd NFC",
-  description: "Candyd NFC Application",
+  title: "Candyd | Relive Your Memories",
+  description: "Unbox a moment. Relive a memory. Candyd uses NFC technology to link your physical products to digital experiences.",
+  keywords: ["NFC", "Memories", "Digital Experiences", "Candyd", "Memory Management"],
+  authors: [{ name: "Candyd Team" }],
 };
 
 export const viewport: Viewport = {
