@@ -12,7 +12,7 @@ export default async function Dashboard() {
   const products = await getDashboardProducts();
 
   return (
-    <div className="h-dvh bg-[#FDF2EC]">
+    <div className="h-dvh bg-transparent">
         <DashboardContent products={products} />
     </div>
   );

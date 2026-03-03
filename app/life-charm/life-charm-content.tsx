@@ -160,6 +160,7 @@ function GridCard({
   cellSize,
   containerSize,
   visualYOffset,
+  index,
 }: {
   item: GridItem;
   people: Person[];
@@ -171,6 +172,7 @@ function GridCard({
   cellSize: { width: number; height: number };
   containerSize: { width: number; height: number };
   visualYOffset: number;
+  index: number;
 }) {
   const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
 
@@ -180,6 +182,13 @@ function GridCard({
   const hasMedia = item.media && item.media.length > 0;
   const firstMedia = hasMedia ? item.media[0] : null;
 
+  // Use a stable date format to prevent hydration mismatch
+  const formattedDate = useMemo(() => {
+      const d = new Date(item.date);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+  }, [item.date]);
+
   // Get people names
   const peopleNames = item.peopleIds
     .map((id) => people.find((p) => p.id === id)?.name)
@@ -187,8 +196,6 @@ function GridCard({
     .slice(0, 2);
 
   // Background colors
-  // Life Items (Lived) get Green-ish gradient
-  // Memories get Purple-ish gradient
   const bgGradient = item.type === 'life_item'
     ? "from-[#A4C538] to-[#7A9B1E]"
     : "from-[#5B2D7D] to-[#3A1D52]";
@@ -199,7 +206,6 @@ function GridCard({
       className={`w-full h-full relative flex flex-col justify-between shadow-xl rounded-none overflow-hidden cursor-pointer`}
       style={{
         opacity,
-        willChange: "transform, opacity",
         touchAction: "none",
         transform: "translate3d(0,0,0)",
         backfaceVisibility: "hidden",
@@ -219,6 +225,7 @@ function GridCard({
             alt=""
             fill
             className="object-cover"
+            priority={index < 4}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         </div>
@@ -287,7 +294,7 @@ function GridCard({
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
               <Calendar className="w-3.5 h-3.5 text-white/70" />
               <span className="text-xs text-white/80 font-medium">
-                  {new Date(item.date).toLocaleDateString()}
+                  {formattedDate}
               </span>
           </div>
         </div>
@@ -467,7 +474,7 @@ export default function LifeCharmContent({
 
   const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(gridItems.length)));
   const totalCells = currentGridSize * currentGridSize;
-  const FILL_ORDER = getCenterOutOrder(currentGridSize);
+  const FILL_ORDER = useMemo(() => getCenterOutOrder(currentGridSize), [currentGridSize]);
 
   const gridData = useMemo(() => {
     if (gridItems.length === 0 && searchQuery) return [];
@@ -504,11 +511,15 @@ export default function LifeCharmContent({
   }, []);
 
   const VISUAL_Y_OFFSET = 40;
+  const hasInitialized = useRef(false);
   
   // Set initial position
   useEffect(() => {
     if (cellSize.width === 0 || containerSize.width === 0) return;
     if (gridData.length === 0) return;
+    
+    // Prevent resetting position if already initialized, unless we have a specific focusId to snap to
+    if (hasInitialized.current && !focusId) return;
 
     let targetRow = 0;
     let targetCol = 0;
@@ -536,8 +547,15 @@ export default function LifeCharmContent({
     const initialX = (containerSize.width - cellSize.width) / 2 - targetCol * cellSize.width;
     const initialY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - targetRow * cellSize.height;
 
-    animate(x, initialX, { type: "spring", stiffness: 300, damping: 30, duration: 0 });
-    animate(y, initialY, { type: "spring", stiffness: 300, damping: 30, duration: 0 });
+    // Use duration 0 for first load, or spring for focusId changes
+    const config = hasInitialized.current ? { type: "spring", stiffness: 300, damping: 30 } : { duration: 0 };
+    
+    animate(x, initialX, config as any);
+    animate(y, initialY, config as any);
+    
+    if (cellSize.width > 0) {
+        hasInitialized.current = true;
+    }
   }, [cellSize, containerSize, currentGridSize, x, y, FILL_ORDER, focusId, gridData, viewMode]);
 
   // --- ACTIONS ---
@@ -611,7 +629,7 @@ export default function LifeCharmContent({
   };
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative overflow-hidden">
       {/* Filter / Search Bar */}
       <FilterBar 
         searchQuery={searchQuery}
@@ -775,6 +793,7 @@ export default function LifeCharmContent({
                     cellSize={cellSize}
                     containerSize={containerSize}
                     visualYOffset={VISUAL_Y_OFFSET}
+                    index={index}
                   />
               </div>
             );

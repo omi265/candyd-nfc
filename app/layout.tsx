@@ -35,18 +35,15 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-import { cookies } from "next/headers";
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-    const cookieStore = await cookies();
     const session = await auth();
   
   return (
-    <html lang="en" className={outfit.className}>
+    <html lang="en" className={`${outfit.variable} ${geistSans.variable} ${geistMono.variable} ${outfit.className} antialiased`}>
       <body>
         <AuthProvider session={session}>
             <ClientLayout>{children}</ClientLayout>

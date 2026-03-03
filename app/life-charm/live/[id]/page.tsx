@@ -216,14 +216,14 @@ export default function MarkAsLivedPage() {
 
   if (!item || !charmId) {
     return (
-      <div className="min-h-dvh bg-[#FDF2EC] flex items-center justify-center">
+      <div className="min-h-dvh bg-transparent flex items-center justify-center">
         <div className="animate-pulse text-[#5B2D7D]">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh bg-[#FDF2EC] flex flex-col font-[Outfit]">
+    <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
       {/* Header */}
       <header className="flex items-center gap-4 px-6 py-4 border-b border-[#5B2D7D]/10">
         <button

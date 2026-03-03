@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { logHabit, adjustHabitLogs, upgradeHabit, declineUpgrade, updateHabit, deleteHabit, createHabit, resetHabitCharm, resetHabit } from "@/app/actions/habit";
 import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2, Plane, BedDouble, Frown, Briefcase, HelpCircle, ArrowUpCircle, Trash2, Target, Save, X, RotateCcw, Pause } from "lucide-react";
@@ -26,7 +26,7 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
     const [isResetDrawerOpen, setIsResetDrawerOpen] = useState(false);
 
     return (
-        <div className="flex flex-col h-full relative">
+        <div className="flex flex-col h-full relative overflow-hidden">
              {/* Local Action Bar */}
              <div className="px-6 py-2 flex items-center justify-end gap-3 z-10">
                 <button 
@@ -120,15 +120,19 @@ function ResetCharmDrawer({ productId, isOpen, onClose, router }: { productId: s
 
     return (
         <Drawer open={isOpen} onOpenChange={onClose}>
-            <DrawerContent className="bg-[#FDF2EC] font-[Outfit]">
+            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl font-[Outfit]">
+                <DrawerHeader className="sr-only">
+                    <DrawerTitle>Reset Habit Charm</DrawerTitle>
+                    <DrawerDescription>Clear all progress and start fresh with this charm.</DrawerDescription>
+                </DrawerHeader>
                 <div className="p-8 pb-12 flex flex-col items-center text-center">
                     <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-6 text-orange-600">
                         <AlertTriangle className="w-10 h-10" />
                     </div>
-                    <DrawerTitle className="text-2xl font-bold text-[#5B2D7D] mb-2">Reset This Charm?</DrawerTitle>
-                    <DrawerDescription className="text-[#5B2D7D]/60 mb-8 max-w-xs">
+                    <h3 className="text-2xl font-bold text-[#5B2D7D] mb-2">Reset This Charm?</h3>
+                    <p className="text-[#5B2D7D]/60 mb-8 max-w-xs">
                         This will archive your current streaks and logs for a fresh start. You won&apos;t see previous history, but it will be saved in our system.
-                    </DrawerDescription>
+                    </p>
 
                     <div className="flex flex-col gap-3 w-full">
                         <button 
@@ -200,7 +204,7 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
 
     return (
         <Drawer open={isOpen} onOpenChange={onClose}>
-            <DrawerContent className="bg-[#FDF2EC] font-[Outfit] max-h-[90vh]">
+            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl font-[Outfit] max-h-[90vh]">
                 <div className="p-6 pb-12 overflow-y-auto no-scrollbar">
                     <DrawerHeader className="px-0 text-left">
                         <DrawerTitle className="text-2xl font-bold text-[#5B2D7D]">Add New Habit</DrawerTitle>
@@ -296,7 +300,7 @@ function HabitHistoryCard({ habit }: { habit: HabitWithLogs }) {
                     <div className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">Level {habit.level}</div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                    <div className="flex items-center gap-1.5 bg-[#FDF2EC] px-3 py-1 rounded-full">
+                    <div className="flex items-center gap-1.5 bg-transparent px-3 py-1 rounded-full">
                         <Flame className="w-4 h-4 text-orange-500" />
                         <span className="text-sm font-bold text-[#5B2D7D]">{habit.currentStreak}</span>
                     </div>
@@ -315,7 +319,8 @@ function HabitHistoryCard({ habit }: { habit: HabitWithLogs }) {
             <div className="overflow-x-auto no-scrollbar -mx-2 px-2">
                 <ContributionGraph 
                     logs={habit.logs} 
-                    startDate={pastDate} 
+                    startDate={pastDate}
+                    isWeekly={range === 7}
                 />
             </div>
         </div>
@@ -601,7 +606,11 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
 
         {/* History & Stats Drawer */}
         <Drawer open={showHistory} onOpenChange={(o) => { setShowHistory(o); if(!o) setIsEditMode(false); }}>
-            <DrawerContent className="bg-[#FDF2EC] rounded-t-[32px] border-none font-[Outfit] max-h-[95vh]">
+            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl border-none font-[Outfit] max-h-[95vh]">
+                <DrawerHeader className="sr-only">
+                    <DrawerTitle>{habit.title} History</DrawerTitle>
+                    <DrawerDescription>View and manage your habit history and settings.</DrawerDescription>
+                </DrawerHeader>
                 <div className="p-6 pb-12 overflow-y-auto no-scrollbar">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8 px-2">
@@ -653,7 +662,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                                 <div className="flex gap-3">
                                     <button 
                                         onClick={handleResetProgress}
-                                        className="flex-1 py-3 bg-[#FDF2EC] text-[#5B2D7D]/60 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
+                                        className="flex-1 py-3 bg-transparent text-[#5B2D7D]/60 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
                                     >
                                         <RotateCcw className="w-4 h-4" /> Reset Streak
                                     </button>
@@ -769,7 +778,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                                                     <button 
                                                         onClick={() => handleAdjustHistory(dateStr, -1)}
                                                         disabled={isLogging}
-                                                        className="w-8 h-8 rounded-full bg-[#FDF2EC] flex items-center justify-center text-[#5B2D7D] active:scale-90 transition-all disabled:opacity-50"
+                                                        className="w-8 h-8 rounded-full bg-transparent flex items-center justify-center text-[#5B2D7D] active:scale-90 transition-all disabled:opacity-50"
                                                     >
                                                         <Minus className="w-4 h-4" />
                                                     </button>
@@ -794,7 +803,11 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
 
         {/* Anomaly Drawer (Pause) */}
         <Drawer open={showAnomaly} onOpenChange={setShowAnomaly}>
-            <DrawerContent className="bg-[#FDF2EC] rounded-t-[32px] border-none font-[Outfit]">
+            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl border-none font-[Outfit]">
+                <DrawerHeader className="sr-only">
+                    <DrawerTitle>Pause Habit</DrawerTitle>
+                    <DrawerDescription>Select a reason to pause your habit for today.</DrawerDescription>
+                </DrawerHeader>
                 <div className="p-6 pb-12">
                     <div className="text-center mb-6">
                         <h3 className="text-xl font-bold text-[#5B2D7D]">Pause for today?</h3>
@@ -826,6 +839,10 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
         {/* Level Up Drawer */}
         <Drawer open={!!upgradeData} onOpenChange={(o) => !o && setUpgradeData(null)}>
             <DrawerContent className="bg-[#5B2D7D] text-white rounded-t-[32px] border-none font-[Outfit]">
+                 <DrawerHeader className="sr-only">
+                    <DrawerTitle>Level Up Milestone</DrawerTitle>
+                    <DrawerDescription>Congratulations on your streak! You have a new habit level available.</DrawerDescription>
+                 </DrawerHeader>
                  <div className="p-8 pb-12 flex flex-col items-center text-center">
                      <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6 animate-pulse">
                          <ArrowUpCircle className="w-10 h-10 text-white" />
@@ -928,7 +945,11 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
 
     return (
         <Drawer open={isOpen} onOpenChange={(o) => !o && onClose()}>
-            <DrawerContent className="bg-[#FDF2EC] rounded-t-[32px] border-none font-[Outfit] max-h-[90vh]">
+            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl rounded-t-[32px] border-none font-[Outfit] max-h-[90vh]">
+                <DrawerHeader className="sr-only">
+                    <DrawerTitle>Log Habit Progress</DrawerTitle>
+                    <DrawerDescription>Add a comment or photo to your habit track for {displayDate}.</DrawerDescription>
+                </DrawerHeader>
                 <div className="p-6 pb-12 overflow-y-auto no-scrollbar">
                     <div className="flex flex-col items-center text-center mb-6">
                         <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center text-3xl mb-4">
@@ -1015,85 +1036,166 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
     );
 }
 
-function ContributionGraph({ logs, startDate }: { logs: HabitLog[], startDate: Date }) {
+function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], startDate: Date, isWeekly?: boolean }) {
     const now = new Date();
     // Use UTC for "today"
     const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
     
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Group logs by date
-    const logMap = useMemo(() => {
-        const map: Record<string, HabitLog> = {};
-        logs.forEach(log => {
-            const d = new Date(log.date);
-            const dateStr = d.getUTCFullYear() + '-' + (d.getUTCMonth() + 1) + '-' + d.getUTCDate();
-            map[dateStr] = log;
-        });
-        return map;
-    }, [logs]);
-
-    // Generate dates
-    const days = useMemo(() => {
-        const result = [];
-        const curr = new Date(startDate);
-        const end = new Date();
-        
-        while (curr <= end) {
-            result.push(new Date(curr));
-            curr.setDate(curr.getDate() + 1);
-        }
-        return result;
-    }, [startDate]);
-
-    // Scroll to end on mount
+    // Auto-scroll to end (latest dates)
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
         }
-    }, []);
+    }, [logs, isWeekly]);
 
-    // Streak logic for coloring
-    const getColor = (date: Date) => {
-        const dateStr = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
-        const log = logMap[dateStr];
-        if (!log) return 'bg-[#FDF2EC]';
-        if (log.logType !== 'DONE') return 'bg-[#EAB308]'; // Paused (Yellow)
+    // IF WEEKLY: Use compact 7-day view
+    if (isWeekly) {
+        // Generate last 7 days
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())));
+        }
 
-        // Calculate streak at this point for shading
-        let streak = 0;
-        const sortedLogs = [...logs].filter(l => new Date(l.date) <= date).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
-        let running = 0;
-        let lastD: string | null = null;
-        sortedLogs.forEach(l => {
+        // Streak mapping for coloring (Safe UTC comparison)
+        const logMap = new Map();
+        const sortedAllLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        let runningS = 0;
+        let lastDStr: string | null = null;
+
+        sortedAllLogs.forEach(l => {
             const d = new Date(l.date);
             const s = d.getUTCFullYear() + '-' + (d.getUTCMonth() + 1) + '-' + d.getUTCDate();
-            if (lastD) {
-                const diff = Math.round((new Date(s).getTime() - new Date(lastD).getTime()) / (1000 * 60 * 60 * 24));
-                if (diff === 1) running++;
-                else if (diff > 1) running = 1;
-            } else running = 1;
-            if (s === dateStr) streak = running;
-            lastD = s;
+            if (lastDStr) {
+                const parts = lastDStr.split('-').map(Number);
+                const prev = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+                const diff = Math.round((d.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+                if (diff === 1) runningS++; else if (diff > 1) runningS = 1;
+            } else runningS = 1;
+            logMap.set(s, { type: l.logType, streak: runningS });
+            lastDStr = s;
         });
 
-        if (streak > 9) return 'bg-[#44337A]';
-        if (streak > 6) return 'bg-[#6B46C1]';
-        if (streak > 3) return 'bg-[#9F7AEA]';
-        return 'bg-[#D6BCFA]';
+        const getColorClass = (date: Date) => {
+            const s = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
+            const data = logMap.get(s);
+            if (!data) return 'bg-transparent border border-[#5B2D7D]/5 text-[#5B2D7D]/20';
+            if (data.type !== 'DONE') return 'bg-[#EAB308] text-white';
+            
+            const streak = data.streak;
+            if (streak > 9) return 'bg-[#44337A] text-white';
+            if (streak > 6) return 'bg-[#6B46C1] text-white';
+            if (streak > 3) return 'bg-[#9F7AEA] text-white';
+            return 'bg-[#D6BCFA] text-[#5B2D7D]';
+        };
+
+        return (
+            <div className="flex justify-between items-end gap-1 px-2 py-2">
+                {days.map((date, i) => {
+                    const dateStr = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
+                    const hasLog = logMap.has(dateStr);
+                    
+                    return (
+                        <div key={i} className="flex flex-col items-center gap-2 flex-1 max-w-[40px]">
+                            <div className={`w-full aspect-square rounded-xl flex items-center justify-center transition-all ${getColorClass(date)}`}>
+                                {hasLog ? (
+                                    <Check className="w-4 h-4" strokeWidth={3} />
+                                ) : (
+                                    <span className="text-[10px] font-black">{date.getUTCDate()}</span>
+                                )}
+                            </div>
+                            <span className="text-[9px] font-bold text-[#5B2D7D]/40 uppercase">
+                                {date.toLocaleDateString('en-US', { weekday: 'narrow' })}
+                            </span>
+                        </div>
+                    )
+                })}
+            </div>
+        );
+    }
+
+    // IF 30D (ORIGINAL STYLE): Use the multi-month grid
+    const monthsData: { name: string, dates: (Date|null)[] }[] = [];
+    const start = new Date(startDate);
+    let current = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+
+    while (current.getTime() <= todayUTC) {
+        const monthName = current.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+        let monthObj = monthsData.find(m => m.name === monthName);
+        
+        if (!monthObj) {
+            monthObj = { name: monthName, dates: [] };
+            monthsData.push(monthObj);
+        }
+        
+        monthObj.dates.push(new Date(current));
+        current.setUTCDate(current.getUTCDate() + 1);
+    }
+
+    const logMap = new Map();
+    const sortedLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    let runningStreak = 0;
+    let lastDateStr: string | null = null;
+
+    sortedLogs.forEach(l => {
+        const d = new Date(l.date);
+        const dateStr = d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+        if (lastDateStr) {
+            const prev = new Date(lastDateStr + 'T00:00:00Z');
+            const curr = new Date(dateStr + 'T00:00:00Z');
+            const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+            if (diff === 1) runningStreak++; else if (diff > 1) runningStreak = 1;
+        } else runningStreak = 1;
+        logMap.set(dateStr, { type: l.logType, streakAtDate: runningStreak });
+        lastDateStr = dateStr;
+    });
+
+    const getColor = (data?: { type: HabitLogType, streakAtDate: number }) => {
+        if (!data) return 'bg-transparent border border-[#5B2D7D]/5';
+        if (data.type !== 'DONE') return 'bg-[#EAB308]'; 
+        const streak = data.streakAtDate;
+        if (streak <= 3) return 'bg-[#D6BCFA]'; 
+        if (streak <= 6) return 'bg-[#9F7AEA]'; 
+        if (streak <= 9) return 'bg-[#6B46C1]'; 
+        return 'bg-[#44337A]'; 
     };
 
+    const cellSize = '28px';
+    const cellGap = '4px';
+
     return (
-        <div ref={scrollRef} className="flex gap-1 overflow-x-auto no-scrollbar py-2">
-            {days.map((date, i) => (
-                <div key={i} className="flex flex-col items-center gap-1 shrink-0">
-                    <div className={`w-3 h-8 rounded-full ${getColor(date)} transition-colors shadow-xs`} />
-                    <span className="text-[6px] font-bold text-[#5B2D7D]/30 uppercase">
-                        {date.getUTCDate() === 1 ? date.toLocaleDateString('en-US', { month: 'short' }) : ''}
-                    </span>
+        <div className="flex flex-col gap-2 select-none w-full">
+            <div ref={scrollRef} className="overflow-x-auto no-scrollbar scroll-smooth w-full">
+                <div className="flex gap-4 min-w-max pb-2">
+                    {monthsData.map((month, mIdx) => (
+                        <div key={mIdx} className="flex flex-col gap-2">
+                            <div className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest px-1">{month.name}</div>
+                            <div 
+                                className="grid grid-flow-col" 
+                                style={{ 
+                                    gridTemplateRows: `repeat(3, ${cellSize})`,
+                                    gap: cellGap 
+                                }}
+                            >
+                                {month.dates.map((date, dIdx) => {
+                                    if (!date) return null;
+                                    const dateStr = date.getUTCFullYear() + '-' + String(date.getUTCMonth() + 1).padStart(2, '0') + '-' + String(date.getUTCDate()).padStart(2, '0');
+                                    const data = logMap.get(dateStr);
+                                    const isFuture = date.getTime() > todayUTC;
+                                    return (
+                                        <div key={dIdx} className={`rounded-[10px] transition-all ${getColor(data)} ${isFuture ? 'opacity-0' : 'flex items-center justify-center shadow-xs'}`} style={{ width: cellSize, height: cellSize }}>
+                                            {!isFuture && <span className={`text-[9px] font-black ${data ? 'text-white' : 'text-[#5B2D7D]/20'}`}>{date.getUTCDate()}</span>}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
                 </div>
-            ))}
+            </div>
         </div>
     );
 }

@@ -64,7 +64,7 @@ export default function ManageCharmsPage() {
     const MEMORY_TOTAL = 50;
 
     return (
-        <div className="min-h-screen bg-[#FDF2EC] font-[Outfit] pb-12 relative">
+        <div className="min-h-screen bg-transparent font-[Outfit] pb-12 relative">
              {/* Header */}
              <header className="flex items-center justify-between px-6 py-6">
                 <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">

@@ -77,7 +77,7 @@ export default function ExperienceClient({
   const hasMedia = experience.media.length > 0;
 
   return (
-    <div className="min-h-dvh bg-[#FDF2EC] flex flex-col font-[Outfit]">
+    <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-[#FDF2EC]/80 backdrop-blur-xl border-b border-[#5B2D7D]/5">
         <div className="flex items-center gap-4 px-6 py-4">

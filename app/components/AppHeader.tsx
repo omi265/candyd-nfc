@@ -17,6 +17,8 @@ function Logo() {
         alt="Candyd Logo"
         fill
         className="object-contain"
+        priority
+        loading="eager"
       />
     </div>
   );

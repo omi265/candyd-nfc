@@ -105,7 +105,7 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
   };
 
   return (
-    <div className="min-h-dvh bg-[#FDF2EC] flex flex-col font-[Outfit]">
+    <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
       {/* Header */}
       <header className="flex flex-col border-b border-[#5B2D7D]/10 bg-white shrink-0">
         <div className="flex items-center gap-4 px-6 py-4">

@@ -3,8 +3,77 @@
 import { useAuth } from "@/lib/auth-context";
 import AppHeader from "./AppHeader";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getUserProducts } from "@/app/actions/memories";
+import { motion, useScroll, useTransform, useSpring } from "motion/react";
+
+function AuthenticatedLayout({ 
+    children, 
+    user, 
+    contextTitle, 
+    backHref 
+}: { 
+    children: React.ReactNode, 
+    user: any, 
+    contextTitle?: string, 
+    backHref?: string 
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // Initialize useScroll only within this component where the ref is guaranteed to be used
+  const { scrollYProgress } = useScroll({
+    container: scrollRef,
+  });
+
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
+  const y1 = useTransform(smoothProgress, [0, 1], [0, -200]);
+  const y2 = useTransform(smoothProgress, [0, 1], [0, 200]);
+  const scale1 = useTransform(smoothProgress, [0, 0.5, 1], [1, 1.2, 1]);
+  const scale2 = useTransform(smoothProgress, [0, 0.5, 1], [1, 0.8, 1]);
+
+  return (
+    <div className="h-dvh bg-[#FDF2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-2xl overflow-hidden isolate">
+      {/* Global Background Decorations - High intensity & Parallax */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-[#FDF2EC]">
+          {/* Top Right Green Glow */}
+          <motion.div 
+            style={{ y: y1, scale: scale1, animationDuration: '6s' }}
+            className="absolute top-[-15%] right-[-15%] w-[800px] h-[800px] bg-[#A4C538]/65 rounded-full blur-[100px] animate-pulse" 
+          />
+          
+          {/* Bottom Left Purple Glow */}
+          <motion.div 
+            style={{ y: y2, scale: scale2, animationDuration: '10s' }}
+            className="absolute bottom-[-15%] left-[-15%] w-[800px] h-[800px] bg-[#5B2D7D]/55 rounded-full blur-[100px] animate-pulse" 
+          />
+
+          {/* Center Connector Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#EADDDE]/50 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="shrink-0 z-50 relative bg-transparent">
+          <AppHeader 
+            userName={user?.name || "User"} 
+            userRole={user?.role} 
+            contextTitle={contextTitle}
+            backHref={backHref}
+          />
+      </div>
+      
+      <div 
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto no-scrollbar relative w-full z-10 bg-transparent"
+      >
+          {children}
+      </div>
+    </div>
+  );
+}
 
 export default function ClientLayout({
   children,
@@ -27,12 +96,10 @@ export default function ClientLayout({
           return;
       }
 
-      // If we have a charmId, we want to show its name in the header
       getUserProducts().then(products => {
           const product = products.find(p => p.id === charmId);
           if (product) {
               setContextTitle(product.name);
-              // Only show back button if we are NOT on the main dashboard
               if (pathname !== '/') {
                   setBackHref('/');
               } else {
@@ -59,26 +126,12 @@ export default function ClientLayout({
   }
 
   return (
-    <div className="h-dvh bg-[#FDF2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-2xl overflow-hidden isolate">
-      {/* Global Background Decorations - High visibility */}
-      <div className="fixed inset-0 pointer-events-none -z-10 bg-[#FDF2EC]">
-          <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-[#A4C538]/45 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '8s' }}></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[800px] h-[800px] bg-[#5B2D7D]/35 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '12s' }}></div>
-          {/* Subtle center glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#EADDDE]/30 rounded-full blur-[150px]"></div>
-      </div>
-
-      <div className="shrink-0 z-50 relative bg-transparent">
-          <AppHeader 
-            userName={user?.name || "User"} 
-            userRole={user?.role} 
-            contextTitle={contextTitle}
-            backHref={backHref}
-          />
-      </div>
-      <div className="flex-1 overflow-y-auto no-scrollbar relative w-full z-10 bg-transparent">
-          {children}
-      </div>
-    </div>
+    <AuthenticatedLayout 
+        user={user} 
+        contextTitle={contextTitle} 
+        backHref={backHref}
+    >
+        {children}
+    </AuthenticatedLayout>
   );
 }

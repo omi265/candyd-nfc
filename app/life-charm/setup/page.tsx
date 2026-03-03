@@ -100,7 +100,7 @@ export default function LifeCharmSetupPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-[#FDF2EC] flex flex-col font-[Outfit]">
+    <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
       {/* Header */}
       <header className="px-6 pt-8 pb-6 text-center shrink-0">
         <motion.div

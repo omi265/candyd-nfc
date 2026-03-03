@@ -7,7 +7,7 @@ export default function TermsPage() {
     const router = useRouter();
 
     return (
-        <div className="min-h-screen bg-[#FDF2EC] font-[Outfit] text-[#5B2D7D] pb-12">
+        <div className="min-h-screen bg-transparent font-[Outfit] text-[#5B2D7D] pb-12">
             <header className="sticky top-0 z-30 bg-[#FDF2EC]/80 backdrop-blur-xl border-b border-[#5B2D7D]/5 px-6 py-4 flex items-center gap-4">
                 <button
                     onClick={() => router.back()}

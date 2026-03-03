@@ -20,7 +20,7 @@ export default async function AdminPage() {
   const { tickets } = await getTickets();
 
   return (
-    <div className="min-h-screen bg-[#FDF2EC] p-8 font-[Outfit]">
+    <div className="min-h-screen bg-transparent p-8 font-[Outfit]">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-[#5B2D7D] mb-8">Admin Dashboard</h1>
         
