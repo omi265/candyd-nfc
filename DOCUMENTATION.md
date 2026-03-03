@@ -105,7 +105,7 @@ candyd-nfc-v2-next/
 ├── public/                      # Static assets
 ├── auth.ts                      # NextAuth configuration
 ├── auth.config.ts               # NextAuth config export
-├── middleware.ts                # Route protection middleware
+├── proxy.ts                # Route protection middleware
 ├── next.config.ts               # Next.js configuration
 ├── tsconfig.json                # TypeScript configuration
 ├── tailwind.config.ts           # Tailwind configuration
