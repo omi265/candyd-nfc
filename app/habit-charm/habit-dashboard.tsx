@@ -74,7 +74,7 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                  ) : (
                      <div className="flex flex-col gap-4 w-full">
                         {habits.map(habit => (
-                            <HabitHistoryCard key={habit.id} habit={habit} />
+                            <HabitHistoryCard key={habit.id} habit={habit} optimisticLogs={habit.logs} />
                         ))}
                      </div>
                  )}
@@ -387,17 +387,19 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
     );
 }
 
-function HabitHistoryCard({ habit }: { habit: HabitWithLogs }) {
+function HabitHistoryCard({ habit, optimisticLogs }: { habit: HabitWithLogs, optimisticLogs: HabitLog[] }) {
     const [range, setRange] = useState<7 | 30>(30);
     const today = new Date();
-    const pastDate = new Date(today);
-    pastDate.setDate(today.getDate() - (range - 1));
+    // Use IST for "today" in history calculation
+    const todayIST = new Date(today.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const pastDate = new Date(todayIST);
+    pastDate.setDate(todayIST.getDate() - (range - 1));
     
     return (
         <div className="bg-white rounded-[32px] p-5 shadow-sm">
             <div className="flex items-center justify-between mb-6">
                 <div className="max-w-[60%]">
-                    <h3 className="text-lg font-bold text-[#5B2D7D] truncate">{habit.title}</h3>
+                    <h3 className="text-lg font-bold text-[#5B2D7D] truncate font-serif">{habit.title}</h3>
                     <div className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">Level {habit.level}</div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
@@ -419,7 +421,7 @@ function HabitHistoryCard({ habit }: { habit: HabitWithLogs }) {
             </div>
             <div className="overflow-x-auto no-scrollbar -mx-2 px-2">
                 <ContributionGraph 
-                    logs={habit.logs} 
+                    logs={optimisticLogs} 
                     startDate={pastDate}
                     isWeekly={range === 7}
                 />
@@ -435,20 +437,27 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
     const [logDrawerData, setLogDrawerData] = useState<{ isOpen: boolean, type: HabitLogType, dateStr?: string } | null>(null);
     const [upgradeData, setUpgradeData] = useState<any>(null); // { nextLevel, message }
     
+    // --- OPTIMISTIC UI STATE ---
+    const [optimisticLogs, setOptimisticLogs] = useState<HabitLog[]>(habit.logs);
+    
+    // Sync optimistic state with real data when props change
+    useEffect(() => {
+        setOptimisticLogs(habit.logs);
+    }, [habit.logs]);
+
     // Edit State
     const [isEditMode, setIsEditMode] = useState(false);
     const [editTitle, setEditTitle] = useState(habit.title);
     const [editTarget, setEditTarget] = useState(habit.targetDays);
 
-    // Virtual Today Logic (Cutoff 4 AM)
+    // Virtual Today Logic (Cutoff 4 AM IST)
     const now = new Date();
-    if (now.getHours() < 4) {
-        now.setDate(now.getDate() - 1);
-    }
-    const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    if (istTime.getHours() < 4) istTime.setDate(istTime.getDate() - 1);
+    const todayUTC = Date.UTC(istTime.getFullYear(), istTime.getMonth(), istTime.getDate());
     
-    // Count logs for today
-    const todayLog = habit.logs.find(l => {
+    // Check if logged using OPTIMISTIC state
+    const todayLog = optimisticLogs.find(l => {
         const d = new Date(l.date);
         return d.getTime() === todayUTC;
     });
@@ -463,19 +472,40 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
     const handleLog = async (type: HabitLogType = 'DONE', notes?: string, imageUrl?: string, dateStr?: string) => {
         if (isLogging) return;
 
-        // If no dateStr is provided (standard tap), generate one based on client's "Virtual Today"
         let effectiveDateStr = dateStr;
         if (!effectiveDateStr) {
             const d = new Date();
-            if (d.getHours() < 4) d.setDate(d.getDate() - 1);
-            effectiveDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const ist = new Date(d.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+            if (ist.getHours() < 4) ist.setDate(ist.getDate() - 1);
+            effectiveDateStr = `${ist.getFullYear()}-${String(ist.getMonth() + 1).padStart(2, '0')}-${String(ist.getDate()).padStart(2, '0')}`;
         }
+
+        // --- APPLY OPTIMISTIC LOG ---
+        const [y, m, d] = effectiveDateStr.split('-').map(Number);
+        const targetDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+        
+        const tempLog: HabitLog = {
+            id: 'temp-' + Date.now(),
+            date: targetDate,
+            notes: notes || null,
+            imageUrl: imageUrl || null,
+            logType: type,
+            habitId: habit.id,
+            createdAt: new Date()
+        };
+
+        setOptimisticLogs(prev => {
+            // Replace if same date exists, else append
+            const filtered = prev.filter(l => new Date(l.date).getTime() !== targetDate.getTime());
+            return [tempLog, ...filtered];
+        });
 
         setIsLogging(true);
         try {
             const result = await logHabit(habit.id, notes, type, imageUrl, effectiveDateStr);
             if (result.error) {
                 toast.error(result.error);
+                setOptimisticLogs(habit.logs); // Rollback on error
             } else {
                 if (type === 'DONE') {
                     toast.success(dateStr ? `Log saved for ${dateStr}` : "Habit logged! Keep it up.");
@@ -483,15 +513,60 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                     toast.success("Logged. Rest is progress too.");
                 }
                 setLogDrawerData(null);
-
-                // Check for progression suggestion
-                if (result.progression) {
-                    setUpgradeData(result.progression);
-                }
+                if (result.progression) setUpgradeData(result.progression);
                 router.refresh();
             }
         } catch (error) {
             toast.error("Failed to log.");
+            setOptimisticLogs(habit.logs); // Rollback
+        } finally {
+            setIsLogging(false);
+        }
+    };
+
+    const handleAdjustHistory = async (dateStr: string, adjustment: number) => {
+        if (isLogging) return;
+
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const targetDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+
+        // --- APPLY OPTIMISTIC ADJUSTMENT ---
+        if (adjustment > 0) {
+            const tempLog: HabitLog = {
+                id: 'temp-' + Date.now(),
+                date: targetDate,
+                notes: null,
+                imageUrl: null,
+                logType: 'DONE',
+                habitId: habit.id,
+                createdAt: new Date()
+            };
+            setOptimisticLogs(prev => [tempLog, ...prev]);
+        } else {
+            setOptimisticLogs(prev => {
+                const index = prev.findIndex(l => new Date(l.date).getTime() === targetDate.getTime());
+                if (index !== -1) {
+                    const next = [...prev];
+                    next.splice(index, 1);
+                    return next;
+                }
+                return prev;
+            });
+        }
+
+        setIsLogging(true);
+        try {
+            const res = await adjustHabitLogs(habit.id, dateStr, adjustment);
+            if (res.success) {
+                toast.success("History adjusted");
+                router.refresh();
+            } else {
+                toast.error(res.error || "Failed to adjust history");
+                setOptimisticLogs(habit.logs); // Rollback
+            }
+        } catch (e) {
+            toast.error("Error adjusting history");
+            setOptimisticLogs(habit.logs); // Rollback
         } finally {
             setIsLogging(false);
         }
@@ -548,23 +623,6 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
             }
         } catch (e) {
             toast.error("Failed to reset");
-        } finally {
-            setIsLogging(false);
-        }
-    };
-
-    const handleAdjustHistory = async (dateStr: string, adjustment: number) => {
-        setIsLogging(true);
-        try {
-            const res = await adjustHabitLogs(habit.id, dateStr, adjustment);
-            if (res.success) {
-                toast.success("History adjusted");
-                router.refresh();
-            } else {
-                toast.error(res.error || "Failed to adjust history");
-            }
-        } catch (e) {
-            toast.error("Error adjusting history");
         } finally {
             setIsLogging(false);
         }
