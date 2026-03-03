@@ -179,6 +179,13 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
     };
 
     const handleSelectHabit = (categoryId: string, levelNum: number) => {
+        const isCurrentlySelected = selectedHabit?.id === categoryId && selectedHabit?.level === levelNum;
+        
+        if (isCurrentlySelected) {
+            setSelectedHabit(null);
+            return;
+        }
+
         const core = CORE_HABITS.find(h => h.id === categoryId);
         const level = core?.levels.find(l => l.level === levelNum);
         if (!core || !level) return;
