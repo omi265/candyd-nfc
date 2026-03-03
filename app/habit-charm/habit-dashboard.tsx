@@ -399,7 +399,7 @@ function HabitHistoryCard({ habit, optimisticLogs }: { habit: HabitWithLogs, opt
         <div className="bg-white rounded-[32px] p-5 shadow-sm">
             <div className="flex items-center justify-between mb-6">
                 <div className="max-w-[60%]">
-                    <h3 className="text-lg font-bold text-[#5B2D7D] truncate font-serif">{habit.title}</h3>
+                    <h3 className="text-lg font-bold text-[#5B2D7D] truncate">{habit.title}</h3>
                     <div className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">Level {habit.level}</div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
@@ -901,11 +901,9 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                                                     onClick={() => !log && handleOpenLogDrawer('DONE', dateStr)}
                                                     className={`w-full aspect-square rounded-xl flex items-center justify-center transition-all ${getColorClass(log, streakAtDate)} ${!log ? 'cursor-pointer hover:bg-[#5B2D7D]/5' : ''}`}
                                                 >
-                                                    {log ? (
-                                                        <Check className="w-4 h-4" strokeWidth={3} />
-                                                    ) : (
-                                                        <span className="text-[10px] font-black">{date.getUTCDate()}</span>
-                                                    )}
+                                                    <span className={`text-[10px] font-black ${log ? (streakAtDate > 3 || log.logType !== 'DONE' ? 'text-white' : 'text-[#5B2D7D]') : 'text-[#5B2D7D]/20'}`}>
+                                                        {date.getUTCDate()}
+                                                    </span>
                                                 </div>
                                                 <span className="text-[9px] font-bold text-[#5B2D7D]/40 uppercase">{dayName}</span>
                                             </div>
@@ -1269,11 +1267,9 @@ function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], st
                     return (
                         <div key={i} className="flex flex-col items-center gap-2 flex-1 max-w-[40px]">
                             <div className={`w-full aspect-square rounded-xl flex items-center justify-center transition-all ${getColorClass(date)}`}>
-                                {hasLog ? (
-                                    <Check className="w-4 h-4" strokeWidth={3} />
-                                ) : (
-                                    <span className="text-[10px] font-black">{date.getUTCDate()}</span>
-                                )}
+                                <span className={`text-[10px] font-black ${hasLog ? (logMap.get(dateStr).streak > 3 || logMap.get(dateStr).type !== 'DONE' ? 'text-white' : 'text-[#5B2D7D]') : 'text-[#5B2D7D]/20'}`}>
+                                    {date.getUTCDate()}
+                                </span>
                             </div>
                             <span className="text-[9px] font-bold text-[#5B2D7D]/40 uppercase">
                                 {date.toLocaleDateString('en-US', { weekday: 'narrow' })}
