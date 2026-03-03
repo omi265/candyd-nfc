@@ -124,7 +124,7 @@ export default function HabitSetup({ product }: { product: Product }) {
                         <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-xl">
                             <Loader2 className="w-10 h-10 text-[#5B2D7D] animate-spin" />
                         </div>
-                        <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2 font-serif">Building Your Rituals</h2>
+                        <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Building Your Rituals</h2>
                         <p className="text-[#5B2D7D]/60 max-w-[240px]">We&apos;re setting up your new habits. This will only take a moment.</p>
                     </motion.div>
                 )}
@@ -139,7 +139,7 @@ export default function HabitSetup({ product }: { product: Product }) {
                 >
                     <Sparkles className="w-8 h-8 text-[#5B2D7D]" />
                 </motion.div>
-                <h1 className="text-2xl font-bold text-[#5B2D7D] mb-2 font-serif">Build Your Ritual</h1>
+                <h1 className="text-2xl font-bold text-[#5B2D7D] mb-2">Build Your Ritual</h1>
                 <p className="text-[#5B2D7D]/60 max-w-xs mx-auto text-sm">Select up to 10 habits. Mix core foundations with your own goals.</p>
             </header>
 
