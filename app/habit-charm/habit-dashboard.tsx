@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { logHabit, adjustHabitLogs, upgradeHabit, declineUpgrade, updateHabit, deleteHabit, createHabit, resetHabitCharm, resetHabit } from "@/app/actions/habit";
-import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2, Plane, BedDouble, Frown, Briefcase, HelpCircle, ArrowUpCircle, Trash2, Target, Save, X, RotateCcw, Pause } from "lucide-react";
+import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2, Plane, BedDouble, Frown, Briefcase, HelpCircle, ArrowUpCircle, Trash2, Target, Save, X, RotateCcw, Pause, Sparkles, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Habit, HabitLog, Product, HabitLogType } from "@prisma/client";
@@ -156,41 +156,64 @@ function ResetCharmDrawer({ productId, isOpen, onClose, router }: { productId: s
 }
 
 function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: string, isOpen: boolean, onClose: () => void, router: any }) {
+    const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
+    const [selectedHabit, setSelectedHabit] = useState<any>(null);
     const [mode, setMode] = useState<'template' | 'custom'>('template');
-    const [title, setTitle] = useState("");
-    const [targetDays, setTargetDays] = useState(66);
+    
+    const [customTitle, setCustomName] = useState("");
+    const [customTarget, setCustomTarget] = useState(66);
     const [isSaving, setIsSaving] = useState(false);
 
-    const handleAdd = async (templateId?: string) => {
+    // Reset state when drawer closes
+    useEffect(() => {
+        if (!isOpen) {
+            setExpandedCategoryId(null);
+            setSelectedHabit(null);
+            setMode('template');
+            setCustomName("");
+        }
+    }, [isOpen]);
+
+    const toggleCategory = (id: string) => {
+        setExpandedCategoryId(expandedCategoryId === id ? null : id);
+    };
+
+    const handleSelectHabit = (categoryId: string, levelNum: number) => {
+        const core = CORE_HABITS.find(h => h.id === categoryId);
+        const level = core?.levels.find(l => l.level === levelNum);
+        if (!core || !level) return;
+
+        setSelectedHabit({
+            id: categoryId,
+            level: levelNum,
+            title: level.description,
+            description: `Level ${levelNum}: ${level.duration} • ${level.trigger}`
+        });
+    };
+
+    const handleAdd = async () => {
+        if (!selectedHabit && mode === 'template') return;
+        if (mode === 'custom' && !customTitle.trim()) return;
+
         setIsSaving(true);
         try {
-            let habitData;
-
-            if (templateId) {
-                const core = CORE_HABITS.find(h => h.id === templateId);
-                const level1 = core?.levels.find(l => l.level === 1);
-                habitData = {
-                    title: level1?.description || core?.title || "Level 1 Habit",
-                    focusArea: templateId,
-                    targetDays: 66,
-                    frequency: "daily"
-                };
-            } else {
-                if (!title.trim()) return;
-                habitData = {
-                    title: title.trim(),
-                    focusArea: "custom",
-                    targetDays,
-                    frequency: "daily"
-                };
-            }
+            const habitData = mode === 'template' ? {
+                title: selectedHabit.title,
+                description: selectedHabit.description,
+                focusArea: selectedHabit.id,
+                frequency: "daily",
+                targetDays: 66,
+            } : {
+                title: customTitle.trim(),
+                focusArea: "custom",
+                frequency: "daily",
+                targetDays: customTarget
+            };
 
             const res = await createHabit(productId, habitData);
             if (res.success) {
                 toast.success("Habit started!");
                 onClose();
-                setTitle("");
-                setMode('template');
                 router.refresh();
             } else {
                 toast.error(res.error || "Failed");
@@ -206,80 +229,151 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
         <Drawer open={isOpen} onOpenChange={onClose}>
             <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl font-[Outfit] max-h-[90vh]">
                 <div className="p-6 pb-12 overflow-y-auto no-scrollbar">
-                    <DrawerHeader className="px-0 text-left">
+                    <DrawerHeader className="px-0 text-left mb-4">
                         <DrawerTitle className="text-2xl font-bold text-[#5B2D7D]">Add New Habit</DrawerTitle>
-                        <DrawerDescription>Mix core foundations with your own goals.</DrawerDescription>
+                        <DrawerDescription>Pick a specific ritual to add to your medallion.</DrawerDescription>
                     </DrawerHeader>
 
-                    {/* Tab Switcher */}
-                    <div className="flex bg-white rounded-2xl p-1 mb-6 border border-[#5B2D7D]/5 shadow-sm">
-                        <button 
-                            onClick={() => setMode('template')}
-                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${mode === 'template' ? 'bg-[#5B2D7D] text-white shadow-md' : 'text-[#5B2D7D]/40'}`}
-                        >
-                            Templates
-                        </button>
-                        <button 
-                            onClick={() => setMode('custom')}
-                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${mode === 'custom' ? 'bg-[#5B2D7D] text-white shadow-md' : 'text-[#5B2D7D]/40'}`}
-                        >
-                            Custom
-                        </button>
+                    {/* Accordion List */}
+                    <div className="space-y-3">
+                        {CORE_HABITS.map((category) => {
+                            const isExpanded = expandedCategoryId === category.id;
+                            const isSelected = selectedHabit?.id === category.id;
+
+                            return (
+                                <div key={category.id} className="overflow-hidden">
+                                    <button
+                                        onClick={() => toggleCategory(category.id)}
+                                        className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
+                                            isExpanded ? "bg-[#5B2D7D] text-white shadow-md" : "bg-white"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl">{category.icon}</span>
+                                            <div className="text-left">
+                                                <h3 className="font-bold">{category.title}</h3>
+                                                {isSelected && !isExpanded && (
+                                                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#A4C538] text-[#5B2D7D]">
+                                                        Selected
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5 text-[#5B2D7D]/40" />}
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {isExpanded && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: "auto", opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="mt-2 bg-white/50 rounded-2xl p-2 space-y-1 overflow-hidden"
+                                            >
+                                                {category.levels.map((lvl) => {
+                                                    const isThisSelected = selectedHabit?.id === category.id && selectedHabit?.level === lvl.level;
+                                                    return (
+                                                        <button
+                                                            key={lvl.level}
+                                                            onClick={() => { handleSelectHabit(category.id, lvl.level); setMode('template'); }}
+                                                            className={`w-full text-left p-3 rounded-xl flex flex-col gap-1 transition-colors ${
+                                                                isThisSelected ? "bg-[#5B2D7D]/10" : "hover:bg-[#EADDDE]/30"
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center justify-between">
+                                                                <span className={`text-sm font-bold ${isThisSelected ? "text-[#5B2D7D]" : "text-[#5B2D7D]/80"}`}>
+                                                                    {lvl.description}
+                                                                </span>
+                                                                <div className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all ${
+                                                                    isThisSelected ? "bg-[#5B2D7D] border-[#5B2D7D]" : "border-[#5B2D7D]/20"
+                                                                }`}>
+                                                                    {isThisSelected && <Check className="w-3 h-3 text-white" />}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-[10px] font-bold text-[#5B2D7D]/40 uppercase tracking-tight">
+                                                                <span>Lvl {lvl.level}</span>
+                                                                <span>•</span>
+                                                                <span>{lvl.duration}</span>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            );
+                        })}
+
+                        {/* Custom Option */}
+                        <div className="overflow-hidden">
+                            <button
+                                onClick={() => { setMode('custom'); setExpandedCategoryId(expandedCategoryId === 'custom' ? null : 'custom'); }}
+                                className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed transition-all ${
+                                    expandedCategoryId === 'custom' ? "border-[#5B2D7D] bg-[#5B2D7D]/5" : "border-[#5B2D7D]/20 bg-white/40"
+                                }`}
+                            >
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                    expandedCategoryId === 'custom' ? "bg-[#5B2D7D]" : "bg-[#EADDDE]"
+                                }`}>
+                                    <Plus className={`w-5 h-5 ${expandedCategoryId === 'custom' ? "text-white" : "text-[#5B2D7D]"}`} />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="font-bold text-[#5B2D7D]">Add custom goal</h3>
+                                </div>
+                            </button>
+
+                            <AnimatePresence>
+                                {expandedCategoryId === 'custom' && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="mt-2 bg-white rounded-2xl p-4 shadow-sm space-y-4 overflow-hidden"
+                                    >
+                                        <div className="space-y-4">
+                                            <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest ml-1">Habit Title</label>
+                                            <input
+                                                type="text"
+                                                value={customTitle}
+                                                onChange={(e) => setCustomName(e.target.value)}
+                                                placeholder="What is the ritual?"
+                                                className="w-full px-4 py-3 rounded-xl bg-[#FDF2EC]/50 border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none"
+                                            />
+                                            <div>
+                                                <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-2 ml-1">Daily Target</label>
+                                                <select 
+                                                    value={customTarget}
+                                                    onChange={(e) => setCustomTarget(parseInt(e.target.value))}
+                                                    className="w-full px-4 py-3 rounded-xl bg-[#FDF2EC]/50 border border-[#5B2D7D]/10 text-[#5B2D7D] text-sm outline-none appearance-none"
+                                                >
+                                                    <option value={21}>21 Days</option>
+                                                    <option value={66}>66 Days</option>
+                                                    <option value={100}>100 Days</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
 
-                    {mode === 'template' ? (
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            {CORE_HABITS.map((habit) => (
-                                <button
-                                    key={habit.id}
-                                    onClick={() => handleAdd(habit.id)}
-                                    disabled={isSaving}
-                                    className="flex flex-col items-center justify-center p-4 bg-white rounded-3xl transition-all border-2 border-transparent active:border-[#5B2D7D]/20 shadow-sm aspect-square active:scale-95 disabled:opacity-50"
-                                >
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl mb-2 ${habit.color}`}>
-                                        {habit.icon}
-                                    </div>
-                                    <span className="font-bold text-[#5B2D7D] text-[11px] uppercase tracking-wider">{habit.title}</span>
-                                </button>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2">What is the habit?</label>
-                                <input 
-                                    type="text"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="e.g. Morning Meditation"
-                                    className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-[#5B2D7D]/40 uppercase mb-2 flex items-center gap-1">
-                                    <Target className="w-3 h-3" /> Goal (Days)
-                                </label>
-                                <select 
-                                    value={targetDays}
-                                    onChange={(e) => setTargetDays(parseInt(e.target.value))}
-                                    className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none appearance-none"
-                                >
-                                    <option value={21}>21 Days (Initiation)</option>
-                                    <option value={66}>66 Days (Habit forming)</option>
-                                    <option value={100}>100 Days (Mastery)</option>
-                                </select>
-                            </div>
-
-                            <button 
-                                onClick={() => handleAdd()}
-                                disabled={isSaving || !title.trim()}
-                                className="w-full py-4 bg-[#5B2D7D] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Start Journey"}
-                            </button>
-                        </div>
-                    )}
+                    {/* Final Action */}
+                    <div className="mt-8">
+                        <button 
+                            onClick={handleAdd}
+                            disabled={isSaving || (mode === 'template' && !selectedHabit) || (mode === 'custom' && !customTitle.trim())}
+                            className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                                <>
+                                    Activate Habit
+                                    <ArrowRight className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </DrawerContent>
         </Drawer>
