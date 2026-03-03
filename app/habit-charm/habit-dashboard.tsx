@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { logHabit, toggleHabitDate, adjustHabitLogs, upgradeHabit, declineUpgrade, updateHabit, deleteHabit, createHabit, resetHabitCharm, resetHabit } from "@/app/actions/habit";
-import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2, Plane, BedDouble, Frown, Briefcase, HelpCircle, ArrowUpCircle, Trash2, Target, Save, X, RotateCcw } from "lucide-react";
+import { logHabit, adjustHabitLogs, upgradeHabit, declineUpgrade, updateHabit, deleteHabit, createHabit, resetHabitCharm, resetHabit } from "@/app/actions/habit";
+import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2, Plane, BedDouble, Frown, Briefcase, HelpCircle, ArrowUpCircle, Trash2, Target, Save, X, RotateCcw, Pause } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Habit, HabitLog, Product, HabitLogType } from "@prisma/client";
@@ -336,6 +336,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
     const [isLogging, setIsLogging] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [showAnomaly, setShowAnomaly] = useState(false);
+    const [logDrawerData, setLogDrawerData] = useState<{ isOpen: boolean, type: HabitLogType, dateStr?: string } | null>(null);
     const [upgradeData, setUpgradeData] = useState<any>(null); // { nextLevel, message }
     
     // Edit State
@@ -358,21 +359,26 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
 
     const isLogged = !!todayLog;
 
-    const handleLog = async (type: HabitLogType = 'DONE') => {
+    const handleOpenLogDrawer = (type: HabitLogType = 'DONE', dateStr?: string) => {
+        setLogDrawerData({ isOpen: true, type, dateStr });
+        setShowAnomaly(false);
+    };
+
+    const handleLog = async (type: HabitLogType = 'DONE', notes?: string, imageUrl?: string, dateStr?: string) => {
         if (isLogging) return;
 
         setIsLogging(true);
         try {
-            const result = await logHabit(habit.id, undefined, type);
+            const result = await logHabit(habit.id, notes, type, imageUrl, dateStr);
             if (result.error) {
                 toast.error(result.error);
             } else {
                 if (type === 'DONE') {
-                    toast.success("Habit logged! Keep it up.");
+                    toast.success(dateStr ? `Log saved for ${dateStr}` : "Habit logged! Keep it up.");
                 } else {
                     toast.success("Logged. Rest is progress too.");
                 }
-                setShowAnomaly(false);
+                setLogDrawerData(null);
 
                 // Check for progression suggestion
                 if (result.progression) {
@@ -482,6 +488,8 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
     const coreHabit = CORE_HABITS.find(h => h.id === habit.focusArea);
 
     const progress = Math.min(100, (habit.currentStreak / habit.targetDays) * 100);
+    const progressInLevel = habit.currentStreak % 7;
+    const levelProgressPercent = (progressInLevel === 0 && habit.currentStreak > 0) ? 100 : (progressInLevel / 7 * 100);
 
     return (
         <>
@@ -490,6 +498,21 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
             className="bg-white rounded-[40px] p-4 flex flex-col items-center shadow-sm relative overflow-visible aspect-[2/3] group"
         >
             {/* Top Bar Actions */}
+            <div className="absolute top-3 left-3 z-20 flex gap-2">
+                {!isLogged ? (
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setShowAnomaly(true); }}
+                        className="w-11 h-11 rounded-full bg-[#FDF2EC] text-[#5B2D7D]/40 flex items-center justify-center hover:bg-[#EADDDE] shadow-sm active:scale-90 transition-all"
+                    >
+                        <Pause className="w-4 h-4" />
+                    </button>
+                ) : (
+                    <div className="w-11 h-11 rounded-full bg-[#A4C538]/10 text-[#A4C538] flex items-center justify-center shadow-sm">
+                        {todayLog.logType === 'DONE' ? <Check className="w-5 h-5" strokeWidth={3} /> : <Pause className="w-4 h-4" />}
+                    </div>
+                )}
+            </div>
+
             <div className="absolute top-3 right-3 z-20">
                 <button 
                     onClick={(e) => { e.stopPropagation(); setShowHistory(true); }}
@@ -500,22 +523,10 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
             </div>
 
             {/* Centered Content */}
-            <div className="flex-1 flex flex-col items-center justify-end w-full pt-8 pb-4">
+            <div className="flex-1 flex flex-col items-center justify-center w-full pt-12 pb-4">
                 
-                {/* Level Badge */}
-                <div className="flex flex-col items-center gap-1 mb-4">
-                    <div className="bg-[#5B2D7D]/5 px-3 py-1 rounded-full text-[10px] font-black text-[#5B2D7D] uppercase tracking-widest">
-                        {habit.focusArea === 'custom' ? 'Custom' : `Level ${habit.level}`}
-                    </div>
-                    {habit.frequency !== 'daily' && (
-                        <div className="text-[9px] font-bold text-[#5B2D7D]/40 uppercase tracking-tighter">
-                            {habit.frequency}
-                        </div>
-                    )}
-                </div>
-
                 {/* Large Logging Button */}
-                <div className="relative flex items-center justify-center w-full max-w-[140px] aspect-square mb-4">
+                <div className="relative flex items-center justify-center w-full max-w-[140px] aspect-square mb-6">
                     <svg 
                         className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-0"
                         viewBox="0 0 100 100"
@@ -532,7 +543,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                     </svg>
 
                     <button
-                        onClick={() => !isLogged && handleLog('DONE')}
+                        onClick={() => !isLogged && handleOpenLogDrawer('DONE')}
                         disabled={isLogging || isLogged}
                         className={`relative w-[80%] h-[80%] rounded-full flex items-center justify-center transition-all shadow-xl active:scale-95 z-10 shrink-0 ${
                             isLogged 
@@ -555,27 +566,48 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                     </button>
                 </div>
 
-                {/* Info */}
-                <div className="text-center w-full px-1 mb-2">
-                    <h3 className="font-bold text-[#5B2D7D] text-sm leading-tight mb-1 line-clamp-2">{habit.title}</h3>
-                </div>
-
-                {/* Anomaly Trigger */}
-                {!isLogged && (
-                    <button 
-                        onClick={() => setShowAnomaly(true)}
-                        className="text-[10px] font-bold text-[#5B2D7D]/40 uppercase tracking-widest hover:text-[#5B2D7D] transition-colors py-2"
-                    >
-                        Pause for today?
-                    </button>
-                )}
-                 {isLogged && (
-                    <div className="text-[10px] font-bold text-[#5B2D7D]/40 uppercase tracking-widest py-2">
-                        {todayLog?.logType === 'DONE' ? 'Done for today' : `Paused: ${todayLog?.logType}`}
+                {/* Info & Progression */}
+                <div className="text-center w-full px-4 flex flex-col items-center">
+                    <h3 className="font-bold text-[#5B2D7D] text-sm leading-tight mb-3 line-clamp-2">{habit.title}</h3>
+                    
+                    {/* Progress Bar Container */}
+                    <div className="w-full max-w-[120px] space-y-1.5 bg-[#5B2D7D]/5 p-2 rounded-2xl border border-[#5B2D7D]/5">
+                        <div className="h-2 w-full bg-[#5B2D7D]/10 rounded-full overflow-hidden">
+                            <motion.div 
+                                key={`${habit.id}-${habit.currentStreak}`}
+                                className="h-full bg-[#A4C538]"
+                                animate={{ 
+                                    width: habit.focusArea === 'custom' 
+                                        ? `${Math.min(100, (habit.currentStreak / habit.targetDays) * 100)}%`
+                                        : `${levelProgressPercent}%` 
+                                }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                            />
+                        </div>
+                        <div className="flex justify-between items-center text-[8px] font-black text-[#5B2D7D]/40 uppercase tracking-tighter">
+                            <span>{habit.focusArea === 'custom' ? 'Goal' : `Lvl ${habit.level}`}</span>
+                            <span className="text-[#A4C538] font-bold">
+                                {habit.focusArea === 'custom' 
+                                    ? `${habit.currentStreak}/${habit.targetDays}d`
+                                    : `${progressInLevel === 0 && habit.currentStreak > 0 ? 7 : progressInLevel}/7 Days`
+                                }
+                            </span>
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
         </motion.div>
+
+        {/* Log Detail Drawer */}
+        <LogHabitDrawer 
+            habit={habit}
+            isOpen={!!logDrawerData?.isOpen}
+            type={logDrawerData?.type || 'DONE'}
+            dateStr={logDrawerData?.dateStr}
+            onClose={() => setLogDrawerData(null)}
+            onLog={handleLog}
+            isLogging={isLogging}
+        />
 
         {/* History & Stats Drawer */}
         <Drawer open={showHistory} onOpenChange={(o) => { setShowHistory(o); if(!o) setIsEditMode(false); }}>
@@ -650,11 +682,74 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
 
                     {!isEditMode && (
                         <>
-                            <div className="bg-white p-5 rounded-[32px] shadow-sm mb-6 overflow-x-auto no-scrollbar">
-                                <ContributionGraph 
-                                    logs={habit.logs} 
-                                    startDate={new Date(new Date().setDate(new Date().getDate() - 56))} 
-                                />
+                            <div className="bg-white p-6 rounded-[32px] shadow-sm mb-6">
+                                <h3 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Past 7 Days</h3>
+                                <div className="flex justify-between items-end gap-1">
+                                    {[6, 5, 4, 3, 2, 1, 0].map(daysAgo => {
+                                        const date = new Date();
+                                        date.setDate(date.getDate() - daysAgo);
+                                        const dateStr = date.getUTCFullYear() + '-' + 
+                                                     String(date.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+                                                     String(date.getUTCDate()).padStart(2, '0');
+                                        
+                                        // Calculate streak for this specific date for color coding
+                                        let streakAtDate = 0;
+                                        const sortedLogs = [...habit.logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                                        let running = 0;
+                                        let lastD: string | null = null;
+                                        
+                                        sortedLogs.forEach(l => {
+                                            const d = new Date(l.date);
+                                            const s = d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+                                            if (lastD) {
+                                                const prevDate = new Date(lastD);
+                                                const currDate = new Date(s);
+                                                const diff = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+                                                if (diff === 1) running++;
+                                                else if (diff > 1) running = 1;
+                                            } else {
+                                                running = 1;
+                                            }
+                                            if (s === dateStr) streakAtDate = running;
+                                            lastD = s;
+                                        });
+
+                                        const log = habit.logs.find(l => {
+                                            const d = new Date(l.date);
+                                            const lStr = d.getUTCFullYear() + '-' + 
+                                                         String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+                                                         String(d.getUTCDate()).padStart(2, '0');
+                                            return lStr === dateStr;
+                                        });
+
+                                        const getColorClass = (l?: HabitLog, streak?: number) => {
+                                            if (!l) return 'bg-[#FDF2EC] text-[#5B2D7D]/20';
+                                            if (l.logType !== 'DONE') return 'bg-[#EAB308] text-white';
+                                            if (streak && streak > 9) return 'bg-[#44337A] text-white';
+                                            if (streak && streak > 6) return 'bg-[#6B46C1] text-white';
+                                            if (streak && streak > 3) return 'bg-[#9F7AEA] text-white';
+                                            return 'bg-[#D6BCFA] text-[#5B2D7D]';
+                                        };
+
+                                        const dayName = date.toLocaleDateString('en-US', { weekday: 'narrow' });
+                                        
+                                        return (
+                                            <div key={daysAgo} className="flex flex-col items-center gap-2 flex-1">
+                                                <div 
+                                                    onClick={() => !log && handleOpenLogDrawer('DONE', dateStr)}
+                                                    className={`w-full aspect-square rounded-xl flex items-center justify-center transition-all ${getColorClass(log, streakAtDate)} ${!log ? 'cursor-pointer hover:bg-[#5B2D7D]/5' : ''}`}
+                                                >
+                                                    {log ? (
+                                                        <Check className="w-4 h-4" strokeWidth={3} />
+                                                    ) : (
+                                                        <span className="text-[10px] font-black">{date.getUTCDate()}</span>
+                                                    )}
+                                                </div>
+                                                <span className="text-[9px] font-bold text-[#5B2D7D]/40 uppercase">{dayName}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
                             {/* Manual Log Adjustment Section */}
@@ -664,11 +759,9 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                                     {[0, 1, 2, 3, 4].map(daysAgo => {
                                         const date = new Date();
                                         date.setDate(date.getDate() - daysAgo);
-                                        // Format as UTC YYYY-MM-DD for consistency
-                                        const year = date.getFullYear();
-                                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                                        const day = String(date.getDate()).padStart(2, '0');
-                                        const dateStr = `${year}-${month}-${day}`;
+                                        const dateStr = date.getUTCFullYear() + '-' + 
+                                                     String(date.getUTCMonth() + 1).padStart(2, '0') + '-' + 
+                                                     String(date.getUTCDate()).padStart(2, '0');
                                         
                                         const logsForDay = habit.logs.filter(l => {
                                             const d = new Date(l.date);
@@ -695,7 +788,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                                                         <Minus className="w-4 h-4" />
                                                     </button>
                                                     <button 
-                                                        onClick={() => handleAdjustHistory(dateStr, 1)}
+                                                        onClick={() => handleOpenLogDrawer('DONE', dateStr)}
                                                         disabled={isLogging}
                                                         className="w-8 h-8 rounded-full bg-[#5B2D7D] flex items-center justify-center text-white active:scale-90 transition-all disabled:opacity-50"
                                                     >
@@ -743,7 +836,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                             <motion.button
                                 key={opt.id}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => handleLog(opt.id as HabitLogType)}
+                                onClick={() => handleOpenLogDrawer(opt.id as HabitLogType)}
                                 className="bg-white p-5 rounded-[24px] flex flex-col items-center justify-center gap-2 hover:bg-[#5B2D7D]/5 transition-colors border border-transparent active:border-[#5B2D7D]/10"
                             >
                                 <opt.icon className="w-6 h-6 text-[#5B2D7D]/70" />
@@ -789,6 +882,161 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
             </DrawerContent>
         </Drawer>
         </>
+    );
+}
+
+function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLogging }: { 
+    habit: Habit, 
+    isOpen: boolean, 
+    type: HabitLogType, 
+    dateStr?: string,
+    onClose: () => void, 
+    onLog: (type: HabitLogType, notes?: string, imageUrl?: string, dateStr?: string) => Promise<void>,
+    isLogging: boolean
+}) {
+    const [notes, setNotes] = useState("");
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Reset state when drawer opens/closes or date changes
+    useEffect(() => {
+        if (!isOpen) {
+            setNotes("");
+            setImageUrl(null);
+        }
+    }, [isOpen]);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setIsUploading(true);
+            
+            try {
+                // Get Cloudinary Signature
+                const { getCloudinarySignature } = await import("@/app/actions/upload");
+                const signatureData = await getCloudinarySignature();
+                const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
+
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("api_key", apiKey!);
+                formData.append("timestamp", timestamp.toString());
+                formData.append("signature", signature);
+                formData.append("folder", folder);
+
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) throw new Error("Upload failed");
+
+                const data = await response.json();
+                setImageUrl(data.secure_url);
+                toast.success("Image uploaded!");
+            } catch (error) {
+                toast.error("Failed to upload image");
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
+
+    const handleLogClick = () => {
+        onLog(type, notes, imageUrl || undefined, dateStr);
+    };
+
+    const coreHabit = CORE_HABITS.find(h => h.id === habit.focusArea);
+
+    const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Today";
+
+    return (
+        <Drawer open={isOpen} onOpenChange={(o) => !o && onClose()}>
+            <DrawerContent className="bg-[#FDF2EC] rounded-t-[32px] border-none font-[Outfit] max-h-[90vh]">
+                <div className="p-6 pb-12 overflow-y-auto no-scrollbar">
+                    <div className="flex flex-col items-center text-center mb-6">
+                        <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center text-3xl mb-4">
+                            {type === 'DONE' ? (coreHabit?.icon || '✨') : '⏸️'}
+                        </div>
+                        <h3 className="text-xl font-bold text-[#5B2D7D]">
+                            {type === 'DONE' ? `Log ${habit.title}` : `Pause: ${type}`}
+                        </h3>
+                        <p className="text-[#5B2D7D]/40 text-xs font-bold uppercase tracking-widest mt-1">{displayDate}</p>
+                    </div>
+
+                    <div className="space-y-6">
+                        {/* Comment/Notes */}
+                        <div>
+                            <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-2 ml-1">Optional Comment</label>
+                            <textarea 
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="How did it go? Any reflections?"
+                                rows={3}
+                                className="w-full bg-white border border-[#5B2D7D]/10 rounded-[20px] p-4 text-[#5B2D7D] text-sm outline-none resize-none focus:ring-1 focus:ring-[#5B2D7D]/20 transition-all"
+                            />
+                        </div>
+
+                        {/* Image Upload */}
+                        <div>
+                            <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-2 ml-1">Optional Photo</label>
+                            {imageUrl ? (
+                                <div className="relative aspect-video w-full rounded-[24px] overflow-hidden group">
+                                    <img src={imageUrl} alt="Habit log" className="w-full h-full object-cover" />
+                                    <button 
+                                        onClick={() => setImageUrl(null)}
+                                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    className="w-full aspect-video bg-white/60 border-2 border-dashed border-[#5B2D7D]/10 rounded-[24px] flex flex-col items-center justify-center gap-2 hover:bg-white/80 transition-all active:scale-[0.98]"
+                                >
+                                    {isUploading ? (
+                                        <Loader2 className="w-6 h-6 animate-spin text-[#5B2D7D]/40" />
+                                    ) : (
+                                        <>
+                                            <div className="w-10 h-10 rounded-full bg-[#5B2D7D]/5 flex items-center justify-center text-[#5B2D7D]/40">
+                                                <Plus className="w-5 h-5" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">Snap or Upload</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                            <input 
+                                type="file" 
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                accept="image/*"
+                                className="hidden"
+                            />
+                        </div>
+
+                        {/* Submit Button */}
+                        <button 
+                            onClick={handleLogClick}
+                            disabled={isLogging || isUploading}
+                            className={`w-full py-4 rounded-[24px] font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${
+                                type === 'DONE' ? 'bg-[#A4C538] text-[#5B2D7D]' : 'bg-[#EAB308] text-white'
+                            }`}
+                        >
+                            {isLogging ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                                <>
+                                    {type === 'DONE' ? 'Confirm Log' : 'Save Pause'}
+                                    <ChevronRight className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </DrawerContent>
+        </Drawer>
     );
 }
 

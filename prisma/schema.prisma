@@ -188,6 +188,7 @@ model HabitLog {
   id        String       @id @default(cuid())
   date      DateTime
   notes     String?
+  imageUrl  String?
   habitId   String
   createdAt DateTime     @default(now())
   logType   HabitLogType @default(DONE)
