@@ -463,9 +463,17 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
     const handleLog = async (type: HabitLogType = 'DONE', notes?: string, imageUrl?: string, dateStr?: string) => {
         if (isLogging) return;
 
+        // If no dateStr is provided (standard tap), generate one based on client's "Virtual Today"
+        let effectiveDateStr = dateStr;
+        if (!effectiveDateStr) {
+            const d = new Date();
+            if (d.getHours() < 4) d.setDate(d.getDate() - 1);
+            effectiveDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
         setIsLogging(true);
         try {
-            const result = await logHabit(habit.id, notes, type, imageUrl, dateStr);
+            const result = await logHabit(habit.id, notes, type, imageUrl, effectiveDateStr);
             if (result.error) {
                 toast.error(result.error);
             } else {
@@ -1042,7 +1050,7 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
 
     const coreHabit = CORE_HABITS.find(h => h.id === habit.focusArea);
 
-    const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Today";
+    const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' }) : new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
     return (
         <Drawer open={isOpen} onOpenChange={(o) => !o && onClose()}>
@@ -1139,8 +1147,9 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
 
 function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], startDate: Date, isWeekly?: boolean }) {
     const now = new Date();
-    // Use UTC for "today"
-    const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    // Use IST for "today"
+    const todayIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const todayUTC = Date.UTC(todayIST.getFullYear(), todayIST.getMonth(), todayIST.getDate());
     
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -1153,10 +1162,10 @@ function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], st
 
     // IF WEEKLY: Use compact 7-day view
     if (isWeekly) {
-        // Generate last 7 days
+        // Generate last 7 days in IST
         const days = [];
         for (let i = 6; i >= 0; i--) {
-            const d = new Date();
+            const d = new Date(todayIST);
             d.setDate(d.getDate() - i);
             days.push(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())));
         }

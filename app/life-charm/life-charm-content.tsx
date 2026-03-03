@@ -182,11 +182,14 @@ function GridCard({
   const hasMedia = item.media && item.media.length > 0;
   const firstMedia = hasMedia ? item.media[0] : null;
 
-  // Use a stable date format to prevent hydration mismatch
+  // Use a stable date format to prevent hydration mismatch (IST focused)
   const formattedDate = useMemo(() => {
-      const d = new Date(item.date);
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+      return new Intl.DateTimeFormat('en-IN', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          timeZone: 'Asia/Kolkata'
+      }).format(new Date(item.date));
   }, [item.date]);
 
   // Get people names

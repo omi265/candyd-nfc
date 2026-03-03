@@ -30,13 +30,15 @@ async function syncHabitStats(habitId: string) {
 
     let streak = 0;
     const now = new Date();
-    // 4 AM Virtual Day Cutoff
-    if (now.getHours() < 4) now.setDate(now.getDate() - 1);
-    const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    // Use IST for Virtual Today calculation
+    const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    if (istTime.getHours() < 4) istTime.setDate(istTime.getDate() - 1);
+    
+    const todayUTC = Date.UTC(istTime.getFullYear(), istTime.getMonth(), istTime.getDate());
     const yesterdayUTC = todayUTC - (1000 * 60 * 60 * 24);
 
     if (activeLogs.length > 0) {
-        // Get unique dates in UTC
+        // Get unique dates in UTC normalized from IST days
         const uniqueDates = Array.from(new Set(activeLogs.map(l => {
             const d = new Date(l.date);
             return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
@@ -58,18 +60,25 @@ async function syncHabitStats(habitId: string) {
         }
     }
 
-    const totalDONE = activeLogs.filter(l => l.logType === 'DONE').length;
+    const totalUniqueDONE = Array.from(new Set(
+        activeLogs
+            .filter(l => l.logType === 'DONE')
+            .map(l => {
+                const d = new Date(l.date);
+                return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+            })
+    )).length;
 
     await db.habit.update({
         where: { id: habitId },
         data: { 
             currentStreak: streak, 
-            totalCompletions: totalDONE,
+            totalCompletions: totalUniqueDONE,
             longestStreak: streak > habit.longestStreak ? streak : habit.longestStreak
         }
     });
 
-    return { streak, totalDONE };
+    return { streak, totalDONE: totalUniqueDONE };
 }
 
 // ===========================================
@@ -231,23 +240,51 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
         let targetDate: Date;
         if (dateStr) {
             const [y, m, d] = dateStr.split('-').map(Number);
-            targetDate = new Date(Date.UTC(y, m - 1, d));
+            targetDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
         } else {
             const now = new Date();
-            if (now.getHours() < 4) now.setDate(now.getDate() - 1);
-            targetDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+            // Virtual Today IST (4 AM Cutoff)
+            const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+            if (istTime.getHours() < 4) istTime.setDate(istTime.getDate() - 1);
+            targetDate = new Date(Date.UTC(istTime.getFullYear(), istTime.getMonth(), istTime.getDate(), 0, 0, 0, 0));
         }
 
-        const existingLog = await db.habitLog.findFirst({ where: { habitId, date: targetDate } });
+        const startOfDay = new Date(targetDate);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
+
+        // Check already logged for this specific day (Range search is safer than exact match)
+        const existingLog = await db.habitLog.findFirst({
+            where: {
+                habitId,
+                date: {
+                    gte: startOfDay,
+                    lt: endOfDay
+                }
+            }
+        });
 
         if (existingLog) {
+            // Update existing log if it exists (standardize to UTC midnight while we're at it)
             await db.habitLog.update({
                 where: { id: existingLog.id },
-                data: { notes, imageUrl, logType }
+                data: {
+                    date: targetDate, // Standardize legacy logs
+                    notes: notes || undefined,
+                    imageUrl: imageUrl || undefined,
+                    logType: logType
+                }
             });
         } else {
+            // Create new log
             await db.habitLog.create({
-                data: { date: targetDate, notes, imageUrl, logType, habitId }
+                data: {
+                    date: targetDate,
+                    notes: notes || undefined,
+                    imageUrl: imageUrl || undefined,
+                    logType: logType,
+                    habitId
+                }
             });
         }
 
@@ -266,12 +303,26 @@ export async function adjustHabitLogs(habitId: string, dateStr: string, adjustme
 
     try {
         const [y, m, d] = dateStr.split('-').map(Number);
-        const targetDate = new Date(Date.UTC(y, m - 1, d));
+        const targetDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
 
         if (adjustment > 0) {
             await db.habitLog.create({ data: { habitId, date: targetDate, logType: 'DONE' } });
         } else {
-            const log = await db.habitLog.findFirst({ where: { habitId, date: targetDate }, orderBy: { createdAt: 'desc' } });
+            // CRITICAL: Ensure we only delete for THIS habitId and THIS date range
+            const startOfDay = new Date(targetDate);
+            const endOfDay = new Date(targetDate);
+            endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
+
+            const log = await db.habitLog.findFirst({ 
+                where: { 
+                    habitId: habitId, 
+                    date: {
+                        gte: startOfDay,
+                        lt: endOfDay
+                    }
+                }, 
+                orderBy: { createdAt: 'desc' } 
+            });
             if (log) await db.habitLog.delete({ where: { id: log.id } });
         }
 

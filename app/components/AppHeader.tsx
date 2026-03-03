@@ -285,9 +285,10 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref }
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const today = new Date();
-  const formattedDate = today.toLocaleDateString("en-US", {
+  const formattedDate = today.toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
+    timeZone: "Asia/Kolkata"
   });
 
   return (
