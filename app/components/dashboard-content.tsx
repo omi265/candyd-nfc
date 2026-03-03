@@ -316,30 +316,7 @@ export default function DashboardContent({ products }: DashboardContentProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden font-[Outfit]">
-      <header className="shrink-0 px-6 py-4 z-30 bg-white border-b border-[#EADDDE] shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h1 className="text-2xl font-black text-[#5B2D7D] tracking-tight">My Charms</h1>
-            <p className="text-sm font-bold text-[#5B2D7D]/70 uppercase tracking-wider">
-              {products.length} active
-            </p>
-          </div>
-        </div>
-
-        {/* Progress bar visual
-        <div className="w-full h-4 bg-[#EADDDE] rounded-full overflow-hidden shadow-inner">
-          <motion.div
-            className="h-full bg-[#A4C538] rounded-full shadow-[0_0_10px_rgba(164,197,56,0.5)]"
-            initial={{ width: 0 }}
-            animate={{
-              width: "100%",
-            }}
-            transition={{ duration: 0.8, ease: "circOut" }}
-          />
-        </div> */}
-      </header>
-
+    <div className="flex flex-col h-full relative">
       <div className="flex-1 min-h-0 relative" ref={containerRef}>
         <motion.div
           className="grid gap-0 absolute top-0 left-0 touch-none origin-top-left"

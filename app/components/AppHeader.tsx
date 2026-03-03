@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Menu, ChevronDown, Check, Sparkles, LifeBuoy } from "lucide-react";
+import { Menu, ChevronDown, Check, Sparkles, LifeBuoy, ChevronLeft } from "lucide-react";
 
 // --- Icons ---
 
@@ -235,7 +235,7 @@ function MenuDropdown({
                 className="flex items-center gap-3 px-2 py-1"
               >
                 <StarIcon />
-                <span className="text-[#5B2D7D] font-bold text-xl tracking-wide">
+                <span className="text-[#5B2D7D] font-bold text-xl tracking-wide uppercase">
                   {item.label}
                 </span>
               </motion.div>
@@ -256,7 +256,7 @@ function MenuDropdown({
                 className="flex items-center gap-3 px-2 py-1"
               >
                 <StarIcon />
-                <span className="text-[#5B2D7D] font-bold text-xl tracking-wide">
+                <span className="text-[#5B2D7D] font-bold text-xl tracking-wide uppercase">
                   LOGOUT
                 </span>
               </motion.div>
@@ -270,7 +270,14 @@ function MenuDropdown({
 
 // --- AppHeader Component ---
 
-export default function AppHeader({ userName, userRole }: { userName: string; userRole?: string }) {
+interface AppHeaderProps {
+    userName: string;
+    userRole?: string;
+    contextTitle?: string;
+    backHref?: string;
+}
+
+export default function AppHeader({ userName, userRole, contextTitle, backHref }: AppHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -284,14 +291,34 @@ export default function AppHeader({ userName, userRole }: { userName: string; us
   return (
     <>
       <header className="flex items-center justify-between px-4 py-4 relative z-40">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
-          <Logo />
-          <div>
-            <p className="text-[#5B2D7D] text-sm">Hello, {userName}!</p>
-            <p className="text-[#5B2D7D] font-semibold">Today, {formattedDate}</p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+              {backHref && (
+                  <button 
+                    onClick={() => router.push(backHref)}
+                    className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors shrink-0"
+                  >
+                      <ChevronLeft className="w-6 h-6" />
+                  </button>
+              )}
+              <div className="cursor-pointer shrink-0" onClick={() => router.push('/')}>
+                <Logo />
+              </div>
+          </div>
+          
+          <div className="flex flex-col min-w-0">
+            {contextTitle ? (
+                <h1 className="text-lg font-bold text-[#5B2D7D] leading-tight line-clamp-1">{contextTitle}</h1>
+            ) : (
+                <>
+                    <p className="text-[#5B2D7D] text-xs opacity-70">Hello, {userName}!</p>
+                    <p className="text-[#5B2D7D] font-semibold text-sm">Today, {formattedDate}</p>
+                </>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => router.push('/support')}
               className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"

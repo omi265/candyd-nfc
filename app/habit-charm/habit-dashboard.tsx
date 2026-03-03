@@ -26,43 +26,33 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
     const [isResetDrawerOpen, setIsResetDrawerOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-[#FDF2EC] flex flex-col font-[Outfit] relative overflow-hidden">
-             {/* Background Decoration */}
-             <div className="absolute top-0 right-0 w-64 h-64 bg-[#A4C538]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-             <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#5B2D7D]/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-
-             {/* Header */}
-             <header className="p-6 flex items-center justify-between z-10 shrink-0">
-                 <div className="flex flex-col">
-                     <span className="text-sm font-bold text-[#5B2D7D]/50 uppercase tracking-widest">Habit Charm</span>
-                     <h1 className="text-2xl font-bold text-[#5B2D7D]">{product.name}</h1>
-                 </div>
-                 <div className="flex items-center gap-3">
+        <div className="flex flex-col h-full relative">
+             {/* Local Action Bar */}
+             <div className="px-6 py-2 flex items-center justify-end gap-3 z-10">
+                <button 
+                    onClick={() => setIsResetDrawerOpen(true)}
+                    className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-[#5B2D7D] hover:bg-[#EADDDE] transition-colors"
+                >
+                    <RotateCcw className="w-4 h-4" />
+                </button>
+                <button 
+                    onClick={() => setViewMode(prev => prev === 'cards' ? 'history' : 'cards')}
+                    className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-[#5B2D7D] hover:bg-[#EADDDE] transition-colors"
+                >
+                    {viewMode === 'cards' ? <Calendar className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                </button>
+                {habits.length < 10 && (
                     <button 
-                        onClick={() => setIsResetDrawerOpen(true)}
-                        className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#5B2D7D] hover:bg-[#EADDDE] transition-colors"
+                        onClick={() => setIsAddDrawerOpen(true)}
+                        className="w-10 h-10 rounded-full bg-[#5B2D7D] shadow-sm flex items-center justify-center text-white hover:bg-[#4A246A] transition-colors"
                     >
-                        <RotateCcw className="w-5 h-5" />
+                        <Plus className="w-5 h-5" />
                     </button>
-                    <button 
-                        onClick={() => setViewMode(prev => prev === 'cards' ? 'history' : 'cards')}
-                        className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#5B2D7D] hover:bg-[#EADDDE] transition-colors"
-                    >
-                        {viewMode === 'cards' ? <Calendar className="w-6 h-6" /> : <ChevronLeft className="w-6 h-6" />}
-                    </button>
-                    {habits.length < 10 && (
-                        <button 
-                            onClick={() => setIsAddDrawerOpen(true)}
-                            className="w-12 h-12 rounded-full bg-[#5B2D7D] shadow-sm flex items-center justify-center text-white hover:bg-[#4A246A] transition-colors"
-                        >
-                            <Plus className="w-6 h-6" />
-                        </button>
-                    )}
-                 </div>
-             </header>
+                )}
+             </div>
 
              {/* Main Content */}
-             <main className="flex-1 p-4 pt-0 z-10 overflow-y-auto no-scrollbar pb-32">
+             <main className="flex-1 p-4 pt-2 z-10 overflow-y-auto no-scrollbar pb-32">
                  {viewMode === 'cards' ? (
                      <div className="grid grid-cols-2 gap-3 w-full">
                         {habits.map(habit => (
@@ -152,7 +142,7 @@ function ResetCharmDrawer({ productId, isOpen, onClose, router }: { productId: s
                             onClick={onClose}
                             className="w-full py-3 rounded-xl font-bold text-[#5B2D7D]/40 hover:bg-[#5B2D7D]/5 transition-colors"
                         >
-                            Keep My Progress
+                            Cancel
                         </button>
                     </div>
                 </div>
@@ -614,73 +604,69 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
             <DrawerContent className="bg-[#FDF2EC] rounded-t-[32px] border-none font-[Outfit] max-h-[95vh]">
                 <div className="p-6 pb-12 overflow-y-auto no-scrollbar">
                     {/* Header */}
-                    <div className="flex flex-col items-center text-center mb-8 relative">
-                        <button 
-                            onClick={() => setIsEditMode(!isEditMode)}
-                            className="absolute top-0 right-0 p-2 text-[#5B2D7D]/40 hover:text-[#5B2D7D]"
-                        >
-                            {isEditMode ? <X className="w-5 h-5" /> : <Pencil className="w-5 h-5" />}
-                        </button>
-                        
-                        <div className="w-16 h-16 bg-[#E8DCF0] rounded-full flex items-center justify-center mb-4 text-[#5B2D7D]">
-                            <Calendar className="w-8 h-8" />
+                    <div className="flex items-center justify-between mb-8 px-2">
+                        <div className="flex flex-col">
+                            <h3 className="text-2xl font-black text-[#5B2D7D] uppercase tracking-tighter leading-none mb-1">{habit.title}</h3>
+                            <span className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">Manage & History</span>
                         </div>
+                        <div className="flex items-center gap-2">
+                            <button 
+                                onClick={() => setIsEditMode(!isEditMode)}
+                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isEditMode ? 'bg-[#5B2D7D] text-white' : 'bg-white text-[#5B2D7D] shadow-sm'}`}
+                            >
+                                {isEditMode ? <X className="w-5 h-5" /> : <Pencil className="w-4 h-4" />}
+                            </button>
+                        </div>
+                    </div>
 
-                        {isEditMode ? (
-                            <div className="w-full space-y-4 text-left">
-                                <div>
-                                    <label className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-1 block">Title</label>
-                                    <input 
-                                        type="text" 
-                                        value={editTitle} 
-                                        onChange={(e) => setEditTitle(e.target.value)}
-                                        className="w-full bg-white border border-[#5B2D7D]/10 rounded-xl px-4 py-2 text-[#5B2D7D] font-bold"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-1 block">Goal (Days)</label>
-                                    <select 
-                                        value={editTarget} 
-                                        onChange={(e) => setEditTarget(parseInt(e.target.value))}
-                                        className="w-full bg-white border border-[#5B2D7D]/10 rounded-xl px-4 py-2 text-[#5B2D7D] font-bold appearance-none"
-                                    >
-                                        <option value={21}>21 Days</option>
-                                        <option value={66}>66 Days</option>
-                                        <option value={100}>100 Days</option>
-                                    </select>
-                                </div>
-                                <div className="flex gap-3 pt-2">
-                                    <button 
-                                        onClick={handleDelete}
-                                        className="flex-1 bg-red-50 text-red-500 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
-                                    >
-                                        <Trash2 className="w-4 h-4" /> Delete
-                                    </button>
+                    {isEditMode ? (
+                        <div className="space-y-6 bg-white p-6 rounded-[32px] shadow-sm animate-in slide-in-from-bottom-4 duration-300">
+                            <div>
+                                <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-2 ml-1">Habit Title</label>
+                                <input 
+                                    type="text"
+                                    value={editTitle}
+                                    onChange={(e) => setEditTitle(e.target.value)}
+                                    className="w-full bg-white border border-[#5B2D7D]/10 rounded-xl px-4 py-2 text-[#5B2D7D] font-bold"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-2 ml-1">Daily Target</label>
+                                <select 
+                                    value={editTarget}
+                                    onChange={(e) => setEditTarget(parseInt(e.target.value))}
+                                    className="w-full bg-white border border-[#5B2D7D]/10 rounded-xl px-4 py-2 text-[#5B2D7D] font-bold appearance-none"
+                                >
+                                    <option value={21}>21 Days</option>
+                                    <option value={66}>66 Days</option>
+                                    <option value={100}>100 Days</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-3 pt-4">
+                                <button 
+                                    onClick={handleUpdate}
+                                    disabled={isLogging}
+                                    className="w-full py-4 bg-[#5B2D7D] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2"
+                                >
+                                    {isLogging ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save Changes"}
+                                </button>
+                                <div className="flex gap-3">
                                     <button 
                                         onClick={handleResetProgress}
-                                        className="flex-1 bg-orange-50 text-orange-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                                        className="flex-1 py-3 bg-[#FDF2EC] text-[#5B2D7D]/60 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
                                     >
-                                        <RotateCcw className="w-4 h-4" /> Reset
+                                        <RotateCcw className="w-4 h-4" /> Reset Streak
                                     </button>
                                     <button 
-                                        onClick={handleUpdate}
-                                        className="flex-[2] bg-[#5B2D7D] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                                        onClick={handleDelete}
+                                        className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
                                     >
-                                        <Save className="w-4 h-4" /> Save
+                                        <Trash2 className="w-4 h-4" /> Delete Habit
                                     </button>
                                 </div>
                             </div>
-                        ) : (
-                            <>
-                                <h2 className="text-xl font-bold text-[#5B2D7D]">{habit.title}</h2>
-                                <p className="text-[#5B2D7D]/60 text-sm mt-1">
-                                    {habit.focusArea === 'custom' ? 'Custom Habit' : `Level ${habit.level}`} • {habit.phase}
-                                </p>
-                            </>
-                        )}
-                    </div>
-
-                    {!isEditMode && (
+                        </div>
+                    ) : (
                         <>
                             <div className="bg-white p-6 rounded-[32px] shadow-sm mb-6">
                                 <h3 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Past 7 Days</h3>
@@ -798,17 +784,6 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                                             </div>
                                         );
                                     })}
-                                </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-white p-4 rounded-2xl text-center">
-                                    <div className="text-[10px] text-[#5B2D7D]/40 font-black uppercase mb-1 tracking-widest">Total Logs</div>
-                                    <div className="text-3xl font-black text-[#5B2D7D]">{habit.totalCompletions}</div>
-                                </div>
-                                <div className="bg-white p-4 rounded-2xl text-center">
-                                    <div className="text-[10px] text-[#5B2D7D]/40 font-black uppercase mb-1 tracking-widest">Max Streak</div>
-                                    <div className="text-3xl font-black text-[#5B2D7D]">{habit.longestStreak}</div>
                                 </div>
                             </div>
                         </>
@@ -1047,154 +1022,78 @@ function ContributionGraph({ logs, startDate }: { logs: HabitLog[], startDate: D
     
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll to end (latest dates)
+    // Group logs by date
+    const logMap = useMemo(() => {
+        const map: Record<string, HabitLog> = {};
+        logs.forEach(log => {
+            const d = new Date(log.date);
+            const dateStr = d.getUTCFullYear() + '-' + (d.getUTCMonth() + 1) + '-' + d.getUTCDate();
+            map[dateStr] = log;
+        });
+        return map;
+    }, [logs]);
+
+    // Generate dates
+    const days = useMemo(() => {
+        const result = [];
+        const curr = new Date(startDate);
+        const end = new Date();
+        
+        while (curr <= end) {
+            result.push(new Date(curr));
+            curr.setDate(curr.getDate() + 1);
+        }
+        return result;
+    }, [startDate]);
+
+    // Scroll to end on mount
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
         }
-    }, [logs]);
+    }, []);
 
-    // Data Processing: Group by Month (using UTC)
-    const monthsData: { name: string, dates: (Date|null)[] }[] = [];
-    
-    // Create a UTC start date
-    const start = new Date(startDate);
-    let current = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+    // Streak logic for coloring
+    const getColor = (date: Date) => {
+        const dateStr = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
+        const log = logMap[dateStr];
+        if (!log) return 'bg-[#FDF2EC]';
+        if (log.logType !== 'DONE') return 'bg-[#EAB308]'; // Paused (Yellow)
 
-    while (current.getTime() <= todayUTC) {
-        const monthName = current.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
-        let monthObj = monthsData.find(m => m.name === monthName);
+        // Calculate streak at this point for shading
+        let streak = 0;
+        const sortedLogs = [...logs].filter(l => new Date(l.date) <= date).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         
-        if (!monthObj) {
-            monthObj = { name: monthName, dates: [] };
-            // Add padding for the first week of the month (UTC Sunday = 0)
-            const firstDayOfMonth = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), 1)).getUTCDay();
-            for (let i = 0; i < firstDayOfMonth; i++) {
-                monthObj.dates.push(null);
-            }
-            monthsData.push(monthObj);
-        }
-        
-        monthObj.dates.push(new Date(current));
-        current.setUTCDate(current.getUTCDate() + 1);
-    }
+        let running = 0;
+        let lastD: string | null = null;
+        sortedLogs.forEach(l => {
+            const d = new Date(l.date);
+            const s = d.getUTCFullYear() + '-' + (d.getUTCMonth() + 1) + '-' + d.getUTCDate();
+            if (lastD) {
+                const diff = Math.round((new Date(s).getTime() - new Date(lastD).getTime()) / (1000 * 60 * 60 * 24));
+                if (diff === 1) running++;
+                else if (diff > 1) running = 1;
+            } else running = 1;
+            if (s === dateStr) streak = running;
+            lastD = s;
+        });
 
-    // Streak mapping (Safe UTC comparison)
-    const logMap = new Map<string, { type: HabitLogType, streakAtDate: number }>();
-    const sortedLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    let runningStreak = 0;
-    let lastDateStr: string | null = null;
-
-    sortedLogs.forEach(l => {
-        const d = new Date(l.date);
-        const dateStr = d.getUTCFullYear() + '-' + 
-                        String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + 
-                        String(d.getUTCDate()).padStart(2, '0');
-        
-        if (lastDateStr) {
-            const prev = new Date(lastDateStr + 'T00:00:00Z');
-            const curr = new Date(dateStr + 'T00:00:00Z');
-            const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-            if (diff === 1) runningStreak++;
-            else if (diff > 1) runningStreak = 1;
-        } else {
-            runningStreak = 1;
-        }
-        logMap.set(dateStr, { type: l.logType, streakAtDate: runningStreak });
-        lastDateStr = dateStr;
-    });
-
-    const getColor = (data?: { type: HabitLogType, streakAtDate: number }) => {
-        if (!data) return 'bg-[#EADDDE]/50';
-        if (data.type !== 'DONE') return 'bg-[#EAB308]'; 
-        const streak = data.streakAtDate;
-        if (streak <= 3) return 'bg-[#D6BCFA]'; 
-        if (streak <= 6) return 'bg-[#9F7AEA]'; 
-        if (streak <= 9) return 'bg-[#6B46C1]'; 
-        return 'bg-[#44337A]'; 
+        if (streak > 9) return 'bg-[#44337A]';
+        if (streak > 6) return 'bg-[#6B46C1]';
+        if (streak > 3) return 'bg-[#9F7AEA]';
+        return 'bg-[#D6BCFA]';
     };
 
-    const cellSize = '26px';
-    const cellGap = '4px';
-
     return (
-        <div className="flex gap-3 select-none">
-            {/* Y-Axis: Days (Fixed) */}
-            <div 
-                className="flex flex-col pt-6 pb-1 justify-between text-[10px] font-black text-[#5B2D7D]/30 uppercase tracking-tighter w-6 shrink-0"
-                style={{ height: `calc(7 * ${cellSize} + 6 * ${cellGap} + 24px)` }}
-            >
-                <span>Sun</span>
-                <span>Tue</span>
-                <span>Thu</span>
-                <span>Sat</span>
-            </div>
-
-            {/* Scrollable Area */}
-            <div 
-                ref={scrollRef}
-                className="overflow-x-auto no-scrollbar scroll-smooth flex-1"
-            >
-                <div className="flex gap-6 min-w-max pb-2">
-                    {monthsData.map((month, mIdx) => (
-                        <div key={mIdx} className="flex flex-col gap-2">
-                            {/* Month Label */}
-                            <div className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest px-1">
-                                {month.name}
-                            </div>
-                            
-                            {/* Month Grid */}
-                            <div 
-                                className="grid grid-rows-7 grid-flow-col"
-                                style={{ gap: cellGap }}
-                            >
-                                {month.dates.map((date, dIdx) => {
-                                    if (!date) return <div key={`pad-${dIdx}`} style={{ width: cellSize, height: cellSize }} />;
-                                    
-                                    const dateStr = date.getUTCFullYear() + '-' + 
-                                                    String(date.getUTCMonth() + 1).padStart(2, '0') + '-' + 
-                                                    String(date.getUTCDate()).padStart(2, '0');
-                                    
-                                    const data = logMap.get(dateStr);
-                                    const colorClass = getColor(data);
-                                    const isFuture = date.getTime() > todayUTC;
-                                    
-                                    return (
-                                        <div 
-                                            key={dIdx} 
-                                            className={`rounded-[6px] transition-all ${colorClass} ${isFuture ? 'opacity-0' : 'group relative'} flex items-center justify-center`}
-                                            style={{ width: cellSize, height: cellSize }}
-                                        >
-                                            {!isFuture && (
-                                                <>
-                                                    <span className={`text-[8px] font-black leading-none ${data ? 'text-white' : 'text-[#5B2D7D]/20'}`}>
-                                                        {date.getUTCDate()}
-                                                    </span>
-                                                    
-                                                    {/* Tooltip */}
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#5B2D7D] text-white text-[9px] rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity shadow-xl border border-white/10 flex flex-col items-center">
-                                                        <div className="font-black leading-none mb-1">
-                                                            {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })}
-                                                        </div>
-                                                        {data ? (
-                                                            <div className="text-[8px] opacity-80 leading-none">
-                                                                {data.type === 'DONE' ? `Streak: ${data.streakAtDate}` : `Paused: ${data.type}`}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-[8px] opacity-80 leading-none">No activity</div>
-                                                        )}
-                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#5B2D7D]" />
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))}
+        <div ref={scrollRef} className="flex gap-1 overflow-x-auto no-scrollbar py-2">
+            {days.map((date, i) => (
+                <div key={i} className="flex flex-col items-center gap-1 shrink-0">
+                    <div className={`w-3 h-8 rounded-full ${getColor(date)} transition-colors shadow-xs`} />
+                    <span className="text-[6px] font-bold text-[#5B2D7D]/30 uppercase">
+                        {date.getUTCDate() === 1 ? date.toLocaleDateString('en-US', { month: 'short' }) : ''}
+                    </span>
                 </div>
-            </div>
+            ))}
         </div>
     );
 }

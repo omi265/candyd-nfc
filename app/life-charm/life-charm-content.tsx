@@ -611,32 +611,7 @@ export default function LifeCharmContent({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden font-[Outfit]">
-      {/* Header - Slimmer version */}
-      <header className="shrink-0 px-5 py-2 z-30 bg-white border-b border-[#EADDDE] shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-3">
-            <h1 className="text-lg font-black text-[#5B2D7D] tracking-tight truncate max-w-[180px]">{lifeList.name}</h1>
-            <p className="text-[10px] font-bold text-[#5B2D7D]/50 uppercase tracking-widest whitespace-nowrap">
-              {stats.lived}/{stats.total} Lived
-            </p>
-          </div>
-          {isGraduated ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A4C538]/10 rounded-full border border-[#A4C538]/20">
-              <GraduationCap className="w-3.5 h-3.5 text-[#A4C538]" />
-              <span className="text-[10px] font-black text-[#5B2D7D] uppercase">Graduated</span>
-            </div>
-          ) : (
-            <button
-              onClick={() => router.push(`/life-charm/graduate?charmId=${product.id}`)}
-              className="px-3 py-1 rounded-full bg-[#5B2D7D]/5 text-[10px] font-bold text-[#5B2D7D]/70 hover:bg-[#5B2D7D]/10 transition-colors uppercase tracking-wider"
-            >
-              Graduate
-            </button>
-          )}
-        </div>
-      </header>
-
+    <div className="flex flex-col h-full relative">
       {/* Filter / Search Bar */}
       <FilterBar 
         searchQuery={searchQuery}

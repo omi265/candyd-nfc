@@ -465,7 +465,7 @@ export default function HomeContent({ initialMemories, people = [], user, forced
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#FDF2EC] relative overflow-hidden">
+    <div className="flex flex-col h-full relative">
       <div className="shrink-0 pt-2 pb-2 z-30 relative pointer-events-none">
           <div className="pointer-events-auto">
              <FilterBar
