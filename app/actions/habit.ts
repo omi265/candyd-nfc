@@ -25,7 +25,7 @@ async function syncHabitStats(habitId: string) {
 
     // Filter logs by resetAt if it exists
     const activeLogs = habit.resetAt 
-        ? habit.logs.filter(l => new Date(l.date) > new Date(habit.resetAt!))
+        ? habit.logs.filter(l => new Date(l.createdAt) > new Date(habit.resetAt!))
         : habit.logs;
 
     let streak = 0;
@@ -170,7 +170,7 @@ export async function getHabits(productId: string) {
     return habits.map(h => {
         if (!h.resetAt) return h;
         const resetTime = new Date(h.resetAt).getTime();
-        return { ...h, logs: h.logs.filter(l => new Date(l.date).getTime() > resetTime) };
+        return { ...h, logs: h.logs.filter(l => new Date(l.createdAt).getTime() > resetTime) };
     });
   } catch (error) { return []; }
 }
@@ -254,13 +254,15 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
         endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
 
         // Check already logged for this specific day (Range search is safer than exact match)
+        // CRITICAL: Only match logs created AFTER the last reset
         const existingLog = await db.habitLog.findFirst({
             where: {
                 habitId,
                 date: {
                     gte: startOfDay,
                     lt: endOfDay
-                }
+                },
+                ...(habit.resetAt ? { createdAt: { gt: habit.resetAt } } : {})
             }
         });
 
@@ -302,13 +304,16 @@ export async function adjustHabitLogs(habitId: string, dateStr: string, adjustme
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
+        const habit = await db.habit.findUnique({ where: { id: habitId } });
+        if (!habit || habit.userId !== session.user.id) return { error: "Unauthorized" };
+
         const [y, m, d] = dateStr.split('-').map(Number);
         const targetDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
 
         if (adjustment > 0) {
             await db.habitLog.create({ data: { habitId, date: targetDate, logType: 'DONE' } });
         } else {
-            // CRITICAL: Ensure we only delete for THIS habitId and THIS date range
+            // CRITICAL: Ensure we only delete for THIS habitId and active logs after reset
             const startOfDay = new Date(targetDate);
             const endOfDay = new Date(targetDate);
             endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
@@ -319,7 +324,8 @@ export async function adjustHabitLogs(habitId: string, dateStr: string, adjustme
                     date: {
                         gte: startOfDay,
                         lt: endOfDay
-                    }
+                    },
+                    ...(habit.resetAt ? { createdAt: { gt: habit.resetAt } } : {})
                 }, 
                 orderBy: { createdAt: 'desc' } 
             });
