@@ -12,13 +12,15 @@ function GlobalLayout({
     user, 
     contextTitle, 
     backHref,
-    hideHeader = false
+    hideHeader = false,
+    isLoading = false
 }: { 
     children: React.ReactNode, 
     user?: any, 
     contextTitle?: string, 
     backHref?: string,
-    hideHeader?: boolean
+    hideHeader?: boolean,
+    isLoading?: boolean
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -58,13 +60,14 @@ function GlobalLayout({
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#EADDDE]/50 rounded-full blur-[120px]" />
       </div>
 
-      {!hideHeader && user && (
+      {!hideHeader && (user || isLoading) && (
         <div className="shrink-0 z-50 relative bg-transparent">
             <AppHeader 
                 userName={user?.name || "User"} 
                 userRole={user?.role} 
                 contextTitle={contextTitle}
                 backHref={backHref}
+                isLoading={isLoading}
             />
         </div>
       )}
@@ -95,8 +98,8 @@ export default function ClientLayout({
   // Define logic for contextual header
   useEffect(() => {
       if (!charmId) {
-          setContextTitle(undefined);
-          setBackHref(undefined);
+          setContextTitle(prev => prev !== undefined ? undefined : prev);
+          setBackHref(prev => prev !== undefined ? undefined : prev);
           return;
       }
 
@@ -104,34 +107,21 @@ export default function ClientLayout({
           const product = products.find(p => p.id === charmId);
           if (product) {
               setContextTitle(product.name);
-              if (pathname !== '/') {
-                  setBackHref('/');
-              } else {
-                  setBackHref(undefined);
-              }
+              setBackHref(pathname !== '/' ? '/' : undefined);
           }
       });
   }, [charmId, pathname]);
 
   const isAuthPage = pathname === "/login" || pathname === "/register" || pathname.startsWith("/nfc/login");
 
-  if (isLoading) {
-      return (
-        <div className="h-dvh bg-[#FDF2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-2xl overflow-hidden">
-          <div className="flex-1 overflow-y-auto no-scrollbar relative w-full">
-            {children}
-          </div>
-        </div>
-      );
-  }
-
-  // Always use the GlobalLayout but hide header on login/register or if not logged in
+  // Always use the GlobalLayout but hide header on login/register pages
   return (
     <GlobalLayout 
         user={user} 
         contextTitle={contextTitle} 
         backHref={backHref}
-        hideHeader={isAuthPage || !user}
+        hideHeader={isAuthPage}
+        isLoading={isLoading}
     >
         {children}
     </GlobalLayout>

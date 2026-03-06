@@ -277,9 +277,10 @@ interface AppHeaderProps {
     userRole?: string;
     contextTitle?: string;
     backHref?: string;
+    isLoading?: boolean;
 }
 
-export default function AppHeader({ userName, userRole, contextTitle, backHref }: AppHeaderProps) {
+export default function AppHeader({ userName, userRole, contextTitle, backHref, isLoading }: AppHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -310,7 +311,12 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref }
           </div>
           
           <div className="flex flex-col min-w-0">
-            {contextTitle ? (
+            {isLoading ? (
+                <div className="space-y-2">
+                    <div className="h-3 w-20 bg-[#5B2D7D]/10 rounded-full animate-pulse" />
+                    <div className="h-4 w-32 bg-[#5B2D7D]/20 rounded-full animate-pulse" />
+                </div>
+            ) : contextTitle ? (
                 <h1 className="text-lg font-bold text-[#5B2D7D] leading-tight line-clamp-1">{contextTitle}</h1>
             ) : (
                 <>
@@ -322,19 +328,28 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref }
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => router.push('/support')}
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
-            >
-                <LifeBuoy className="w-5 h-5" />
-            </button>
-            <button
-              ref={menuButtonRef}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
-            >
-                <Menu className="w-6 h-6" />
-            </button>
+            {isLoading ? (
+                <>
+                    <div className="w-10 h-10 rounded-full bg-white animate-pulse" />
+                    <div className="w-10 h-10 rounded-full bg-white animate-pulse" />
+                </>
+            ) : (
+                <>
+                    <button
+                      onClick={() => router.push('/support')}
+                      className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
+                    >
+                        <LifeBuoy className="w-5 h-5" />
+                    </button>
+                    <button
+                      ref={menuButtonRef}
+                      onClick={() => setIsMenuOpen(!isMenuOpen)}
+                      className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
+                </>
+            )}
         </div>
       </header>
       <MenuDropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} toggleButtonRef={menuButtonRef} userRole={userRole} />
