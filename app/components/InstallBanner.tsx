@@ -78,12 +78,7 @@ export function InstallBanner() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#A4C538]/10 rounded-full -mr-12 -mt-12 blur-2xl pointer-events-none" />
           
           <div className="w-12 h-12 bg-[#5B2D7D] rounded-xl flex items-center justify-center shrink-0 shadow-lg">
-            <img src="/public/Candyd_logo.svg" alt="Candyd" className="w-8 h-8 invert" 
-                 onError={(e) => {
-                    // Fallback if logo path is tricky in client component
-                    (e.target as any).src = '/Candyd_logo.svg';
-                 }}
-            />
+            <img src="/Candyd_logo.svg" alt="Candyd" className="w-8 h-8 invert" />
           </div>
 
           <div className="flex-1">
