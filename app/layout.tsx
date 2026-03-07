@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   description: "Unbox a moment. Relive a memory. Candyd uses NFC technology to link your physical products to digital experiences.",
   keywords: ["NFC", "Memories", "Digital Experiences", "Candyd", "Memory Management"],
   authors: [{ name: "Candyd Team" }],
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
