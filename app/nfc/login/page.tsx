@@ -1,11 +1,13 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { Zap, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Zap, Lock, ArrowRight, Loader2, Camera } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { getProductWithType } from "@/app/actions/life-charm";
 import { getProductOwnerInfo, completeUserSetup } from "@/app/actions/nfc";
+import CameraCapture from "@/app/components/CameraCapture";
+import { AnimatePresence, motion } from "framer-motion";
 
 function NFCLoginContent() {
   const searchParams = useSearchParams();
@@ -19,6 +21,7 @@ function NFCLoginContent() {
   const [newName, setNewName] = useState("");
   const [isSetupMode, setIsSetupMode] = useState(false);
   const [error, setError] = useState("");
+  const [showCamera, setShowCamera] = useState(false);
 
   const handleRedirect = useCallback(async (currentToken: string) => {
       const product = await getProductWithType(currentToken);
@@ -70,6 +73,11 @@ function NFCLoginContent() {
     if (!token) {
         // Handled in render now
       return;
+    }
+
+    // Haptic pulse on load
+    if ("vibrate" in navigator) {
+        navigator.vibrate([10, 30, 10]);
     }
 
     const checkTrustAndLogin = async () => {
@@ -188,8 +196,31 @@ function NFCLoginContent() {
   if (isSetupMode && ownerInfo) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit] p-4">
-            <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50">
-                <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6">
+            <AnimatePresence>
+                {showCamera && token && (
+                    <CameraCapture 
+                        token={token} 
+                        onClose={() => setShowCamera(false)} 
+                        onSuccess={() => {
+                            setShowCamera(false);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
+                {/* Quick Access Tab */}
+                <div className="absolute top-0 right-0">
+                    <button 
+                        onClick={() => setShowCamera(true)}
+                        className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"
+                    >
+                        <Camera className="w-4 h-4" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span>
+                    </button>
+                </div>
+
+                <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6 mt-4">
                     <Zap className="w-6 h-6 text-[#5B2D7D]" />
                 </div>
                 
@@ -249,8 +280,31 @@ function NFCLoginContent() {
   if (needsPassword && ownerInfo) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit] p-4">
-            <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50">
-                <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6">
+            <AnimatePresence>
+                {showCamera && token && (
+                    <CameraCapture 
+                        token={token} 
+                        onClose={() => setShowCamera(false)} 
+                        onSuccess={() => {
+                            setShowCamera(false);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
+                {/* Quick Access Tab */}
+                <div className="absolute top-0 right-0">
+                    <button 
+                        onClick={() => setShowCamera(true)}
+                        className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"
+                    >
+                        <Camera className="w-4 h-4" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span>
+                    </button>
+                </div>
+
+                <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6 mt-4">
                     <Lock className="w-6 h-6 text-[#5B2D7D]" />
                 </div>
                 
@@ -301,8 +355,29 @@ function NFCLoginContent() {
   // Fallback / Error State
   return (
     <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
-      <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <AnimatePresence>
+          {showCamera && token && (
+              <CameraCapture 
+                  token={token} 
+                  onClose={() => setShowCamera(false)} 
+                  onSuccess={() => setShowCamera(false)}
+              />
+          )}
+      </AnimatePresence>
+
+      <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50 relative overflow-hidden">
+        {token && (
+            <div className="absolute top-0 right-0">
+                <button 
+                    onClick={() => setShowCamera(true)}
+                    className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"
+                >
+                    <Camera className="w-4 h-4" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span>
+                </button>
+            </div>
+        )}
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 mt-4">
              <Zap className="w-8 h-8 text-red-500" />
         </div>
         <h2 className="text-xl font-bold text-[#5B2D7D] mb-2">Access Denied</h2>
