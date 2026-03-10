@@ -122,3 +122,16 @@ export const logHabitSchema = z.object({
     imageUrl: z.string().optional(),
     logType: z.enum(['DONE', 'SICK', 'TRAVEL', 'STRESSED', 'BUSY', 'OTHER']).default('DONE')
 });
+
+// ===========================================
+// AUTH
+// ===========================================
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your new password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});

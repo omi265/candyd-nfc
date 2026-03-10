@@ -134,3 +134,54 @@ export async function createGuestMemory(token: string, data: {
         return { error: "Failed to save memory" };
     }
 }
+
+export async function getPublicMemoryCharmData(token: string) {
+    try {
+        const product = await db.product.findUnique({
+            where: { token },
+            select: { 
+                id: true, 
+                name: true, 
+                type: true,
+                active: true,
+                userId: true
+            }
+        });
+
+        if (!product || !product.active || product.type !== "MEMORY") {
+            return null;
+        }
+
+        // Fetch only liked memories for this product
+        const memories = await db.memory.findMany({
+            where: {
+                productId: product.id,
+                userId: product.userId,
+                isLiked: true
+            },
+            include: {
+                media: {
+                    orderBy: { orderIndex: 'asc' }
+                }
+            },
+            orderBy: { date: 'desc' }
+        });
+
+        return {
+            name: product.name,
+            memories: memories.map(m => ({
+                id: m.id,
+                title: m.title,
+                date: m.date,
+                location: m.location,
+                media: m.media.map(media => ({
+                    url: media.url,
+                    type: media.type
+                }))
+            }))
+        };
+    } catch (error) {
+        console.error("Failed to fetch public charm data:", error);
+        return null;
+    }
+}

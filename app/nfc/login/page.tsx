@@ -1,11 +1,11 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { Zap, Lock, ArrowRight, Loader2, Camera } from "lucide-react";
+import { Zap, Lock, ArrowRight, Loader2, Camera, Heart, MapPin, Calendar, LayoutGrid } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { getProductWithType } from "@/app/actions/life-charm";
-import { getProductOwnerInfo, completeUserSetup } from "@/app/actions/nfc";
+import { getProductOwnerInfo, completeUserSetup, getPublicMemoryCharmData } from "@/app/actions/nfc";
 import CameraCapture from "@/app/components/CameraCapture";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -22,6 +22,8 @@ function NFCLoginContent() {
   const [isSetupMode, setIsSetupMode] = useState(false);
   const [error, setError] = useState("");
   const [showCamera, setShowCamera] = useState(false);
+  const [publicData, setPublicData] = useState<any>(null);
+  const [showPublicGallery, setShowPublicGallery] = useState(false);
 
   const handleRedirect = useCallback(async (currentToken: string) => {
       const product = await getProductWithType(currentToken);
@@ -92,6 +94,14 @@ function NFCLoginContent() {
             } else {
                 // Device NOT trusted -> Fetch info
                 setStatus("Verifying tag...");
+
+                // Fetch public gallery data first
+                const pubData = await getPublicMemoryCharmData(token);
+                if (pubData && pubData.memories.length > 0) {
+                    setPublicData(pubData);
+                    setShowPublicGallery(true);
+                }
+
                 const info = await getProductOwnerInfo(token);
                 
                 if (info) {
@@ -168,6 +178,85 @@ function NFCLoginContent() {
       }
   };
 
+  const PublicGallery = () => {
+    if (!publicData) return null;
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-4xl mx-auto px-4 pb-24"
+        >
+            <div className="text-center mb-8 pt-8">
+                <div className="w-16 h-16 bg-white/60 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                    <Heart className="w-8 h-8 text-[#5B2D7D] fill-[#5B2D7D]/10" />
+                </div>
+                <h1 className="text-2xl font-bold text-[#5B2D7D] mb-1">{publicData.name}</h1>
+                <p className="text-[#5B2D7D]/60 text-sm">A collection of shared moments</p>
+            </div>
+
+            <div className="columns-2 md:columns-3 gap-4 space-y-4">
+                {publicData.memories.map((memory: any) => (
+                    <motion.div 
+                        key={memory.id}
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="break-inside-avoid bg-white/40 backdrop-blur-md rounded-[24px] overflow-hidden border border-white/50 shadow-sm"
+                    >
+                        {memory.media[0] && (
+                            <div className="relative aspect-square overflow-hidden">
+                                <img 
+                                    src={memory.media[0].url} 
+                                    alt={memory.title}
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute top-3 right-3">
+                                    <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-full shadow-sm">
+                                        <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        <div className="p-4">
+                            <h3 className="text-[#5B2D7D] font-bold text-sm mb-1 line-clamp-1">{memory.title}</h3>
+                            <div className="flex flex-col gap-1">
+                                {memory.location && (
+                                    <div className="flex items-center gap-1 text-[10px] text-[#5B2D7D]/50">
+                                        <MapPin className="w-3 h-3" />
+                                        <span className="line-clamp-1">{memory.location}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-1 text-[10px] text-[#5B2D7D]/50">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>{new Date(memory.date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* Bottom Floating Action Bar */}
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-[60]">
+                <button 
+                    onClick={() => setShowPublicGallery(false)}
+                    className="bg-white/80 backdrop-blur-xl text-[#5B2D7D] px-6 py-3 rounded-full font-bold text-sm shadow-xl flex items-center gap-2 border border-[#5B2D7D]/10 active:scale-95 transition-all"
+                >
+                    <Lock className="w-4 h-4" />
+                    Manage Charm
+                </button>
+                <button 
+                    onClick={() => setShowCamera(true)}
+                    className="bg-[#A4C538] text-white px-6 py-3 rounded-full font-bold text-sm shadow-xl flex items-center gap-2 active:scale-95 transition-all shadow-[#A4C538]/30"
+                >
+                    <Camera className="w-4 h-4" />
+                    Snap Memory
+                </button>
+            </div>
+        </motion.div>
+    );
+  };
+
   if (!token) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
@@ -191,6 +280,23 @@ function NFCLoginContent() {
             </div>
         </div>
       );
+  }
+
+  if (showPublicGallery && publicData) {
+    return (
+        <div className="min-h-screen bg-transparent font-[Outfit] relative">
+            <AnimatePresence>
+                {showCamera && token && (
+                    <CameraCapture 
+                        token={token} 
+                        onClose={() => setShowCamera(false)} 
+                        onSuccess={() => setShowCamera(false)}
+                    />
+                )}
+            </AnimatePresence>
+            <PublicGallery />
+        </div>
+    );
   }
 
   if (isSetupMode && ownerInfo) {

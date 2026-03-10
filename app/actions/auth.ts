@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { revalidatePath } from "next/cache";
 import { deleteFromCloudinary, extractPublicId } from "@/lib/cloudinary-helper";
+import { changePasswordSchema } from "@/lib/schemas";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -101,6 +102,49 @@ export async function updateProfile(prevState: any, formData: FormData) {
         return { success: true };
     } catch (error) {
         return { error: "Failed to update profile" };
+    }
+}
+
+export async function changePassword(prevState: any, formData: FormData) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Not authenticated" };
+
+    const rawData = Object.fromEntries(formData.entries());
+    const validatedFields = changePasswordSchema.safeParse(rawData);
+
+    if (!validatedFields.success) {
+        return { error: "Invalid fields: " + validatedFields.error.issues.map(i => i.message).join(", ") };
+    }
+
+    const { currentPassword, newPassword } = validatedFields.data;
+
+    try {
+        const user = await db.user.findUnique({
+            where: { id: session.user.id }
+        });
+
+        if (!user || !user.password) {
+            return { error: "User not found" };
+        }
+
+        // Verify current password
+        const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!passwordMatch) {
+            return { error: "Current password is incorrect" };
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await db.user.update({
+            where: { id: session.user.id },
+            data: { password: hashedPassword }
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Change Password Error:", error);
+        return { error: "Failed to change password" };
     }
 }
 
