@@ -1,16 +1,17 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { Zap, Lock, ArrowRight, Loader2, Camera, Heart, MapPin, Calendar, LayoutGrid } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { Zap, Lock, ArrowRight, Loader2, Camera, Heart, MapPin, Calendar, Sparkles } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { getProductWithType } from "@/app/actions/life-charm";
-import { getProductOwnerInfo, completeUserSetup, getPublicMemoryCharmData } from "@/app/actions/nfc";
+import { getProductOwnerInfo, completeUserSetup, getPublicCharmShowcase, claimProduct } from "@/app/actions/nfc";
 import CameraCapture from "@/app/components/CameraCapture";
 import { AnimatePresence, motion } from "framer-motion";
 
 function NFCLoginContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const token = searchParams.get("token");
   
   const [status, setStatus] = useState("Checking security...");
@@ -19,7 +20,9 @@ function NFCLoginContent() {
   const [ownerInfo, setOwnerInfo] = useState<{ email: string; name: string | null } | null>(null);
   const [password, setPassword] = useState("");
   const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [isSetupMode, setIsSetupMode] = useState(false);
+  const [isUnassigned, setIsUnassigned] = useState(false);
   const [error, setError] = useState("");
   const [showCamera, setShowCamera] = useState(false);
   const [publicData, setPublicData] = useState<any>(null);
@@ -35,7 +38,6 @@ function NFCLoginContent() {
               case "HABIT":
                   window.location.href = `/habit-charm?charmId=${product.id}`;
                   break;
-              case "MEMORY":
               default:
                   window.location.href = "/";
           }
@@ -46,6 +48,7 @@ function NFCLoginContent() {
 
   // Helper to mask email
   const maskEmail = (email: string) => {
+      if (!email) return "";
       const [name, domain] = email.split("@");
       if (!name || !domain) return email;
       const maskedName = name.length > 2 ? `${name.substring(0, 2)}***` : `${name}***`;
@@ -61,7 +64,6 @@ function NFCLoginContent() {
       if (result?.error) {
           setStatus("Tag invalid or expired.");
           setIsLoading(false);
-          // If token login fails (maybe user revoked access?), we might want to clear trust
           localStorage.removeItem(`trusted_tag_${tokenToUse}`);
       } else {
           setStatus("Success! Redirecting...");
@@ -69,47 +71,44 @@ function NFCLoginContent() {
       }
   }, [handleRedirect]);
 
-
-
   useEffect(() => {
-    if (!token) {
-        // Handled in render now
-      return;
-    }
+    if (!token) return;
 
-    // Haptic pulse on load
     if ("vibrate" in navigator) {
         navigator.vibrate([10, 30, 10]);
     }
 
     const checkTrustAndLogin = async () => {
         try {
-            // 1. Check if this device is trusted for this specific token
             const isTrusted = localStorage.getItem(`trusted_tag_${token}`);
 
             if (isTrusted === "true") {
-                // Device is trusted -> Attempt Magic Login
                 setStatus("Authenticating...");
                 await performTokenLogin(token);
             } else {
-                // Device NOT trusted -> Fetch info
                 setStatus("Verifying tag...");
 
-                // Fetch public gallery data first
-                const pubData = await getPublicMemoryCharmData(token);
-                if (pubData && pubData.memories.length > 0) {
+                // 1. Fetch public gallery data (Showcase)
+                const pubData = await getPublicCharmShowcase(token);
+                if (pubData && pubData.items && pubData.items.length > 0) {
                     setPublicData(pubData);
                     setShowPublicGallery(true);
                 }
 
+                // 2. Fetch owner info
                 const info = await getProductOwnerInfo(token);
                 
                 if (info) {
-                    setOwnerInfo(info);
-                    if (info.setupRequired) {
-                        setIsSetupMode(true);
+                    if (info && 'unassigned' in info) {
+                        setIsUnassigned(true);
+                        setOwnerInfo({ name: info.charmName || "New Charm", email: "" });
                     } else {
-                        setNeedsPassword(true);
+                        setOwnerInfo(info as any);
+                        if (info.setupRequired) {
+                            setIsSetupMode(true);
+                        } else {
+                            setNeedsPassword(true);
+                        }
                     }
                     setIsLoading(false);
                 } else {
@@ -117,7 +116,8 @@ function NFCLoginContent() {
                     setIsLoading(false);
                 }
             }
-        } catch {
+        } catch (err) {
+            console.error(err);
             setStatus("An error occurred.");
             setIsLoading(false);
         }
@@ -138,11 +138,49 @@ function NFCLoginContent() {
               setError(result.error);
               setIsLoading(false);
           } else {
-              // Auto login using handlePasswordLogin
               await handlePasswordLogin(e);
           }
       } catch {
           setError("Setup failed.");
+          setIsLoading(false);
+      }
+  };
+
+  const handleClaim = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!token) return;
+      setIsLoading(true);
+      setError("");
+
+      try {
+          const result = await claimProduct(token, {
+              email: newEmail,
+              name: newName,
+              password: password
+          });
+
+          if (result.error) {
+              setError(result.error);
+              setIsLoading(false);
+          } else {
+              localStorage.setItem(`trusted_tag_${token}`, "true");
+              
+              const loginResult = await signIn("credentials", {
+                  email: newEmail,
+                  password: password,
+                  redirect: false
+              });
+
+              if (loginResult?.error) {
+                  setError("Login failed after claim. Please log in manually.");
+                  setIsLoading(false);
+              } else {
+                  setStatus("Claimed! Redirecting...");
+                  await handleRedirect(token);
+              }
+          }
+      } catch {
+          setError("Claim process failed.");
           setIsLoading(false);
       }
   };
@@ -152,11 +190,12 @@ function NFCLoginContent() {
       setIsLoading(true);
       setError("");
 
-      if (!ownerInfo?.email) return;
+      const emailToUse = ownerInfo?.email || newEmail;
+      if (!emailToUse) return;
 
       try {
           const result = await signIn("credentials", {
-              email: ownerInfo.email,
+              email: emailToUse,
               password: password,
               redirect: false
           });
@@ -165,7 +204,6 @@ function NFCLoginContent() {
               setError("Incorrect password.");
               setIsLoading(false);
           } else {
-              // Success! Trust this device
               if (token) {
                   localStorage.setItem(`trusted_tag_${token}`, "true");
                   setStatus("Verified! Redirecting...");
@@ -196,18 +234,18 @@ function NFCLoginContent() {
             </div>
 
             <div className="columns-2 md:columns-3 gap-4 space-y-4">
-                {publicData.memories.map((memory: any) => (
+                {publicData.items.map((item: any) => (
                     <motion.div 
-                        key={memory.id}
+                        key={item.id}
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="break-inside-avoid bg-white/40 backdrop-blur-md rounded-[24px] overflow-hidden border border-white/50 shadow-sm"
                     >
-                        {memory.media[0] && (
+                        {item.media[0] && (
                             <div className="relative aspect-square overflow-hidden">
                                 <img 
-                                    src={memory.media[0].url} 
-                                    alt={memory.title}
+                                    src={item.media[0].url} 
+                                    alt={item.title}
                                     className="w-full h-full object-cover"
                                 />
                                 <div className="absolute top-3 right-3">
@@ -218,17 +256,17 @@ function NFCLoginContent() {
                             </div>
                         )}
                         <div className="p-4">
-                            <h3 className="text-[#5B2D7D] font-bold text-sm mb-1 line-clamp-1">{memory.title}</h3>
+                            <h3 className="text-[#5B2D7D] font-bold text-sm mb-1 line-clamp-1">{item.title}</h3>
                             <div className="flex flex-col gap-1">
-                                {memory.location && (
+                                {item.location && (
                                     <div className="flex items-center gap-1 text-[10px] text-[#5B2D7D]/50">
                                         <MapPin className="w-3 h-3" />
-                                        <span className="line-clamp-1">{memory.location}</span>
+                                        <span className="line-clamp-1">{item.location}</span>
                                     </div>
                                 )}
                                 <div className="flex items-center gap-1 text-[10px] text-[#5B2D7D]/50">
                                     <Calendar className="w-3 h-3" />
-                                    <span>{new Date(memory.date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                                    <span>{new Date(item.date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
                                 </div>
                             </div>
                         </div>
@@ -236,7 +274,6 @@ function NFCLoginContent() {
                 ))}
             </div>
 
-            {/* Bottom Floating Action Bar */}
             <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-[60]">
                 <button 
                     onClick={() => setShowPublicGallery(false)}
@@ -271,7 +308,7 @@ function NFCLoginContent() {
       );
   }
 
-  if (isLoading && !needsPassword && !isSetupMode) {
+  if (isLoading && !needsPassword && !isSetupMode && !isUnassigned) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
             <div className="text-center">
@@ -299,6 +336,78 @@ function NFCLoginContent() {
     );
   }
 
+  if (isUnassigned && ownerInfo) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit] p-4">
+            <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden text-center">
+                <div className="w-16 h-16 bg-[#A4C538]/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <Sparkles className="w-8 h-8 text-[#A4C538]" />
+                </div>
+                
+                <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Claim Your Charm</h2>
+                <p className="text-[#5B2D7D]/60 text-sm mb-8 px-4">
+                    This <span className="font-bold text-[#5B2D7D]">{ownerInfo.name}</span> is ready to be yours. Create an account to get started.
+                </p>
+
+                <form onSubmit={handleClaim} className="space-y-4 text-left">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Email Address</label>
+                        <input 
+                            type="email" 
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all"
+                            placeholder="your@email.com"
+                            required
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Full Name</label>
+                        <input 
+                            type="text" 
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all"
+                            placeholder="e.g. Alex Smith"
+                            required
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Create Password</label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5B2D7D]/40" />
+                            <input 
+                                type="password" 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 pl-10 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all"
+                                placeholder="Min. 6 characters"
+                                required
+                                minLength={6}
+                            />
+                        </div>
+                    </div>
+
+                    {error && (
+                        <p className="text-red-500 text-xs text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>
+                    )}
+
+                    <button 
+                        type="submit" 
+                        disabled={isLoading}
+                        className="w-full bg-[#A4C538] hover:bg-[#93b132] text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-[#A4C538]/20 flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+                    >
+                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Claim & Start Living"}
+                        {!isLoading && <ArrowRight className="w-5 h-5" />}
+                    </button>
+                </form>
+            </div>
+        </div>
+      );
+  }
+
   if (isSetupMode && ownerInfo) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit] p-4">
@@ -315,7 +424,6 @@ function NFCLoginContent() {
             </AnimatePresence>
 
             <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
-                {/* Quick Access Tab */}
                 <div className="absolute top-0 right-0">
                     <button 
                         onClick={() => setShowCamera(true)}
@@ -399,7 +507,6 @@ function NFCLoginContent() {
             </AnimatePresence>
 
             <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
-                {/* Quick Access Tab */}
                 <div className="absolute top-0 right-0">
                     <button 
                         onClick={() => setShowCamera(true)}
@@ -458,7 +565,6 @@ function NFCLoginContent() {
       );
   }
 
-  // Fallback / Error State
   return (
     <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
       <AnimatePresence>

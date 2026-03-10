@@ -28,11 +28,11 @@ export default async function AdminPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard title="Total Users" value={stats.userCount} />
           <StatCard title="Total Charms" value={stats.productCount} />
+          <StatCard title="Unassigned" value={stats.productCount - stats.userCount} color="purple" />
           <StatCard title="Life Charms" value={stats.lifeCharmCount} color="green" />
           <StatCard title="Habit Charms" value={stats.habitCharmCount} color="orange" />
           <StatCard title="Memories" value={stats.memoryCount} />
           <StatCard title="Life Lists" value={stats.lifeListCount} />
-          <StatCard title="List Items" value={stats.lifeListItemCount} />
           <StatCard title="Storage Used" value={formatBytes(stats.totalStorage)} />
         </div>
 
@@ -60,11 +60,11 @@ export default async function AdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {products.map((product: Product & { user: { email: string, name: string | null } }) => (
+                      {products.map((product: Product & { user: { email: string, name: string | null } | null }) => (
                         <tr key={product.id} className="group hover:bg-white/50 transition-colors">
-                          <td className="py-3 pr-4 text-[#5B2D7D]">{product.name}</td>
+                          <td className="py-3 pr-4 text-[#5B2D7D] font-medium">{product.name}</td>
                           <td className="py-3 pr-4">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                               product.type === "LIFE"
                                 ? "bg-[#A4C538]/20 text-[#7A9429]"
                                 : product.type === "HABIT"
@@ -75,12 +75,18 @@ export default async function AdminPage() {
                             </span>
                           </td>
                           <td className="py-3 pr-4">
-                            <div className="text-sm font-medium text-[#5B2D7D]">{product.user.name}</div>
-                            <div className="text-xs text-[#5B2D7D]/60">{product.user.email}</div>
+                            {product.user ? (
+                                <>
+                                    <div className="text-sm font-medium text-[#5B2D7D]">{product.user.name}</div>
+                                    <div className="text-xs text-[#5B2D7D]/60">{product.user.email}</div>
+                                </>
+                            ) : (
+                                <span className="text-xs font-bold text-[#A4C538] bg-[#A4C538]/10 px-2 py-1 rounded-lg italic">Unassigned</span>
+                            )}
                           </td>
                           <td className="py-3 pr-4">
                             <div className="flex items-center gap-2">
-                                <code className="font-mono text-xs text-[#5B2D7D]/80 truncate max-w-[150px] bg-white/50 px-2 py-1 rounded">
+                                <code className="font-mono text-[10px] text-[#5B2D7D]/80 truncate max-w-[150px] bg-white/50 px-2 py-1 rounded border border-[#5B2D7D]/10">
                                     /nfc/login?token={product.token}
                                 </code>
                                 <CopyButton token={product.token as string} />

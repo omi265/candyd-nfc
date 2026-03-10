@@ -12,8 +12,12 @@ export async function getProductOwnerInfo(token: string) {
       include: { user: { select: { email: true, name: true, setupRequired: true } } }
     });
 
-    if (!product || !product.active || !product.user) {
+    if (!product || !product.active) {
       return null;
+    }
+
+    if (!product.userId || !product.user) {
+        return { unassigned: true, type: product.type, charmName: product.name };
     }
 
     return {
@@ -27,6 +31,47 @@ export async function getProductOwnerInfo(token: string) {
   }
 }
 
+export async function claimProduct(token: string, userData: { email: string, name: string, password: string }) {
+    try {
+        const product = await db.product.findUnique({
+            where: { token },
+            select: { id: true, userId: true }
+        });
+
+        if (!product || product.userId) {
+            return { error: "Product not found or already claimed." };
+        }
+
+        // Check if user exists or create new
+        let user = await db.user.findUnique({
+            where: { email: userData.email }
+        });
+
+        if (!user) {
+            const hashedPassword = await hash(userData.password, 10);
+            user = await db.user.create({
+                data: {
+                    email: userData.email,
+                    name: userData.name,
+                    password: hashedPassword,
+                    setupRequired: false
+                }
+            });
+        }
+
+        // Link product to user
+        await db.product.update({
+            where: { token },
+            data: { userId: user.id }
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to claim product:", error);
+        return { error: "Claim failed" };
+    }
+}
+
 export async function completeUserSetup(token: string, name: string, password: string) {
     try {
         const product = await db.product.findUnique({
@@ -34,7 +79,7 @@ export async function completeUserSetup(token: string, name: string, password: s
             select: { userId: true, user: { select: { setupRequired: true } } }
         });
 
-        if (!product || !product.user?.setupRequired) {
+        if (!product || !product.userId || !product.user?.setupRequired) {
             return { error: "Invalid request or account already set up." };
         }
 
@@ -103,7 +148,7 @@ export async function createGuestMemory(token: string, data: {
             select: { id: true, userId: true, active: true }
         });
 
-        if (!product || !product.active) {
+        if (!product || !product.active || !product.userId) {
             return { error: "Invalid tag" };
         }
 
@@ -135,7 +180,7 @@ export async function createGuestMemory(token: string, data: {
     }
 }
 
-export async function getPublicMemoryCharmData(token: string) {
+export async function getPublicCharmShowcase(token: string) {
     try {
         const product = await db.product.findUnique({
             where: { token },
@@ -148,38 +193,47 @@ export async function getPublicMemoryCharmData(token: string) {
             }
         });
 
-        if (!product || !product.active || product.type !== "MEMORY") {
+        if (!product || !product.active || !product.userId) {
             return null;
         }
 
-        // Fetch only liked memories for this product
-        const memories = await db.memory.findMany({
-            where: {
-                productId: product.id,
-                userId: product.userId,
-                isLiked: true
-            },
-            include: {
-                media: {
-                    orderBy: { orderIndex: 'asc' }
-                }
-            },
-            orderBy: { date: 'desc' }
-        });
+        if (product.type === "LIFE") {
+            // Fetch liked experiences for Life Charms
+            const experiences = await db.experience.findMany({
+                where: {
+                    item: {
+                        lifeList: {
+                            productId: product.id
+                        }
+                    },
+                    isLiked: true
+                },
+                include: {
+                    media: {
+                        orderBy: { orderIndex: 'asc' }
+                    }
+                },
+                orderBy: { date: 'desc' }
+            });
 
-        return {
-            name: product.name,
-            memories: memories.map(m => ({
-                id: m.id,
-                title: m.title,
-                date: m.date,
-                location: m.location,
-                media: m.media.map(media => ({
-                    url: media.url,
-                    type: media.type
+            return {
+                name: product.name,
+                type: "LIFE",
+                items: experiences.map(e => ({
+                    id: e.id,
+                    title: e.reflection || "An Experience",
+                    date: e.date,
+                    location: e.location,
+                    media: e.media.map(m => ({
+                        url: m.url,
+                        type: m.type
+                    }))
                 }))
-            }))
-        };
+            };
+        }
+
+        // Habit charms don't have a public showcase yet
+        return null;
     } catch (error) {
         console.error("Failed to fetch public charm data:", error);
         return null;

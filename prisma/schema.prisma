@@ -29,7 +29,7 @@ model Product {
   id          String     @id @default(cuid())
   name        String
   token       String     @unique
-  userId      String
+  userId      String?
   createdAt   DateTime   @default(now())
   active      Boolean    @default(true)
   graduatedAt DateTime?
@@ -39,7 +39,7 @@ model Product {
   habits      Habit[]
   lifeLists   LifeList[]
   memories    Memory[]
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

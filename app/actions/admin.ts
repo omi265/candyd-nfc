@@ -76,7 +76,7 @@ export async function getAllUsers() {
 }
 
 export async function createProduct(
-  email: string,
+  email?: string,
   productName: string = "New Charm",
   charmType: "LIFE" | "HABIT" = "LIFE"
 ) {
@@ -85,12 +85,17 @@ export async function createProduct(
     return { error: "Unauthorized" };
   }
 
-  const user = await db.user.findUnique({
-    where: { email },
-  });
+  let userId: string | null = null;
 
-  if (!user) {
-    return { error: "User not found" };
+  if (email) {
+    const user = await db.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return { error: "User not found" };
+    }
+    userId = user.id;
   }
 
   // Generate a unique token
@@ -101,7 +106,7 @@ export async function createProduct(
       data: {
         name: productName,
         token,
-        userId: user.id,
+        userId,
         type: charmType,
       },
     });
@@ -114,10 +119,43 @@ export async function createProduct(
   }
 }
 
+export async function generateBatchProducts(
+    type: "LIFE" | "HABIT",
+    count: number,
+    baseName: string = "Candyd Charm"
+) {
+    const session = await auth();
+    if (session?.user?.role !== "ADMIN") {
+        return { error: "Unauthorized" };
+    }
+
+    try {
+        const products = [];
+        for (let i = 0; i < count; i++) {
+            products.push({
+                name: `${baseName} ${Math.floor(Math.random() * 10000)}`,
+                token: crypto.randomUUID(),
+                type,
+                active: true
+            });
+        }
+
+        await db.product.createMany({
+            data: products
+        });
+
+        revalidatePath("/admin");
+        return { success: true, count };
+    } catch (error) {
+        console.error("Batch creation failed:", error);
+        return { error: "Failed to generate batch" };
+    }
+}
+
 export async function createUserAndProduct(
   email: string,
   productName: string = "New Charm",
-  charmType: "LIFE" | "HABIT" = "LIFE"
+  charmType: "LIFE" | "HABIT" | "MEMORY" = "LIFE"
 ) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
