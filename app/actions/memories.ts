@@ -529,3 +529,45 @@ export async function deleteProduct(id: string) {
         return { error: error.message };
     }
 }
+
+export async function getCharmStats(productId: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const product = await db.product.findUnique({
+            where: { id: productId },
+            select: { userId: true }
+        });
+
+        if (!product || product.userId !== session.user.id) {
+            return { error: "Unauthorized" };
+        }
+
+        // Count memories linked to this product
+        const memoryCount = await db.memory.count({
+            where: { productId }
+        });
+
+        // Calculate total media size for these memories
+        const mediaSize = await db.media.aggregate({
+            where: {
+                memory: {
+                    productId
+                }
+            },
+            _sum: {
+                size: true
+            }
+        });
+
+        return {
+            memoryCount,
+            totalSizeBytes: mediaSize._sum.size || 0,
+            limit: 50 
+        };
+    } catch (error) {
+        console.error("Failed to fetch charm stats:", error);
+        return { error: "Failed to fetch stats" };
+    }
+}

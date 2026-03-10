@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { getUserProducts, deleteProduct } from "@/app/actions/memories";
+import { getUserProducts, deleteProduct, getCharmStats } from "@/app/actions/memories";
 
 // --- Icons ---
 import { 
@@ -29,6 +29,19 @@ export default function ManageCharmsPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteInput, setDeleteInput] = useState("");
 
+    // Stats state
+    const [stats, setStats] = useState<{ memoryCount: number, totalSizeBytes: number, limit: number } | null>(null);
+    const [isLoadingStats, setIsLoadingStats] = useState(false);
+
+    // Byte formatter
+    const formatSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
     useEffect(() => {
         async function loadProducts() {
             if(!user) return;
@@ -40,6 +53,20 @@ export default function ManageCharmsPage() {
         }
         loadProducts();
     }, [user]);
+
+    useEffect(() => {
+        if (!selectedProduct?.id) return;
+        
+        async function loadStats() {
+            setIsLoadingStats(true);
+            const data = await getCharmStats(selectedProduct.id);
+            if (data && 'memoryCount' in data) {
+                setStats(data as any);
+            }
+            setIsLoadingStats(false);
+        }
+        loadStats();
+    }, [selectedProduct]);
 
     const handleDeleteCharm = async () => {
         if (!selectedProduct) return;
@@ -59,9 +86,7 @@ export default function ManageCharmsPage() {
         setIsDeleteModalOpen(false);
     };
 
-    // Mock constants for UI
-    const MEMORY_USED = 50;
-    const MEMORY_TOTAL = 50;
+    const percentUsed = stats ? Math.min(Math.round((stats.memoryCount / stats.limit) * 100), 100) : 0;
 
     return (
         <div className="min-h-screen bg-transparent font-[Outfit] pb-12 relative">
@@ -88,7 +113,9 @@ export default function ManageCharmsPage() {
                 <div className="bg-[#FFF9F6] rounded-[32px] p-6 mb-8 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-baseline gap-1">
-                            <span className="text-5xl font-bold text-[#3E1C56]">100%</span>
+                            <span className="text-5xl font-bold text-[#3E1C56]">
+                                {isLoadingStats ? "..." : `${percentUsed}%`}
+                            </span>
                             <span className="text-[#9A92A6]">Memory used</span>
                         </div>
                         <button className="bg-[#C2D647] text-[#3E1C56] px-4 py-2 rounded-full font-semibold text-sm hover:bg-[#b0c43d] transition-colors">
@@ -97,12 +124,20 @@ export default function ManageCharmsPage() {
                     </div>
                     
                     {/* Progress Bar */}
-                    <div className="h-6 w-full bg-[#A2D5EA] rounded-full mb-4 relative overflow-hidden">
-                        <div className="absolute top-0 left-0 h-full w-full bg-[#A2D5EA]" />
-                        {/* If we had partial usage, we would adjust width. Here 100% */}
+                    <div className="h-6 w-full bg-[#EADDDE] rounded-full mb-4 relative overflow-hidden">
+                        <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percentUsed}%` }}
+                            className="absolute top-0 left-0 h-full bg-[#A2D5EA]" 
+                        />
                     </div>
 
-                    <p className="text-[#9A92A6] text-lg font-medium">{MEMORY_USED} of {MEMORY_TOTAL} memories used</p>
+                    <p className="text-[#9A92A6] text-lg font-medium">
+                        {isLoadingStats ? "Calculating..." : `${stats?.memoryCount || 0} of ${stats?.limit || 50} memories used`}
+                    </p>
+                    <p className="text-[#9A92A6] text-sm mt-1">
+                        {isLoadingStats ? "" : `Total storage: ${formatSize(stats?.totalSizeBytes || 0)}`}
+                    </p>
                     <p className="text-[#D6CDE3] text-sm mt-4 text-center">Plan valid until 14 June 2026</p>
                 </div>
 
