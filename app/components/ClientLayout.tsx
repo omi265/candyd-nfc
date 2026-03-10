@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import AppHeader from "./AppHeader";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { getUserProducts } from "@/app/actions/memories";
 import { motion, useScroll, useTransform, useSpring } from "motion/react";
@@ -90,6 +90,7 @@ export default function ClientLayout({
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const charmId = searchParams.get('charmId');
   
   const [contextTitle, setContextTitle] = useState<string | undefined>(undefined);
@@ -124,21 +125,41 @@ export default function ClientLayout({
       });
   }, [charmId, pathname]);
 
-  // Service Worker Registration
+  // Service Worker Registration & PWA Diagnostics
   useEffect(() => {
-    if ('serviceWorker' in navigator && window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
+    // 1. Diagnostics
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    console.log(`[PWA] App is running in ${isStandalone ? 'Standalone' : 'Browser'} mode.`);
+
+    // 2. Service Worker
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker
           .register('/sw.js')
           .then((registration) => {
-            console.log('Service Worker registered with scope:', registration.scope);
+            console.log('[PWA] Service Worker registered with scope:', registration.scope);
           })
           .catch((error) => {
-            console.error('Service Worker registration failed:', error);
+            console.error('[PWA] Service Worker registration failed:', error);
           });
       });
     }
-  }, []);
+
+    // 3. Launch Handler (Receiver for NFC/Link Taps)
+    if ('launchQueue' in window) {
+        (window as any).launchQueue.setConsumer((launchParams: any) => {
+            if (launchParams.targetURL) {
+                const url = new URL(launchParams.targetURL);
+                console.log("[PWA] App launched with URL:", url.href);
+                
+                // If it's an NFC login link, navigate immediately
+                if (url.pathname.startsWith('/nfc/login')) {
+                    router.push(`${url.pathname}${url.search}`);
+                }
+            }
+        });
+    }
+  }, [router]);
 
   const isAuthPage = pathname === "/login" || pathname === "/register" || pathname.startsWith("/nfc/login");
 

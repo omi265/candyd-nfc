@@ -30,6 +30,7 @@ interface LifeCharmDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   people?: any[];
+  readOnly?: boolean;
 }
 
 export function LifeCharmDrawer({
@@ -37,6 +38,7 @@ export function LifeCharmDrawer({
   open,
   onOpenChange,
   people = [],
+  readOnly = false,
 }: LifeCharmDrawerProps) {
   const router = useRouter();
 
@@ -196,23 +198,34 @@ export function LifeCharmDrawer({
           </div>
 
           <DrawerFooter className="px-6 mt-6 pb-8 space-y-3">
-            {!isGraduated && (
+            {!readOnly ? (
+              <>
+                {!isGraduated && (
+                  <button
+                    onClick={handleAddItem}
+                    className="w-full bg-[#A4C538] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Add to list
+                  </button>
+                )}
+
+                <button
+                  onClick={handleViewFullList}
+                  className="w-full bg-[#5B2D7D] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#4a2466] transition-colors"
+                >
+                  View full list
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </>
+            ) : (
               <button
-                onClick={handleAddItem}
-                className="w-full bg-[#A4C538] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
+                onClick={() => onOpenChange(false)}
+                className="w-full bg-[#5B2D7D] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#4a2466] transition-colors"
               >
-                <Plus className="w-5 h-5" />
-                Add to list
+                Close
               </button>
             )}
-
-            <button
-              onClick={handleViewFullList}
-              className="w-full bg-[#5B2D7D] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#4a2466] transition-colors"
-            >
-              View full list
-              <ArrowRight className="w-5 h-5" />
-            </button>
           </DrawerFooter>
         </div>
       </DrawerContent>

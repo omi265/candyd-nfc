@@ -24,9 +24,10 @@ interface MemoryDrawerProps {
     onOpenChange: (open: boolean) => void;
     people?: any[];
     onEdit?: () => void;
+    readOnly?: boolean;
 }
 
-export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit }: MemoryDrawerProps) {
+export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit, readOnly = false }: MemoryDrawerProps) {
     const router = useRouter();
     const [isLiked, setIsLiked] = useState(false);
     const [isPending, startTransition] = useTransition();
@@ -56,6 +57,7 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit }
     };
 
     const handleLike = () => {
+        if (readOnly) return;
         const wasLiked = isLiked;
         setIsLiked(!wasLiked); // Optimistic update
 
@@ -114,16 +116,19 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit }
                                  </div>
                              </div>
                              <div className="flex gap-3 shrink-0">
-                                 <button onClick={handleEdit} className="w-12 h-12 rounded-full bg-[#EADDDE] flex items-center justify-center hover:bg-[#D4C3D8] transition-colors">
-                                     <Edit2 className="w-6 h-6 text-[#5B2D7D]" />
-                                 </button>
+                                 {!readOnly && (
+                                     <button onClick={handleEdit} className="w-12 h-12 rounded-full bg-[#EADDDE] flex items-center justify-center hover:bg-[#D4C3D8] transition-colors">
+                                         <Edit2 className="w-6 h-6 text-[#5B2D7D]" />
+                                     </button>
+                                 )}
                                  <button 
                                     onClick={handleLike}
+                                    disabled={readOnly}
                                     className={`w-12 h-12 rounded-full border flex items-center justify-center transition-colors ${
                                         isLiked 
                                         ? "bg-[#F37B55] border-[#F37B55]" 
                                         : "bg-[#FFF5F0] border-[#EADDDE]"
-                                    }`}
+                                    } ${readOnly ? "opacity-50 grayscale cursor-default" : ""}`}
                                  >
                                      <Heart className={`w-6 h-6 ${isLiked ? "text-white fill-white" : "text-[#F37B55]"}`} />
                                  </button>
@@ -177,13 +182,21 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit }
                      </div>
 
                      <DrawerFooter className="px-6 mt-6 pb-8">
-                         {/* 'Add' Button (simplified as per design) */}
-                         <button 
-                            onClick={handleEdit}
-                            className="w-full bg-[#A4C538] py-4 rounded-full flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
-                        >
-                             Edit Memory <Plus className="w-4 h-4 text-[#5B2D7D]" />
-                        </button>
+                         {!readOnly ? (
+                            <button 
+                                onClick={handleEdit}
+                                className="w-full bg-[#A4C538] py-4 rounded-full flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
+                            >
+                                Edit Memory <Plus className="w-4 h-4 text-[#5B2D7D]" />
+                            </button>
+                         ) : (
+                            <button 
+                                onClick={() => onOpenChange(false)}
+                                className="w-full bg-[#5B2D7D] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#4a2466] transition-colors"
+                            >
+                                Close
+                            </button>
+                         )}
                      </DrawerFooter>
                  </div>
             </DrawerContent>

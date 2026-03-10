@@ -219,7 +219,7 @@ function ShowcaseGallery({ publicData, onUnlock, onCamera, token, onItemClick }:
     };
 
     return (
-        <div className="flex flex-col h-screen relative overflow-hidden bg-transparent font-[Outfit]">
+        <div className="flex flex-col h-dvh relative overflow-hidden bg-transparent font-[Outfit]">
             <div className="absolute top-0 left-0 right-0 z-30 pt-8 px-6 text-center pointer-events-none">
                 <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="inline-block px-4 py-2 bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-lg pointer-events-auto">
                     <h1 className="text-xl font-black text-[#5B2D7D] uppercase tracking-tight">{publicData.name}</h1>
@@ -257,7 +257,7 @@ function ShowcaseGallery({ publicData, onUnlock, onCamera, token, onItemClick }:
     );
 }
 
-// --- Main Page Logic ---
+// --- Main Page ---
 function NFCLoginContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -275,7 +275,6 @@ function NFCLoginContent() {
   const [showCamera, setShowCamera] = useState(false);
   const [publicData, setPublicData] = useState<any>(null);
   const [showPublicGallery, setShowPublicGallery] = useState(false);
-  
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
@@ -354,18 +353,12 @@ function NFCLoginContent() {
   };
 
   const handleItemClick = (item: any) => {
-      // Format data for MemoryDrawer
-      const data = {
-          ...item,
-          dataType: item.type, // life_item or memory
-          isLiked: true, // They are only here because they are liked
-      };
-      setSelectedItem(data);
+      setSelectedItem({ ...item, dataType: item.type, isLiked: true });
       setDrawerOpen(true);
   };
 
   if (!token) return (
-    <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
+    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
       <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><Zap className="w-8 h-8 text-red-500" /></div>
         <h2 className="text-xl font-bold text-[#5B2D7D] mb-2">Access Denied</h2>
@@ -375,27 +368,21 @@ function NFCLoginContent() {
   );
 
   if (isLoading && !needsPassword && !isSetupMode && !isUnassigned) return (
-    <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
+    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
         <div className="text-center"><Loader2 className="w-10 h-10 text-[#5B2D7D] animate-spin mx-auto mb-4" /><p className="text-[#5B2D7D] font-medium animate-pulse">{status}</p></div>
     </div>
   );
 
   if (showPublicGallery && publicData) return (
-    <div className="min-h-screen bg-transparent font-[Outfit] relative">
+    <div className="h-dvh bg-transparent font-[Outfit] relative">
         <AnimatePresence>{showCamera && token && <CameraCapture token={token} onClose={() => setShowCamera(false)} onSuccess={() => setShowCamera(false)} />}</AnimatePresence>
         <ShowcaseGallery publicData={publicData} onUnlock={() => setShowPublicGallery(false)} onCamera={() => setShowCamera(true)} token={token} onItemClick={handleItemClick} />
-        <MemoryDrawer 
-            memory={selectedItem} 
-            open={drawerOpen} 
-            onOpenChange={setDrawerOpen} 
-            people={[]}
-            onEdit={() => setShowPublicGallery(false)} // Taking them to login if they try to edit
-        />
+        <MemoryDrawer memory={selectedItem} open={drawerOpen} onOpenChange={setDrawerOpen} people={[]} readOnly={true} onEdit={() => setShowPublicGallery(false)} />
     </div>
   );
 
   if (isUnassigned && ownerInfo) return (
-    <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
+    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
         <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
             <div className="w-16 h-16 bg-[#A4C538]/20 rounded-2xl flex items-center justify-center mx-auto mb-6"><Sparkles className="w-8 h-8 text-[#A4C538]" /></div>
             <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Claim Your Charm</h2>
@@ -412,7 +399,7 @@ function NFCLoginContent() {
   );
 
   if (isSetupMode && ownerInfo) return (
-    <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
+    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
         <AnimatePresence>{showCamera && token && <CameraCapture token={token} onClose={() => setShowCamera(false)} onSuccess={() => setShowCamera(false)} />}</AnimatePresence>
         <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
             <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
@@ -420,7 +407,7 @@ function NFCLoginContent() {
             <h2 className="text-xl font-bold text-[#5B2D7D] text-center mb-2">Welcome!</h2>
             <p className="text-[#5B2D7D]/60 text-center text-sm mb-6">Set up your account for <br/><span className="font-semibold text-[#5B2D7D]">{ownerInfo.email}</span></p>
             <form onSubmit={onSetup} className="space-y-4 text-left">
-                <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Name</label><input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
+                <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Name</label><input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] placeholder-[#5B2D7D]/30 focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
                 <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required minLength={6} /></div>
                 {error && <p className="text-red-500 text-xs text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>}
                 <button type="submit" disabled={isLoading} className="w-full bg-[#5B2D7D] hover:bg-[#4A246A] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">{isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Complete Setup"}<ArrowRight className="w-4 h-4" /></button>
@@ -430,7 +417,7 @@ function NFCLoginContent() {
   );
 
   if (needsPassword && ownerInfo) return (
-    <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
+    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
         <AnimatePresence>{showCamera && token && <CameraCapture token={token} onClose={() => setShowCamera(false)} onSuccess={() => setShowCamera(false)} />}</AnimatePresence>
         <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
             <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
@@ -447,7 +434,7 @@ function NFCLoginContent() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-transparent font-[Outfit]">
+    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
       <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50 relative overflow-hidden">
         {token && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 mt-4"><Zap className="w-8 h-8 text-red-500" /></div>

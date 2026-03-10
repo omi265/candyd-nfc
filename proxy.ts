@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 const { auth } = NextAuth(authConfig);
 
 // Define public routes that don't need authentication
-const publicRoutes = ["/login", "/register", "/api/auth", "/nfc/login", "/products", "/manifest.webmanifest", "/sw.js", "/login/forgot-password", "/login/reset-password"];
+const publicRoutes = ["/login", "/register", "/api/auth", "/nfc/login", "/products", "/manifest.webmanifest", "/sw.js", "/login/forgot-password", "/login/reset-password", "/.well-known"];
 
 export default auth((req) => {
   const needsAuth = !publicRoutes.some((route) => req.nextUrl.pathname.startsWith(route));
@@ -32,6 +32,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder files
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|.*\\.svg$|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|\\.well-known|.*\\.svg$|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$).*)",
   ],
 };
