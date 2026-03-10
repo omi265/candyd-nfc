@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { getUserProducts, deleteProduct, getCharmStats } from "@/app/actions/memories";
@@ -17,12 +17,15 @@ import {
     X,
     Image as ImageIcon,
     Nfc,
-    Users
+    Users,
+    Sparkles
 } from "lucide-react";
 
 
 export default function ManageCharmsPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const currentCharmId = searchParams.get('charmId');
     const { user } = useAuth();
     const [products, setProducts] = useState<any[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -47,12 +50,16 @@ export default function ManageCharmsPage() {
             if(!user) return;
             const prods = await getUserProducts();
             setProducts(prods);
+            
             if (prods.length > 0) {
-                setSelectedProduct(prods[0]);
+                const initialProduct = currentCharmId 
+                    ? prods.find(p => p.id === currentCharmId) || prods[0]
+                    : prods[0];
+                setSelectedProduct(initialProduct);
             }
         }
         loadProducts();
-    }, [user]);
+    }, [user, currentCharmId]);
 
     useEffect(() => {
         if (!selectedProduct?.id) return;
@@ -67,6 +74,13 @@ export default function ManageCharmsPage() {
         }
         loadStats();
     }, [selectedProduct]);
+
+    const handleCharmSelect = (product: any) => {
+        setSelectedProduct(product);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('charmId', product.id);
+        router.replace(`/manage-charms?${params.toString()}`);
+    };
 
     const handleDeleteCharm = async () => {
         if (!selectedProduct) return;
@@ -90,21 +104,26 @@ export default function ManageCharmsPage() {
 
     return (
         <div className="min-h-screen bg-transparent font-[Outfit] pb-12 relative">
-             {/* Header */}
-             <header className="flex items-center justify-between px-6 py-6">
-                <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
-                    <ChevronLeft className="w-6 h-6 text-[#22005D]" />
-                </button>
-                <div />
-                <button className="w-10 h-10 flex items-center justify-center bg-[#FDF2EC] rounded-full shadow-sm border border-[#EADDDE]">
-                   <Menu className="w-6 h-6 text-[#5B2D7D]" />
-                </button>
-            </header>
-
             <main className="px-6">
-                {/* Product Badge */}
-                <div className="inline-block bg-[#D6CDE3] rounded-lg px-4 py-1 text-[#5B2D7D] text-sm font-medium mb-4">
-                    {selectedProduct ? selectedProduct.name : "Charm XYZ"}
+                {/* Charm Selector */}
+                <div className="mb-8">
+                    <p className="text-[#9A92A6] text-xs font-bold uppercase tracking-wider mb-3 ml-1">Your Charms</p>
+                    <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1">
+                        {products.map((product) => (
+                            <button
+                                key={product.id}
+                                onClick={() => handleCharmSelect(product)}
+                                className={`flex-shrink-0 px-4 py-2 rounded-xl border transition-all flex items-center gap-2 ${
+                                    selectedProduct?.id === product.id
+                                        ? "bg-[#5B2D7D] border-[#5B2D7D] text-white shadow-md shadow-[#5B2D7D]/20"
+                                        : "bg-white border-[#EADDDE] text-[#5B2D7D] hover:border-[#5B2D7D]/30"
+                                }`}
+                            >
+                                <Sparkles className={`w-4 h-4 ${selectedProduct?.id === product.id ? "text-white" : "text-[#5B2D7D]"}`} />
+                                <span className="font-medium text-sm whitespace-nowrap">{product.name}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <h1 className="text-3xl font-bold mb-8 text-[#3E1C56]">Charm settings</h1>

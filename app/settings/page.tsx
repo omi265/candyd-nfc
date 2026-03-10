@@ -58,16 +58,6 @@ export default function SettingsPage() {
 
     return (
         <div className="min-h-screen bg-transparent font-[Outfit]">
-            {/* Header */}
-            <header className="flex items-center justify-between px-6 py-6">
-                <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
-                    <ChevronLeft className="w-6 h-6 text-[#22005D]" />
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center bg-[#FDF2EC] rounded-full shadow-sm border border-[#EADDDE]">
-                   <Menu className="w-6 h-6 text-[#5B2D7D]" />
-                </button>
-            </header>
-
             <main className="px-6 pb-12">
                 <h1 className="text-[#3E1C56] text-3xl font-bold mb-8">Settings</h1>
 

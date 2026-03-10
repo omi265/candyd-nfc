@@ -97,6 +97,18 @@ export default function ClientLayout({
 
   // Define logic for contextual header
   useEffect(() => {
+      if (pathname === "/settings") {
+          setContextTitle("Settings");
+          setBackHref("/");
+          return;
+      }
+
+      if (pathname === "/manage-charms") {
+          setContextTitle("Manage Charms");
+          setBackHref("/");
+          return;
+      }
+
       if (!charmId) {
           setContextTitle(prev => prev !== undefined ? undefined : prev);
           setBackHref(prev => prev !== undefined ? undefined : prev);
