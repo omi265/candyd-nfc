@@ -81,27 +81,11 @@ function CharmCard({
   const opacity = useTransform(dist, [0, 400], [1, 0.5]);
   const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
 
-  let icon = <ImageIcon className="w-12 h-12 text-white" />;
-  let bgGradient = "from-[#5B2D7D] to-[#3A1D52]"; // Memory (Purple)
-  let typeLabel = "Memory";
+  let icon = <Heart className="w-12 h-12 text-white fill-white" />;
+  let bgGradient = "from-[#A4C538] to-[#7A9B1E]"; // Life (Green)
+  let typeLabel = "Life";
 
-  if (product.type === "MEMORY") {
-      icon = (
-        <div className="relative w-20 h-20 flex items-center justify-center">
-            <div className="absolute inset-0 bg-white/20 rounded-xl shadow-md border-2 border-white/30 -rotate-12 translate-x-[-15%] translate-y-[-5%] overflow-hidden">
-                <Image src="https://images.unsplash.com/photo-1518173946687-a4c8a9b746f5?auto=format&fit=crop&w=100&q=80" fill className="object-cover opacity-40" alt="" sizes="80px" />
-            </div>
-            <div className="absolute inset-0 bg-white/20 rounded-xl shadow-md border-2 border-white/30 rotate-12 translate-x-[15%] translate-y-[5%] overflow-hidden">
-                <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" fill className="object-cover opacity-40" alt="" sizes="80px" />
-            </div>
-            <div className="relative z-10 w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                <ImageIcon className="w-8 h-8 text-[#5B2D7D]" />
-            </div>
-        </div>
-      );
-      bgGradient = "from-[#5B2D7D] to-[#3A1D52]";
-      typeLabel = "Memory";
-  } else if (product.type === "LIFE") {
+  if (product.type === "LIFE") {
       icon = <Heart className="w-12 h-12 text-white fill-white" />;
       bgGradient = "from-[#A4C538] to-[#7A9B1E]";
       typeLabel = "Life";
@@ -306,12 +290,12 @@ export default function DashboardContent({ products }: DashboardContentProps) {
           return;
       }
 
-      if (product.type === "MEMORY") {
-          router.push('/memories');
-      } else if (product.type === "LIFE") {
+      if (product.type === "LIFE") {
           router.push(`/life-charm?charmId=${product.id}`);
       } else if (product.type === "HABIT") {
           router.push(`/habit-charm?charmId=${product.id}`);
+      } else {
+          router.push("/");
       }
   };
 

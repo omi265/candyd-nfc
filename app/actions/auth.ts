@@ -9,6 +9,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { deleteFromCloudinary, extractPublicId } from "@/lib/cloudinary-helper";
 import { changePasswordSchema } from "@/lib/schemas";
+import { sendPasswordResetEmail } from "@/lib/mail";
+import { v4 as uuidv4 } from "uuid";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -145,6 +147,91 @@ export async function changePassword(prevState: any, formData: FormData) {
     } catch (error) {
         console.error("Change Password Error:", error);
         return { error: "Failed to change password" };
+    }
+}
+
+export async function forgotPassword(email: string) {
+    if (!email) return { error: "Email is required" };
+
+    try {
+        const user = await db.user.findUnique({
+            where: { email }
+        });
+
+        if (!user) {
+            // For security, don't reveal if user exists
+            return { success: true };
+        }
+
+        // Generate token
+        const token = uuidv4();
+        const expires = new Date(new Date().getTime() + 3600 * 1000); // 1 hour
+
+        // Upsert token
+        const existingToken = await db.passwordResetToken.findFirst({
+            where: { email }
+        });
+
+        if (existingToken) {
+            await db.passwordResetToken.delete({
+                where: { id: existingToken.id }
+            });
+        }
+
+        await db.passwordResetToken.create({
+            data: {
+                email,
+                token,
+                expires
+            }
+        });
+
+        // Send email
+        await sendPasswordResetEmail(email, token);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Forgot Password Error:", error);
+        return { error: "Something went wrong" };
+    }
+}
+
+export async function resetPassword(token: string, password: string) {
+    if (!token || !password) return { error: "Token and password are required" };
+
+    try {
+        const resetToken = await db.passwordResetToken.findUnique({
+            where: { token }
+        });
+
+        if (!resetToken || resetToken.expires < new Date()) {
+            return { error: "Token invalid or expired" };
+        }
+
+        const user = await db.user.findUnique({
+            where: { email: resetToken.email }
+        });
+
+        if (!user) {
+            return { error: "User not found" };
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await db.user.update({
+            where: { id: user.id },
+            data: { password: hashedPassword }
+        });
+
+        // Delete token
+        await db.passwordResetToken.delete({
+            where: { id: resetToken.id }
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Reset Password Error:", error);
+        return { error: "Something went wrong" };
     }
 }
 

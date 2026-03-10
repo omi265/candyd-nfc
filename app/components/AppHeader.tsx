@@ -99,9 +99,7 @@ function MenuDropdown({
           params.set('charmId', productId);
           
           let route = '/';
-          if (selected.type === 'MEMORY') {
-              route = '/memories';
-          } else if (selected.type === 'LIFE') {
+          if (selected.type === 'LIFE') {
               route = '/life-charm';
           } else if (selected.type === 'HABIT') {
               route = '/habit-charm';

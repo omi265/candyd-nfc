@@ -198,7 +198,7 @@ export async function getPublicCharmShowcase(token: string) {
         }
 
         if (product.type === "LIFE") {
-            // Fetch liked experiences for Life Charms
+            // 1. Fetch liked experiences for Life Charms
             const experiences = await db.experience.findMany({
                 where: {
                     item: {
@@ -211,24 +211,71 @@ export async function getPublicCharmShowcase(token: string) {
                 include: {
                     media: {
                         orderBy: { orderIndex: 'asc' }
+                    },
+                    item: {
+                        select: { title: true }
                     }
                 },
                 orderBy: { date: 'desc' }
             });
 
+            // 2. Fetch liked standalone memories linked to this product
+            const memories = await db.memory.findMany({
+                where: {
+                    productId: product.id,
+                    isLiked: true
+                },
+                include: {
+                    media: {
+                        orderBy: { orderIndex: 'asc' }
+                    }
+                },
+                orderBy: { date: 'desc' }
+            });
+
+            // 3. Unify and sort
+            const unifiedItems = [
+                ...experiences.map(e => ({
+                    id: e.id,
+                    type: 'life_item',
+                    title: e.item.title,
+                    description: e.reflection,
+                    date: e.date,
+                    location: e.location,
+                    events: [e.item.title],
+                    peopleIds: e.peopleIds,
+                    media: e.media.map(m => ({
+                        id: m.id,
+                        url: m.url,
+                        type: m.type
+                    })),
+                    isLiked: true
+                })),
+                ...memories.map(m => ({
+                    id: m.id,
+                    type: 'memory',
+                    title: m.title,
+                    description: m.description,
+                    date: m.date,
+                    location: m.location,
+                    events: m.events,
+                    peopleIds: m.peopleIds,
+                    media: m.media.map(media => ({
+                        id: media.id,
+                        url: media.url,
+                        type: media.type
+                    })),
+                    isLiked: true
+                }))
+            ];
+
+            // Sort newest first
+            unifiedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
             return {
                 name: product.name,
                 type: "LIFE",
-                items: experiences.map(e => ({
-                    id: e.id,
-                    title: e.reflection || "An Experience",
-                    date: e.date,
-                    location: e.location,
-                    media: e.media.map(m => ({
-                        url: m.url,
-                        type: m.type
-                    }))
-                }))
+                items: unifiedItems
             };
         }
 
