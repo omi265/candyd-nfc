@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
  
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    id: '/',
+    id: 'com.candyd.nfc.app',
     name: 'Candyd NFC',
     short_name: 'Candyd',
     description: 'Unbox a moment. Relive a memory. Candyd uses NFC technology to link your physical products to digital experiences.',
@@ -12,15 +12,15 @@ export default function manifest(): MetadataRoute.Manifest {
     display_override: ['standalone', 'minimal-ui'],
     background_color: '#FDF2EC',
     theme_color: '#5B2D7D',
-    // @ts-ignore - experimental link handling
-    handle_links: 'auto',
-    // @ts-ignore - capture_links helps with PWA navigation
+    // @ts-ignore
+    handle_links: 'preferred',
+    // @ts-ignore
     capture_links: 'existing-client-navigate',
-    // @ts-ignore - launch_handler is experimental but supported by Chrome/Android
+    // @ts-ignore
     launch_handler: {
-      client_mode: 'focus-existing'
+      client_mode: ['focus-existing', 'navigate-new']
     },
-    // @ts-ignore - protocol_handlers can help with deep linking
+    // @ts-ignore
     protocol_handlers: [
       {
         protocol: "web+candyd",

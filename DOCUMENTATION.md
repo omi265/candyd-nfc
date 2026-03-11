@@ -289,7 +289,7 @@ Temporary guest access tokens with expiration.
 ```typescript
 // NFC authentication flow
 1. User taps physical NFC product
-2. NFC redirects to web+candyd://[token]
+2. NFC redirects to /nfc/login?token=...
 3. Page extracts token from URL
 4. Credentials provider receives token
 5. Product lookup by token field
@@ -751,7 +751,7 @@ Drag-and-drop media ordering on edit page.
 **Physical Product Flow:**
 1. NFC chip programmed with product token URL
 2. User taps phone to product
-3. OS handles custom protocol and opens `web+candyd://[token]` inside the Candyd PWA
+3. Browser opens `/nfc/login?token=...` (or PWA if verified/installed)
 4. Auto-authentication with associated account
 5. Redirect to filtered memory view
 

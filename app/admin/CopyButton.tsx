@@ -7,7 +7,8 @@ import { toast } from "sonner";
 export function CopyButton({ token }: { token: string }) {
   const [copied, setCopied] = useState(false);
 
-  const fullUrl = `web+candyd://${token}`;
+  const baseUrl = "/nfc/login?token=";
+  const fullUrl = typeof window !== "undefined" ? `${window.location.origin}${baseUrl}${token}` : `${baseUrl}${token}`;
 
   const handleCopy = async () => {
     try {

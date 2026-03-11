@@ -9,8 +9,12 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Basic fetch handler (can be expanded for offline support)
-  // For now, it just passes through
+  // Only handle http and https schemes.
+  // Custom protocols like web+candyd should NOT be handled by the service worker fetch event.
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+  
   event.respondWith(fetch(event.request));
 });
 

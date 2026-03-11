@@ -141,7 +141,7 @@ candyd-nfc/
 1.  Navigate to `/admin`.
 2.  **Create Product:** Enter a user's email and product name.
 3.  **Get Token:** Copy the "NFC Token" link.
-4.  **Program Tag:** Write the link `web+candyd://[TOKEN]` to an NFC tag.
+4.  **Program Tag:** Write the link `https://nfc.candyd.co/nfc/login?token=[TOKEN]` to an NFC tag.
 
 ### For Guests
 1.  Receive a guest link (`/guest/login?token=...`).
