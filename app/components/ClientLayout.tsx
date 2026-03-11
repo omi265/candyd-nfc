@@ -61,7 +61,7 @@ function GlobalLayout({
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#EADDDE]/50 rounded-full blur-[120px]" />
       </div>
 
-      {!hideHeader && (user || isLoading) && (
+      {!hideHeader && (
         <div className="shrink-0 z-50 relative bg-transparent">
             <AppHeader 
                 userName={user?.name || "User"} 
