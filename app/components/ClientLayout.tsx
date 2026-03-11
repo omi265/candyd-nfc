@@ -6,6 +6,7 @@ import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { getUserProducts } from "@/app/actions/memories";
 import { motion, useScroll, useTransform, useSpring } from "motion/react";
+import SplashScreen from "./SplashScreen";
 
 function GlobalLayout({ 
     children, 
@@ -175,14 +176,17 @@ export default function ClientLayout({
 
   // Always use the GlobalLayout but hide header on login/register pages
   return (
-    <GlobalLayout 
-        user={user} 
-        contextTitle={contextTitle} 
-        backHref={backHref}
-        hideHeader={isAuthPage}
-        isLoading={isLoading}
-    >
-        {children}
-    </GlobalLayout>
+    <>
+      <SplashScreen isLoading={isLoading} />
+      <GlobalLayout 
+          user={user} 
+          contextTitle={contextTitle} 
+          backHref={backHref}
+          hideHeader={isAuthPage}
+          isLoading={isLoading}
+      >
+          {children}
+      </GlobalLayout>
+    </>
   );
 }
