@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Menu, ChevronDown, Check, Sparkles, LifeBuoy, ChevronLeft } from "lucide-react";
+import { haptics } from "@/lib/haptics";
 
 // --- Icons ---
 
@@ -148,7 +149,10 @@ function MenuDropdown({
             className="bg-[#E8DCF0]/60 backdrop-blur-sm rounded-2xl p-4 mb-4"
           >
             <button
-              onClick={() => setIsCharmDropdownOpen(!isCharmDropdownOpen)}
+              onClick={() => {
+                  haptics.light();
+                  setIsCharmDropdownOpen(!isCharmDropdownOpen);
+              }}
               className="w-full flex items-center justify-center gap-2 py-2"
             >
               <Sparkles className="w-5 h-5 text-[#5B2D7D]" />
@@ -177,7 +181,10 @@ function MenuDropdown({
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.15 }}
-                        onClick={() => handleCharmSelect(null)}
+                        onClick={() => {
+                            haptics.light();
+                            handleCharmSelect(null);
+                        }}
                         className="w-full flex items-center justify-center gap-2 py-2 text-[#5B2D7D] hover:bg-[#D8CCE8]/50 rounded-lg transition-colors"
                     >
                         <span className={!currentCharmId ? "font-medium" : "opacity-70"}>
@@ -192,7 +199,10 @@ function MenuDropdown({
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.15, delay: (index + 1) * 0.05 }}
-                        onClick={() => handleCharmSelect(product.id)}
+                        onClick={() => {
+                            haptics.light();
+                            handleCharmSelect(product.id);
+                        }}
                         className="w-full flex items-center justify-center gap-2 py-2 text-[#5B2D7D] hover:bg-[#D8CCE8]/50 rounded-lg transition-colors"
                       >
                         <span
@@ -226,7 +236,10 @@ function MenuDropdown({
                 key={item.label}
                 href={item.href}
                 className="block"
-                onClick={onClose}
+                onClick={() => {
+                    haptics.light();
+                    onClose();
+                }}
               >
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -244,6 +257,7 @@ function MenuDropdown({
 
             <button
                 onClick={() => {
+                    haptics.light();
                     logout();
                     onClose();
                 }}
@@ -297,13 +311,19 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref, 
           <div className="flex items-center gap-2">
               {backHref && (
                   <button 
-                    onClick={() => router.push(backHref)}
+                    onClick={() => {
+                        haptics.light();
+                        router.push(backHref);
+                    }}
                     className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors shrink-0"
                   >
                       <ChevronLeft className="w-6 h-6" />
                   </button>
               )}
-              <div className="cursor-pointer shrink-0" onClick={() => router.push('/')}>
+              <div className="cursor-pointer shrink-0" onClick={() => {
+                  haptics.light();
+                  router.push('/');
+              }}>
                 <Logo />
               </div>
           </div>
@@ -334,14 +354,20 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref, 
             ) : (
                 <>
                     <button
-                      onClick={() => router.push('/support')}
+                      onClick={() => {
+                          haptics.light();
+                          router.push('/support');
+                      }}
                       className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
                     >
                         <LifeBuoy className="w-5 h-5" />
                     </button>
                     <button
                       ref={menuButtonRef}
-                      onClick={() => setIsMenuOpen(!isMenuOpen)}
+                      onClick={() => {
+                          haptics.light();
+                          setIsMenuOpen(!isMenuOpen);
+                      }}
                       className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
                     >
                         <Menu className="w-6 h-6" />

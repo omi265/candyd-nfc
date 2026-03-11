@@ -11,6 +11,7 @@ import { AnimatePresence, motion, useMotionValue, animate, useTransform, MotionV
 import { getOptimizedUrl } from "@/lib/media-helper";
 import { MemoryDrawer } from "@/components/memory-drawer";
 import Image from "next/image";
+import { haptics } from "@/lib/haptics";
 
 // --- Helpers ---
 
@@ -214,6 +215,8 @@ function ShowcaseGallery({ publicData, onUnlock, onCamera, token, onItemClick }:
 
         const snapX = (containerSize.width - cellSize.width) / 2 - tCol * cellSize.width;
         const snapY = (containerSize.height - cellSize.height) / 2 - VISUAL_Y_OFFSET - tRow * cellSize.height;
+        
+        haptics.medium();
         animate(x, snapX, { type: "spring", stiffness: 300, damping: 30 });
         animate(y, snapY, { type: "spring", stiffness: 300, damping: 30 });
     };
@@ -243,15 +246,34 @@ function ShowcaseGallery({ publicData, onUnlock, onCamera, token, onItemClick }:
                         if (!item) return <div key={`empty-${i}`} style={{ width: cellSize.width || "80vw", height: cellSize.height || "65vh" }} />;
                         return (
                             <div key={item.id} className="flex items-center justify-center p-1" style={{ width: cellSize.width || "80vw", height: cellSize.height || "65vh" }}>
-                                <PublicGridCard item={item} x={x} y={y} row={r} col={c} cellSize={cellSize} containerSize={containerSize} visualYOffset={VISUAL_Y_OFFSET} index={i} onClick={() => onItemClick(item)} />
+                                <PublicGridCard item={item} x={x} y={y} row={r} col={c} cellSize={cellSize} containerSize={containerSize} visualYOffset={VISUAL_Y_OFFSET} index={i} onClick={() => { haptics.light(); onItemClick(item); }} />
                             </div>
                         );
                     })}
                 </motion.div>
             </div>
+
+            {/* --- HAPTIC DEBUG OVERLAY (Temporary for testing) --- */}
+            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[100] flex flex-wrap justify-center gap-2 px-4 pointer-events-none w-full">
+                {[
+                    { label: "Light", action: haptics.light },
+                    { label: "Medium", action: haptics.medium },
+                    { label: "Heavy", action: haptics.heavy },
+                    { label: "Success", action: haptics.success },
+                    { label: "3 Ticks", action: haptics.nfcTap },
+                ].map((btn) => (
+                    <button
+                        key={btn.label}
+                        onClick={(e) => { e.stopPropagation(); btn.action(); }}
+                        className="px-3 py-1.5 bg-[#5B2D7D]/80 backdrop-blur-md border border-white/20 text-white text-[10px] font-black rounded-full pointer-events-auto active:scale-95 transition-all shadow-xl"
+                    >
+                        {btn.label}
+                    </button>
+                ))}
+            </div>
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 z-[60] w-full max-w-[320px] px-6 pointer-events-none">
-                <button onClick={onUnlock} className="flex-1 bg-white/80 backdrop-blur-xl text-[#5B2D7D] py-4 rounded-3xl font-black uppercase tracking-tighter text-xs shadow-2xl border border-[#5B2D7D]/10 active:scale-95 transition-all pointer-events-auto">Unlock dashboard</button>
-                <button onClick={onCamera} className="w-14 h-14 bg-[#A4C538] text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-all shadow-[#A4C538]/30 pointer-events-auto"><Camera className="w-6 h-6" /></button>
+                <button onClick={() => { haptics.medium(); onUnlock(); }} className="flex-1 bg-white/80 backdrop-blur-xl text-[#5B2D7D] py-4 rounded-3xl font-black uppercase tracking-tighter text-xs shadow-2xl border border-[#5B2D7D]/10 active:scale-95 transition-all pointer-events-auto">Unlock dashboard</button>
+                <button onClick={() => { haptics.light(); onCamera(); }} className="w-14 h-14 bg-[#A4C538] text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-all shadow-[#A4C538]/30 pointer-events-auto"><Camera className="w-6 h-6" /></button>
             </div>
         </div>
     );
@@ -313,7 +335,7 @@ function NFCLoginContent() {
         }, 100);
     }
 
-    if ("vibrate" in navigator) navigator.vibrate([15, 30, 15, 30, 15]);
+    haptics.nfcTap();
     const init = async () => {
         try {
             // --- 1. Attempt to load from Cache for instant UI ---

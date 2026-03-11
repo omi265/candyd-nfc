@@ -5,6 +5,7 @@ import { Camera, RefreshCw, X, Check, Loader2, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { getGuestCloudinarySignature, createGuestMemory } from "@/app/actions/nfc";
+import { haptics } from "@/lib/haptics";
 
 interface CameraCaptureProps {
   token: string;
@@ -20,13 +21,6 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
   const [isUploading, setIsUploading] = useState(false);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
   const [isCameraReady, setIsCameraReady] = useState(false);
-
-  // Vibrate helper
-  const vibrate = (pattern: number | number[]) => {
-    if ("vibrate" in navigator) {
-      navigator.vibrate(pattern);
-    }
-  };
 
   const startCamera = useCallback(async () => {
     setIsCameraReady(false);
@@ -66,7 +60,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
     if (!context) return;
 
     // Vibrate on capture
-    vibrate(50);
+    haptics.medium();
 
     canvasRef.current.width = videoRef.current.videoWidth;
     canvasRef.current.height = videoRef.current.videoHeight;
@@ -90,7 +84,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
     if (!capturedImage) return;
 
     setIsUploading(true);
-    vibrate([20, 50, 20]);
+    haptics.light();
 
     try {
       // 1. Get Guest Signature
@@ -127,10 +121,11 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
 
       if (dbResult.error) throw new Error(dbResult.error);
 
-      vibrate([100, 50, 100]);
+      haptics.success();
       toast.success("Memory captured!");
       onSuccess(dbResult.memoryId!);
     } catch (err: any) {
+      haptics.error();
       toast.error(err.message || "Something went wrong");
       setIsUploading(false);
     }
@@ -138,7 +133,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
 
   const toggleCamera = () => {
     setFacingMode(prev => (prev === "user" ? "environment" : "user"));
-    vibrate(20);
+    haptics.light();
   };
 
   return (
