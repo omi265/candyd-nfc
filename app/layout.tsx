@@ -33,6 +33,10 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Candyd",
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+  },
   icons: {
     apple: "/apple-touch-icon.png",
   },

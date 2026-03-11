@@ -299,6 +299,21 @@ function NFCLoginContent() {
 
   useEffect(() => {
     if (!token) return;
+
+    // --- Bridge Logic for existing https:// links ---
+    // If the user lands here via a standard web link, try to trigger the custom protocol
+    // This will force the PWA to open if it's installed.
+    const hasAttemptedRedirect = sessionStorage.getItem(`pwa_redirect_attempt_${token}`);
+    if (!hasAttemptedRedirect) {
+        sessionStorage.setItem(`pwa_redirect_attempt_${token}`, "true");
+        // We use a small timeout to let the page load slightly, then attempt redirect
+        const timer = setTimeout(() => {
+            console.log("[PWA] Attempting bridge redirect to custom protocol...");
+            window.location.href = `web+candyd://${token}`;
+        }, 100);
+        return () => clearTimeout(timer);
+    }
+
     if ("vibrate" in navigator) navigator.vibrate([10, 30, 10]);
     const init = async () => {
         try {

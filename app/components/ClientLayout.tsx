@@ -149,12 +149,22 @@ export default function ClientLayout({
     if ('launchQueue' in window) {
         (window as any).launchQueue.setConsumer((launchParams: any) => {
             if (launchParams.targetURL) {
-                const url = new URL(launchParams.targetURL);
-                console.log("[PWA] App launched with URL:", url.href);
-                
-                // If it's an NFC login link, navigate immediately
-                if (url.pathname.startsWith('/nfc/login')) {
-                    router.push(`${url.pathname}${url.search}`);
+                const urlString = launchParams.targetURL;
+                console.log("[PWA] App launched with URL:", urlString);
+
+                // Check for custom protocol: web+candyd://[TOKEN]
+                if (urlString.startsWith('web+candyd://')) {
+                    const token = urlString.replace('web+candyd://', '');
+                    if (token) {
+                        router.push(`/nfc/login?token=${token}`);
+                    }
+                } 
+                // Fallback for standard web paths
+                else {
+                    const url = new URL(urlString);
+                    if (url.pathname.startsWith('/nfc/login')) {
+                        router.push(`${url.pathname}${url.search}`);
+                    }
                 }
             }
         });

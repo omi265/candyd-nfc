@@ -89,7 +89,7 @@ export default async function AdminPage() {
                           <td className="py-3 pr-4">
                             <div className="flex items-center gap-2">
                                 <code className="font-mono text-[10px] text-[#5B2D7D]/80 truncate max-w-[150px] bg-white/50 px-2 py-1 rounded border border-[#5B2D7D]/10">
-                                    /nfc/login?token={product.token}
+                                    web+candyd://{product.token}
                                 </code>
                                 <CopyButton token={product.token as string} />
                             </div>

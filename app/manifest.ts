@@ -14,10 +14,19 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#5B2D7D',
     // @ts-ignore - experimental link handling
     handle_links: 'auto',
+    // @ts-ignore - capture_links helps with PWA navigation
+    capture_links: 'existing-client-navigate',
     // @ts-ignore - launch_handler is experimental but supported by Chrome/Android
     launch_handler: {
       client_mode: 'focus-existing'
     },
+    // @ts-ignore - protocol_handlers can help with deep linking
+    protocol_handlers: [
+      {
+        protocol: "web+candyd",
+        url: "/nfc/login?token=%s"
+      }
+    ],
     icons: [
       {
         src: '/icon-192x192.png',

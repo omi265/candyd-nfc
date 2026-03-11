@@ -7,12 +7,11 @@ import { toast } from "sonner";
 export function CopyButton({ token }: { token: string }) {
   const [copied, setCopied] = useState(false);
 
-  const baseUrl = "/nfc/login?token=";
-  const fullUrl = typeof window !== "undefined" ? `${window.location.origin}${baseUrl}${token}` : `${baseUrl}${token}`;
+  const fullUrl = `web+candyd://${token}`;
 
   const handleCopy = async () => {
     try {
-      // Modern Clipboard API (Requires Secure Context / HTTPS)
+      // Modern Clipboard API
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(fullUrl);
       } else {
