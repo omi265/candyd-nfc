@@ -230,3 +230,28 @@ export async function getProducts() {
 
   return products;
 }
+
+export async function deleteProduct(id: string) {
+  const session = await auth();
+  if (session?.user?.role !== "ADMIN") {
+    return { error: "Unauthorized" };
+  }
+
+  try {
+    // Delete associated data first if not cascaded by DB
+    // Habits and LifeLists are not currently onDelete: Cascade in the schema for Product
+    await db.habit.deleteMany({ where: { productId: id } });
+    await db.lifeList.deleteMany({ where: { productId: id } });
+    // Memories are SetNull so they don't need deletion here, unless desired
+
+    await db.product.delete({
+      where: { id },
+    });
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Delete product failed:", error);
+    return { error: "Failed to delete product" };
+  }
+}

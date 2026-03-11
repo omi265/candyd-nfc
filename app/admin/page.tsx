@@ -1,9 +1,10 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getAdminStats, getProducts, createProduct, getAllUsers } from "@/app/actions/admin";
+import { getAdminStats, getProducts, getAllUsers } from "@/app/actions/admin";
 import { getTickets } from "@/app/actions/support";
 import { AdminDashboardClient } from "./client";
 import { CopyButton } from "./CopyButton";
+import { DeleteProductButton } from "./DeleteProductButton";
 import { SupportTicketStatus } from "./SupportTicketStatus";
 import { Product, SupportTicket } from "@prisma/client";
 
@@ -57,6 +58,7 @@ export default async function AdminPage() {
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Type</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Assigned To</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Token Link</th>
+                        <th className="pb-3 font-medium text-[#5B2D7D]/60 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -91,6 +93,9 @@ export default async function AdminPage() {
                                 </code>
                                 <CopyButton token={product.token as string} />
                             </div>
+                          </td>
+                          <td className="py-3 text-right">
+                            <DeleteProductButton productId={product.id} productName={product.name} />
                           </td>
                         </tr>
                       ))}
