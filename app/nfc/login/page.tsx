@@ -306,29 +306,74 @@ function NFCLoginContent() {
     const hasAttemptedRedirect = sessionStorage.getItem(`pwa_redirect_attempt_${token}`);
     if (!hasAttemptedRedirect) {
         sessionStorage.setItem(`pwa_redirect_attempt_${token}`, "true");
-        // We use a small timeout to let the page load slightly, then attempt redirect
-        const timer = setTimeout(() => {
+        // We attempt the redirect but don't return early anymore
+        setTimeout(() => {
             console.log("[PWA] Attempting bridge redirect to custom protocol...");
             window.location.href = `web+candyd://${token}`;
         }, 100);
-        return () => clearTimeout(timer);
     }
 
     if ("vibrate" in navigator) navigator.vibrate([10, 30, 10]);
     const init = async () => {
         try {
-            if (localStorage.getItem(`trusted_tag_${token}`) === "true") await performLogin(token);
-            else {
+            // --- 1. Attempt to load from Cache for instant UI ---
+            const cachedPublicData = localStorage.getItem(`cache_public_showcase_${token}`);
+            const cachedOwnerInfo = localStorage.getItem(`cache_owner_info_${token}`);
+            
+            if (cachedPublicData) {
+                setPublicData(JSON.parse(cachedPublicData));
+                setShowPublicGallery(true);
+                setIsLoading(false);
+            }
+            
+            if (cachedOwnerInfo) {
+                const info = JSON.parse(cachedOwnerInfo);
+                setOwnerInfo(info);
+                if (info.unassigned) setIsUnassigned(true);
+                else if (info.setupRequired) setIsSetupMode(true);
+                else setNeedsPassword(true);
+                setIsLoading(false);
+            }
+
+            // --- 2. Perform Login if trusted ---
+            if (localStorage.getItem(`trusted_tag_${token}`) === "true") {
+                await performLogin(token);
+                return;
+            }
+
+            // --- 3. Background Fetch/Refresh (Slightly delayed to prioritize Cache UI) ---
+            setTimeout(async () => {
+                // Fetch Showcase
                 const pub = await getPublicCharmShowcase(token);
-                if (pub?.items?.length) { setPublicData(pub); setShowPublicGallery(true); }
+                if (pub?.items?.length) { 
+                    setPublicData(pub); 
+                    setShowPublicGallery(true);
+                    localStorage.setItem(`cache_public_showcase_${token}`, JSON.stringify(pub));
+                    setIsLoading(false);
+                }
+
+                // Fetch Owner Info
                 const info = await getProductOwnerInfo(token);
                 if (info) {
-                    if ('unassigned' in info) { setIsUnassigned(true); setOwnerInfo({ name: info.charmName, email: "" }); }
-                    else { setOwnerInfo(info); if (info.setupRequired) setIsSetupMode(true); else setNeedsPassword(true); }
+                    localStorage.setItem(`cache_owner_info_${token}`, JSON.stringify(info));
+                    if ('unassigned' in info) { 
+                        setIsUnassigned(true); 
+                        setOwnerInfo({ name: info.charmName, email: "", unassigned: true }); 
+                    } else { 
+                        setOwnerInfo(info); 
+                        if (info.setupRequired) setIsSetupMode(true); 
+                        else setNeedsPassword(true); 
+                    }
                     setIsLoading(false);
-                } else { setStatus("Invalid tag."); setIsLoading(false); }
-            }
-        } catch { setStatus("Error occurred."); setIsLoading(false); }
+                } else if (!cachedOwnerInfo) {
+                    setStatus("Invalid tag.");
+                    setIsLoading(false);
+                }
+            }, cachedPublicData ? 1000 : 0); // 1s delay if cached, instant if not
+        } catch { 
+            if (isLoading) setStatus("Error occurred."); 
+            setIsLoading(false); 
+        }
     };
     init();
   }, [token, performLogin]);
