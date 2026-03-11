@@ -313,7 +313,7 @@ function NFCLoginContent() {
         }, 100);
     }
 
-    if ("vibrate" in navigator) navigator.vibrate([10, 30, 10]);
+    if ("vibrate" in navigator) navigator.vibrate([15, 30, 15, 30, 15]);
     const init = async () => {
         try {
             // --- 1. Attempt to load from Cache for instant UI ---
