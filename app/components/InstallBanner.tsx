@@ -26,8 +26,9 @@ export function InstallBanner() {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Show banner if not already standalone
-      if (!isStandaloneMode) {
+      // Show banner if not already standalone and not dismissed in this session
+      const hasDismissed = sessionStorage.getItem("installBannerDismissed");
+      if (!isStandaloneMode && !hasDismissed) {
         setIsVisible(true);
       }
     };
@@ -36,11 +37,14 @@ export function InstallBanner() {
 
     // For iOS, we show the banner manually if not standalone
     if (isIOSDevice && !isStandaloneMode) {
-      // Small delay to ensure user isn't immediately hit with a popup
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 3000);
-      return () => clearTimeout(timer);
+      const hasDismissed = sessionStorage.getItem("installBannerDismissed");
+      if (!hasDismissed) {
+        // Small delay to ensure user isn't immediately hit with a popup
+        const timer = setTimeout(() => {
+          setIsVisible(true);
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
     }
 
     return () => {
@@ -61,6 +65,7 @@ export function InstallBanner() {
     // We've used the prompt, and can't use it again
     setDeferredPrompt(null);
     setIsVisible(false);
+    sessionStorage.setItem("installBannerDismissed", "true");
   };
 
   if (!isVisible || isStandalone) return null;
@@ -106,7 +111,10 @@ export function InstallBanner() {
             )}
             
             <button
-              onClick={() => setIsVisible(false)}
+              onClick={() => {
+                setIsVisible(false);
+                sessionStorage.setItem("installBannerDismissed", "true");
+              }}
               className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-400"
             >
               <X className="w-4 h-4" />

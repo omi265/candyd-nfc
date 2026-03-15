@@ -355,11 +355,19 @@ function MemoryUploadContent() {
     const hasMedia = mediaItems.length > 0;
 
     return (
-        <div className="flex flex-col h-full bg-transparent font-[Outfit] relative">
+        <div className="flex flex-col h-full bg-transparent font-[Outfit] relative overflow-x-hidden">
              <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-[#FDF2EC] to-transparent z-10 pointer-events-none"></div>
 
-             <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-12">
+             <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-12 overflow-x-hidden">
                 <div className="max-w-xl mx-auto w-full relative z-20">
+                    <button 
+                        onClick={() => router.back()}
+                        className="mb-6 p-2 -ml-2 text-[#5B2D7D] hover:bg-[#5B2D7D]/5 rounded-full transition-colors flex items-center gap-1 group"
+                    >
+                        <ChevronLeft className="w-5 h-5 group-active:-translate-x-1 transition-transform" />
+                        <span className="text-sm font-medium">Back</span>
+                    </button>
+
                     <div className="flex items-start justify-between mb-8 mt-2">
                          <div className="flex items-start gap-3">
                              <div className="mt-1">

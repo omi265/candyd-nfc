@@ -13,13 +13,16 @@ import {
   Image as ImageIcon,
   Search,
   X,
-  Heart
+  Heart,
+  Camera
 } from "lucide-react";
 import { LifeList, LifeListItem, Product, Person, Experience, ExperienceMedia, Memory, Media } from "@prisma/client";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import { MemoryDrawer } from "@/components/memory-drawer";
+import CameraCapture from "@/app/components/CameraCapture";
 import { toast } from "sonner";
 import Image from "next/image";
+import { AnimatePresence } from "framer-motion";
 
 type LifeListItemWithExperience = LifeListItem & {
   experience: (Experience & { media: ExperienceMedia[] }) | null;
@@ -35,6 +38,7 @@ type MemoryWithMedia = Memory & {
 
 type ProductWithState = Product & {
   state: string;
+  token: string;
 };
 
 // Unified type for Grid Display
@@ -338,6 +342,7 @@ export default function LifeCharmContent({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   // Update view mode if URL changes
   useEffect(() => {
@@ -902,7 +907,16 @@ export default function LifeCharmContent({
 
         {/* Action Buttons */}
         {!isGraduated && (
-            <div className="flex flex-col items-center gap-3 pointer-events-auto">
+            <div className="flex flex-row items-center gap-3 pointer-events-auto">
+            {/* Quick Capture Button */}
+            <button
+                onClick={() => setShowCamera(true)}
+                className="w-14 h-14 rounded-full bg-white border border-[#EADDDE] flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
+                title="Quick Capture"
+            >
+                <Camera className="w-6 h-6 text-[#5B2D7D]" />
+            </button>
+
             {/* Primary: Add Memory (Grid) or Add Experience (List) */}
             <button
                 onClick={handleFabClick}
@@ -925,6 +939,20 @@ export default function LifeCharmContent({
         people={people}
         onEdit={handleEditItem}
       />
+
+      {/* Camera Capture Overlay */}
+      <AnimatePresence>
+        {showCamera && product.token && (
+            <CameraCapture 
+                token={product.token} 
+                onClose={() => setShowCamera(false)} 
+                onSuccess={() => {
+                    setShowCamera(false);
+                    router.refresh(); // Refresh to show the new memory
+                }} 
+            />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

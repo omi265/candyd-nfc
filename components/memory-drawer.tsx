@@ -13,10 +13,11 @@ import { useRef, useState, useEffect, useTransition } from "react";
 import { toggleMemoryLike } from "@/app/actions/memories";
 import { toggleExperienceLike } from "@/app/actions/life-charm";
 import { toast } from "sonner";
-import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles, Users } from "lucide-react";
+import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles, Users, Info, X } from "lucide-react";
 import AudioPlayer from "@/app/components/AudioPlayer";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import Image from "next/image";
+import { motion, AnimatePresence as MotionAnimatePresence } from "framer-motion";
 
 interface MemoryDrawerProps {
     memory: any | null;
@@ -30,6 +31,7 @@ interface MemoryDrawerProps {
 export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit, readOnly = false }: MemoryDrawerProps) {
     const router = useRouter();
     const [isLiked, setIsLiked] = useState(false);
+    const [showInfo, setShowInfo] = useState(false);
     const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
@@ -121,17 +123,45 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit, 
                                          <Edit2 className="w-6 h-6 text-[#5B2D7D]" />
                                      </button>
                                  )}
-                                 <button 
-                                    onClick={handleLike}
-                                    disabled={readOnly}
-                                    className={`w-12 h-12 rounded-full border flex items-center justify-center transition-colors ${
-                                        isLiked 
-                                        ? "bg-[#F37B55] border-[#F37B55]" 
-                                        : "bg-[#FFF5F0] border-[#EADDDE]"
-                                    } ${readOnly ? "opacity-50 grayscale cursor-default" : ""}`}
-                                 >
-                                     <Heart className={`w-6 h-6 ${isLiked ? "text-white fill-white" : "text-[#F37B55]"}`} />
-                                 </button>
+                                 
+                                 <div className="relative">
+                                    <button 
+                                        onClick={handleLike}
+                                        disabled={readOnly}
+                                        className={`w-12 h-12 rounded-full border flex items-center justify-center transition-colors ${
+                                            isLiked 
+                                            ? "bg-[#F37B55] border-[#F37B55]" 
+                                            : "bg-[#FFF5F0] border-[#EADDDE]"
+                                        } ${readOnly ? "opacity-50 grayscale cursor-default" : ""}`}
+                                    >
+                                        <Heart className={`w-6 h-6 ${isLiked ? "text-white fill-white" : "text-[#F37B55]"}`} />
+                                    </button>
+
+                                    <button 
+                                        onClick={() => setShowInfo(!showInfo)}
+                                        className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-[#EADDDE] rounded-full flex items-center justify-center shadow-sm text-[#5B2D7D]/60 hover:text-[#5B2D7D] transition-colors"
+                                    >
+                                        <Info className="w-3 h-3" />
+                                    </button>
+
+                                    <MotionAnimatePresence>
+                                        {showInfo && (
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                className="absolute bottom-full right-0 mb-3 w-48 p-3 bg-white border border-[#EADDDE] rounded-2xl shadow-xl z-50 text-[11px] leading-tight text-[#5B2D7D]/80"
+                                            >
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-bold text-[#5B2D7D]">Feature Memory</span>
+                                                    <button onClick={() => setShowInfo(false)}><X className="w-3 h-3 text-[#5B2D7D]/40" /></button>
+                                                </div>
+                                                Liking a memory features it on your **Public Showcase**. Anyone who scans your charm will see your featured memories first!
+                                                <div className="absolute top-full right-4 w-3 h-3 bg-white border-r border-b border-[#EADDDE] rotate-45 -mt-1.5" />
+                                            </motion.div>
+                                        )}
+                                    </MotionAnimatePresence>
+                                 </div>
                              </div>
                          </div>
                     </DrawerHeader>
