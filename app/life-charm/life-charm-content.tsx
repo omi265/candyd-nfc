@@ -823,7 +823,7 @@ export default function LifeCharmContent({
                 </div>
             ) : (
                 <div className="w-full h-full flex items-center justify-center px-6 text-center">
-                    <p className="text-[#5B2D7D] text-lg font-medium">
+                    <p className="text-2xl font-bold tracking-tight text-[#5B2D7D]/40">
                         Start adding your memories
                     </p>
                 </div>
