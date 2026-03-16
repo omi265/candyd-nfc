@@ -485,7 +485,7 @@ export default function LifeCharmContent({
   const FILL_ORDER = useMemo(() => getCenterOutOrder(currentGridSize), [currentGridSize]);
 
   const gridData = useMemo(() => {
-    if (gridItems.length === 0 && searchQuery) return [];
+    if (gridItems.length === 0) return [];
 
     const grid: (GridItem | null)[] = Array(totalCells).fill(null);
     
@@ -499,7 +499,7 @@ export default function LifeCharmContent({
       }
     });
     return grid;
-  }, [gridItems, totalCells, FILL_ORDER, searchQuery]);
+  }, [gridItems, totalCells, FILL_ORDER]);
 
   // Measure cell size
   useEffect(() => {
