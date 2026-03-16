@@ -138,27 +138,47 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit, 
                                     </button>
 
                                     <button 
-                                        onClick={() => setShowInfo(!showInfo)}
-                                        className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-[#EADDDE] rounded-full flex items-center justify-center shadow-sm text-[#5B2D7D]/60 hover:text-[#5B2D7D] transition-colors"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowInfo(!showInfo);
+                                        }}
+                                        className="absolute -top-2 -right-2 w-8 h-8 bg-white border-2 border-[#EADDDE] rounded-full flex items-center justify-center shadow-md text-[#5B2D7D] hover:bg-gray-50 transition-all z-20 active:scale-90"
                                     >
-                                        <Info className="w-3 h-3" />
+                                        <Info className="w-4 h-4" />
                                     </button>
 
                                     <MotionAnimatePresence>
                                         {showInfo && (
-                                            <motion.div
-                                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                className="absolute bottom-full right-0 mb-3 w-48 p-3 bg-white border border-[#EADDDE] rounded-2xl shadow-xl z-50 text-[11px] leading-tight text-[#5B2D7D]/80"
-                                            >
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <span className="font-bold text-[#5B2D7D]">Feature Memory</span>
-                                                    <button onClick={() => setShowInfo(false)}><X className="w-3 h-3 text-[#5B2D7D]/40" /></button>
-                                                </div>
-                                                Liking a memory features it on your **Public Showcase**. Anyone who scans your charm will see your featured memories first!
-                                                <div className="absolute top-full right-4 w-3 h-3 bg-white border-r border-b border-[#EADDDE] rotate-45 -mt-1.5" />
-                                            </motion.div>
+                                            <>
+                                                {/* Backdrop to close when clicking outside */}
+                                                <motion.div 
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
+                                                    onClick={() => setShowInfo(false)}
+                                                    className="fixed inset-0 z-40 bg-black/5"
+                                                />
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                                    className="absolute top-full right-0 mt-3 w-64 p-4 bg-white border-2 border-[#EADDDE] rounded-2xl shadow-2xl z-50 text-[12px] leading-relaxed text-[#5B2D7D]"
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="font-bold text-sm text-[#5B2D7D]">Feature This Memory</span>
+                                                        <button onClick={() => setShowInfo(false)} className="p-1 -mr-1 hover:bg-gray-100 rounded-full transition-colors">
+                                                            <X className="w-4 h-4 text-[#5B2D7D]/40" />
+                                                        </button>
+                                                    </div>
+                                                    <p className="font-medium">
+                                                        Liking a memory adds it to your **Public Showcase**. 
+                                                    </p>
+                                                    <p className="mt-2 text-[#5B2D7D]/70">
+                                                        Anyone who scans your physical charm will see your featured memories first!
+                                                    </p>
+                                                    <div className="absolute bottom-full right-5 w-4 h-4 bg-white border-l-2 border-t-2 border-[#EADDDE] rotate-45 -mb-2.5" />
+                                                </motion.div>
+                                            </>
                                         )}
                                     </MotionAnimatePresence>
                                  </div>
