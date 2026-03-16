@@ -807,7 +807,7 @@ export default function LifeCharmContent({
             );
           })}
         </motion.div>
-            ) : (
+            ) : searchQuery ? (
                 <div className="w-full h-full flex flex-col items-center justify-center py-20 text-center">
                     <div className="w-16 h-16 rounded-full bg-[#EADDDE]/30 flex items-center justify-center mb-4">
                         <Search className="w-8 h-8 text-[#5B2D7D]/20" />
@@ -820,6 +820,12 @@ export default function LifeCharmContent({
                     >
                         Clear search
                     </button>
+                </div>
+            ) : (
+                <div className="w-full h-full flex items-center justify-center px-6 text-center">
+                    <p className="text-[#5B2D7D] text-lg font-medium">
+                        Start adding your memories
+                    </p>
                 </div>
             )
         ) : (
