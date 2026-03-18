@@ -41,9 +41,10 @@ interface DraggableMediaItemProps {
     totalItems: number;
     onMoveUp: () => void;
     onMoveDown: () => void;
+    onDelete: () => void;
 }
 
-const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, onMoveDown }: DraggableMediaItemProps) => {
+const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, onMoveDown, onDelete }: DraggableMediaItemProps) => {
     return (
         <motion.div
             layout
@@ -118,6 +119,15 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                             )}
                         </div>
                     </div>
+
+                    {/* Delete Button (New) */}
+                    <button 
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="w-14 h-full flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 transition-colors active:scale-95 shrink-0"
+                    >
+                        <Trash2 className="w-6 h-6" />
+                    </button>
 
                     {/* Move Down Button (Right) */}
                     <button 
@@ -430,6 +440,22 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         });
     };
 
+    const handleRemoveMedia = (index: number) => {
+        const itemToRemove = mediaItems[index];
+        if (itemToRemove.isNew && itemToRemove.status === 'completed' && itemToRemove.url) {
+            // Optional: delete from cloudinary if it was just uploaded
+            // getCloudinarySignature().then(...) - but we don't have delete action easily here
+            // For now, just remove from UI, the backend won't see it
+        }
+        
+        setMediaItems(prev => prev.filter((_, i) => i !== index));
+        // Cleanup refs if needed
+        if (itemToRemove.id) {
+            completedUploadsRef.current.delete(itemToRemove.id);
+            uploadPromisesRef.current.delete(itemToRemove.id);
+        }
+    };
+
     const handleSave = async () => {
         setIsUploading(true);
         // Clean errors first?
@@ -665,6 +691,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                     totalItems={mediaItems.length}
                                     onMoveUp={() => handleMoveUp(index)}
                                     onMoveDown={() => handleMoveDown(index)}
+                                    onDelete={() => handleRemoveMedia(index)}
                                   />
                               ))}
 

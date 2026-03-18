@@ -67,6 +67,7 @@ function MemoryUploadContent() {
     const [newPersonName, setNewPersonName] = useState("");
     const [showPeopleSelector, setShowPeopleSelector] = useState(false);
     const [isAddingPerson, setIsAddingPerson] = useState(false);
+    const [isReordering, setIsReordering] = useState(false);
 
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const uploadPromisesRef = useRef<Map<string, Promise<any>>>(new Map());
@@ -174,6 +175,24 @@ function MemoryUploadContent() {
         } finally {
             uploadPromisesRef.current.delete(item.id);
         }
+    };
+
+    const handleMoveUp = (index: number) => {
+        if (index === 0) return;
+        setMediaItems(prev => {
+            const newList = [...prev];
+            [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
+            return newList;
+        });
+    };
+
+    const handleMoveDown = (index: number) => {
+        setMediaItems(prev => {
+            if (index === prev.length - 1) return prev;
+            const newList = [...prev];
+            [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
+            return newList;
+        });
     };
 
     const toggleEmotion = (emotion: string) => {
@@ -411,7 +430,30 @@ function MemoryUploadContent() {
 
                         {/* Media */}
                         <div>
-                            <label className="block text-[#C27A59] text-[13px] font-bold mb-1 uppercase">MEDIA<span className="text-[#C27A59]">*</span></label>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="block text-[#C27A59] text-[13px] font-bold uppercase">MEDIA<span className="text-[#C27A59]">*</span></label>
+                                {mediaItems.length > 1 && (
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsReordering(!isReordering)}
+                                        className={`text-[11px] font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${
+                                            isReordering 
+                                            ? "bg-[#A4C538] text-[#5B2D7D]" 
+                                            : "bg-[#EADDDE] text-[#5B2D7D]"
+                                        }`}
+                                    >
+                                        {isReordering ? (
+                                            <>
+                                                <RefreshCw className="w-3 h-3" /> Done
+                                            </>
+                                        ) : (
+                                            <>
+                                                <RefreshCw className="w-3 h-3" /> Reorder
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                             <p className="text-[#A68CAB] text-[10px] mb-3 ml-1">You can add and edit the media later</p>
                             
                             {!hasMedia ? (
@@ -439,6 +481,81 @@ function MemoryUploadContent() {
                                     <input type="file" ref={imageInputRef} className="hidden" onChange={handleFileChange} multiple accept="image/*" />
                                     <input type="file" ref={videoInputRef} className="hidden" onChange={handleFileChange} multiple accept="video/*" />
                                     <input type="file" ref={audioInputRef} className="hidden" onChange={handleFileChange} multiple accept="audio/*" />
+                                </div>
+                            ) : isReordering ? (
+                                <div className="space-y-3">
+                                    {mediaItems.map((item, index) => (
+                                        <motion.div
+                                            key={item.id}
+                                            layout
+                                            initial={false}
+                                            className="relative overflow-hidden flex items-center h-28 rounded-xl ring-1 ring-[#EADDDE] bg-white p-0 overflow-hidden select-none transition-all"
+                                        >
+                                            {/* Move Up Button */}
+                                            <button 
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); handleMoveUp(index); }}
+                                                disabled={index === 0}
+                                                className="w-14 h-full flex items-center justify-center bg-[#A4C538]/20 text-[#5B2D7D] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#A4C538]/30 transition-colors active:scale-95 shrink-0"
+                                            >
+                                                <ChevronDown className="w-8 h-8 rotate-180" />
+                                            </button>
+
+                                            {/* Content */}
+                                            <div className="flex-1 flex items-center gap-3 px-2 min-w-0 overflow-hidden">
+                                                <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden relative bg-[#FDF2EC]">
+                                                    {item.file.type.startsWith("video") ? (
+                                                        <video src={item.previewUrl} className="w-full h-full object-cover" muted />
+                                                    ) : (item.file.type.startsWith("audio") || item.type?.startsWith("audio")) ? (
+                                                        <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
+                                                            <Mic className="w-8 h-8 text-[#5B2D7D]" />
+                                                        </div>
+                                                    ) : (
+                                                        <Image src={item.previewUrl} alt="preview" fill className="object-cover" sizes="80px" />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[13px] font-bold text-[#5B2D7D] capitalize truncate">
+                                                        {item.file.type.split('/')[0] || "Media"}
+                                                    </p>
+                                                    <p className="text-[10px] text-[#A68CAB] truncate">
+                                                        {index === 0 ? "Cover Media" : `Item ${index + 1}`}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Delete Button */}
+                                            <button 
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (item.cloudData?.url) deleteUploadedFile(item.cloudData.url);
+                                                    setMediaItems(prev => prev.filter(p => p.id !== item.id));
+                                                }}
+                                                className="w-14 h-full flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 transition-colors active:scale-95 shrink-0"
+                                            >
+                                                <Trash2 className="w-6 h-6" />
+                                            </button>
+
+                                            {/* Move Down Button */}
+                                            <button 
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); handleMoveDown(index); }}
+                                                disabled={index === mediaItems.length - 1}
+                                                className="w-14 h-full flex items-center justify-center bg-[#5B2D7D]/10 text-[#5B2D7D] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#5B2D7D]/20 transition-colors active:scale-95 shrink-0"
+                                            >
+                                                <ChevronDown className="w-8 h-8" />
+                                            </button>
+                                        </motion.div>
+                                    ))}
+                                    
+                                    <button 
+                                        type="button"
+                                        onClick={() => setIsReordering(false)}
+                                        className="w-full bg-[#5B2D7D] text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform"
+                                    >
+                                        Done Reordering
+                                    </button>
                                 </div>
                             ) : (
                                  <div className="bg-[#FFF5F0] rounded-2xl p-3 relative space-y-2 border border-[#E8D1E0]">

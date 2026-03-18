@@ -321,6 +321,33 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
              // Separate new and existing items
              const newItems = items.filter(item => item.isNew);
              const existingItems = items.filter(item => !item.isNew && item.id);
+             const existingIds = existingItems.map(item => item.id);
+
+             // 0. Identify and delete removed items
+             const currentMedia = await db.media.findMany({
+                 where: { memoryId: id },
+                 select: { id: true, url: true }
+             });
+
+             const removedMedia = currentMedia.filter(m => !existingIds.includes(m.id));
+             
+             if (removedMedia.length > 0) {
+                 // Delete from Cloudinary
+                 const publicIds = removedMedia
+                     .map(m => extractPublicId(m.url))
+                     .filter((id): id is string => id !== null);
+                 
+                 if (publicIds.length > 0) {
+                     await deleteFromCloudinary(publicIds);
+                 }
+
+                 // Delete from Database
+                 await db.media.deleteMany({
+                     where: {
+                         id: { in: removedMedia.map(m => m.id) }
+                     }
+                 });
+             }
 
              // 1. Bulk create new items
              if (newItems.length > 0) {
