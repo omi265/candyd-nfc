@@ -90,6 +90,15 @@ function getRitualDayStatus(habits: HabitWithLogs[], utcDate: number): RitualDay
     return "missed";
 }
 
+function getRitualDayBreakdown(habits: HabitWithLogs[], utcDate: number) {
+    return habits.map(habit => {
+        const log = getLatestLogForDay(habit.logs, utcDate);
+        if (!log) return "missed" as const;
+        if (log.logType === "DONE") return "done" as const;
+        return "paused" as const;
+    });
+}
+
 function normalizeRitualDraft(habits: EditableRitualHabit[]) {
     return habits.map((habit, index) => ({
         ...habit,
@@ -184,7 +193,7 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
     }, [morningHabits, nightHabits, product.currentStreak, todayUTC]);
 
     return (
-        <div className="flex flex-col h-full relative overflow-hidden bg-[#FDF2EC]">
+        <div className="flex flex-col h-full relative overflow-hidden bg-transparent">
              {/* Local Action Bar */}
              <div className="px-6 py-2 flex items-center justify-end gap-3 z-10">
                 <button 
@@ -261,7 +270,13 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                      </div>
                  ) : (
                      <div className="flex flex-col gap-4 w-full">
-                        {habits.map(habit => (
+                        {morningHabits.length > 0 && (
+                            <RitualHistoryCard type="MORNING" habits={morningHabits} />
+                        )}
+                        {nightHabits.length > 0 && (
+                            <RitualHistoryCard type="NIGHT" habits={nightHabits} />
+                        )}
+                        {otherHabits.map(habit => (
                             <HabitHistoryCard key={habit.id} habit={habit} optimisticLogs={habit.logs} />
                         ))}
                      </div>
@@ -405,10 +420,18 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
         };
 
     return (
-        <motion.button
+        <motion.div
             whileTap={{ scale: 0.98 }}
             onClick={onBegin}
-            className={`relative p-5 rounded-[40px] flex flex-col items-center justify-center aspect-[4/5] shadow-sm border overflow-hidden group ${accentClasses.surface}`}
+            onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onBegin();
+                }
+            }}
+            role="button"
+            tabIndex={0}
+            className={`relative p-5 rounded-[40px] flex flex-col items-center justify-center aspect-[4/5] shadow-sm border overflow-hidden group cursor-pointer ${accentClasses.surface}`}
         >
             <div className="absolute left-3 top-3 z-10">
                 <button
@@ -456,7 +479,7 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
             <div className="absolute bottom-4 right-4 w-8 h-8 rounded-full bg-[#5B2D7D] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowRight className="w-4 h-4" />
             </div>
-        </motion.button>
+        </motion.div>
     );
 }
 
@@ -1291,6 +1314,70 @@ function HabitHistoryCard({ habit, optimisticLogs }: { habit: HabitWithLogs, opt
                     startDate={pastDate}
                     isWeekly={range === 7}
                 />
+            </div>
+        </div>
+    );
+}
+
+function RitualHistoryCard({ type, habits }: { type: RitualType; habits: HabitWithLogs[] }) {
+    const [range, setRange] = useState<7 | 30>(30);
+    const title = type === "MORNING" ? "Morning Ritual" : "Night Ritual";
+    const accent = type === "MORNING"
+        ? {
+            chip: "bg-orange-50 text-orange-600 border-orange-100",
+            icon: "text-orange-500",
+            soft: "bg-orange-50"
+        }
+        : {
+            chip: "bg-indigo-50 text-indigo-600 border-indigo-100",
+            icon: "text-indigo-500",
+            soft: "bg-indigo-50"
+        };
+
+    const today = new Date();
+    const todayIST = new Date(today.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const pastDate = new Date(todayIST);
+    pastDate.setDate(todayIST.getDate() - (range - 1));
+
+    const todayUTC = getVirtualTodayUTC();
+    const currentStatus = getRitualDayStatus(habits, todayUTC);
+    const totalStreak = habits.reduce((max, habit) => Math.max(max, habit.currentStreak), 0);
+
+    return (
+        <div className="bg-white rounded-[32px] p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+                <div className="max-w-[60%]">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center ${accent.soft}`}>
+                            {type === "MORNING" ? <Sun className={`w-4 h-4 ${accent.icon}`} /> : <Moon className={`w-4 h-4 ${accent.icon}`} />}
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-[#5B2D7D] truncate">{title}</h3>
+                            <div className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">
+                                {habits.length} {habits.length === 1 ? "task" : "tasks"} • {currentStatus}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border ${accent.chip}`}>
+                        <Flame className={`w-4 h-4 ${accent.icon}`} />
+                        <span className="text-sm font-bold">{totalStreak}</span>
+                    </div>
+                    <div className="flex bg-[#FDF2EC] rounded-lg p-1">
+                        <button
+                            onClick={() => setRange(7)}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 7 ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D]/40'}`}
+                        >7D</button>
+                        <button
+                            onClick={() => setRange(30)}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 30 ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D]/40'}`}
+                        >30D</button>
+                    </div>
+                </div>
+            </div>
+            <div className="overflow-x-auto no-scrollbar -mx-2 px-2">
+                <RitualContributionGraph habits={habits} startDate={pastDate} isWeekly={range === 7} />
             </div>
         </div>
     );
@@ -2220,6 +2307,156 @@ function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], st
                                     return (
                                         <div key={dIdx} className={`rounded-[10px] transition-all ${getColor(data)} ${isFuture ? 'opacity-0' : 'flex items-center justify-center shadow-xs'}`} style={{ width: cellSize, height: cellSize }}>
                                             {!isFuture && <span className={`text-[9px] font-black ${data ? 'text-white' : 'text-[#5B2D7D]/20'}`}>{date.getUTCDate()}</span>}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function RitualContributionGraph({ habits, startDate, isWeekly }: { habits: HabitWithLogs[]; startDate: Date; isWeekly?: boolean }) {
+    const now = new Date();
+    const todayIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const todayUTC = Date.UTC(todayIST.getFullYear(), todayIST.getMonth(), todayIST.getDate());
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+        }
+    }, [habits, isWeekly]);
+
+    const getStatusData = (date: Date) => {
+        const utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+        return getRitualDayStatus(habits, utc);
+    };
+
+    const getBreakdownData = (date: Date) => {
+        const utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+        return getRitualDayBreakdown(habits, utc);
+    };
+
+    const getColorClass = (status: RitualDayStatus) => {
+        if (status === "full") return "bg-[#6B46C1] text-white";
+        if (status === "partial") return "bg-[#D6BCFA] text-[#5B2D7D]";
+        if (status === "paused") return "bg-blue-100 text-blue-600";
+        return "bg-transparent border border-[#5B2D7D]/5 text-[#5B2D7D]/20";
+    };
+
+    const getSegmentColor = (state: "done" | "paused" | "missed") => {
+        if (state === "done") return "bg-[#A4C538]";
+        if (state === "paused") return "bg-[#EAB308]";
+        return "bg-[#5B2D7D]/10";
+    };
+
+    if (isWeekly) {
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(todayIST);
+            d.setDate(d.getDate() - i);
+            days.push(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())));
+        }
+
+        return (
+            <div className="flex justify-between items-end gap-1 px-2 py-2">
+                {days.map((date, i) => {
+                    const status = getStatusData(date);
+                    const breakdown = getBreakdownData(date);
+                    return (
+                        <div key={i} className="flex flex-col items-center gap-2 flex-1 max-w-[40px]">
+                            <div className={`w-full aspect-square rounded-xl flex flex-col justify-between p-1.5 transition-all ${getColorClass(status)}`}>
+                                <div className="flex items-start justify-between">
+                                    <span className={`text-[10px] font-black ${status === "full" || status === "paused" ? "text-current" : status === "partial" ? "text-[#5B2D7D]" : "text-[#5B2D7D]/20"}`}>
+                                        {date.getUTCDate()}
+                                    </span>
+                                    {status === "full" && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
+                                    {status === "paused" && <Pause className="w-3.5 h-3.5" />}
+                                </div>
+                                <div className="grid grid-cols-3 gap-1">
+                                    {Array.from({ length: Math.max(3, breakdown.length) }, (_, idx) => {
+                                        const state = breakdown[idx] || "missed";
+                                        return <div key={idx} className={`h-1.5 rounded-full ${getSegmentColor(state)}`} />;
+                                    })}
+                                </div>
+                            </div>
+                            <span className="text-[9px] font-bold text-[#5B2D7D]/40 uppercase">
+                                {date.toLocaleDateString('en-US', { weekday: 'narrow' })}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    const monthsData: { name: string, dates: (Date | null)[] }[] = [];
+    const start = new Date(startDate);
+    let current = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+
+    while (current.getTime() <= todayUTC) {
+        const monthName = current.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+        let monthObj = monthsData.find(m => m.name === monthName);
+
+        if (!monthObj) {
+            monthObj = { name: monthName, dates: [] };
+            monthsData.push(monthObj);
+        }
+
+        monthObj.dates.push(new Date(current));
+        current.setUTCDate(current.getUTCDate() + 1);
+    }
+
+    const cellSize = '28px';
+    const cellGap = '4px';
+
+    return (
+        <div className="flex flex-col gap-2 select-none w-full">
+            <div ref={scrollRef} className="overflow-x-auto no-scrollbar scroll-smooth w-full">
+                <div className="flex gap-4 min-w-max pb-2">
+                    {monthsData.map((month, mIdx) => (
+                        <div key={mIdx} className="flex flex-col gap-2">
+                            <div className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest px-1">{month.name}</div>
+                            <div
+                                className="grid grid-flow-col"
+                                style={{
+                                    gridTemplateRows: `repeat(3, ${cellSize})`,
+                                    gap: cellGap
+                                }}
+                            >
+                                {month.dates.map((date, dIdx) => {
+                                    if (!date) return <div key={dIdx} style={{ width: cellSize, height: cellSize }} />;
+                                    const status = getStatusData(date);
+                                    const breakdown = getBreakdownData(date);
+                                    return (
+                                        <div
+                                            key={dIdx}
+                                            className={`rounded-md border p-1 flex flex-col justify-between ${
+                                                status === "full" ? "bg-[#F3ECFB] border-[#D6BCFA]" :
+                                                status === "partial" ? "bg-white border-[#E7D9F6]" :
+                                                status === "paused" ? "bg-blue-50 border-blue-100" :
+                                                "bg-transparent border-[#5B2D7D]/5"
+                                            }`}
+                                            style={{ width: cellSize, height: cellSize }}
+                                            title={`${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${status}`}
+                                        >
+                                            <span className={`text-[9px] leading-none font-black ${
+                                                status === "missed" ? "text-[#5B2D7D]/25" :
+                                                status === "paused" ? "text-blue-600" :
+                                                "text-[#5B2D7D]"
+                                            }`}>
+                                                {date.getUTCDate()}
+                                            </span>
+                                            <div className="grid grid-cols-3 gap-[2px]">
+                                                {Array.from({ length: Math.max(3, breakdown.length) }, (_, idx) => {
+                                                    const state = breakdown[idx] || "missed";
+                                                    return <div key={idx} className={`h-1 rounded-full ${getSegmentColor(state)}`} />;
+                                                })}
+                                            </div>
                                         </div>
                                     );
                                 })}
