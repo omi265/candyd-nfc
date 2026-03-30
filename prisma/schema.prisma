@@ -26,20 +26,22 @@ model User {
 }
 
 model Product {
-  id          String     @id @default(cuid())
-  name        String
-  token       String     @unique
-  userId      String?
-  createdAt   DateTime   @default(now())
-  active      Boolean    @default(true)
-  graduatedAt DateTime?
-  state       CharmState @default(ACTIVE)
-  type        CharmType  @default(MEMORY)
-  lastResetAt DateTime?
-  habits      Habit[]
-  lifeLists   LifeList[]
-  memories    Memory[]
-  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String     @id @default(cuid())
+  name          String
+  token         String     @unique
+  userId        String?
+  createdAt     DateTime   @default(now())
+  active        Boolean    @default(true)
+  graduatedAt   DateTime?
+  state         CharmState @default(ACTIVE)
+  type          CharmType  @default(MEMORY)
+  lastResetAt   DateTime?
+  currentStreak Int        @default(0)
+  longestStreak Int        @default(0)
+  habits        Habit[]
+  lifeLists     LifeList[]
+  memories      Memory[]
+  user          User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -176,6 +178,10 @@ model Habit {
   level                 Int        @default(1)
   phase                 String     @default("initiation")
   resetAt               DateTime?
+  ritualType            String     @default("OTHER")
+  duration              Int?
+  orderIndex            Int        @default(0)
+  pauseUntil            DateTime?
   product               Product    @relation(fields: [productId], references: [id])
   user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   logs                  HabitLog[]
@@ -185,14 +191,15 @@ model Habit {
 }
 
 model HabitLog {
-  id        String       @id @default(cuid())
-  date      DateTime
-  notes     String?
-  imageUrl  String?
-  habitId   String
-  createdAt DateTime     @default(now())
-  logType   HabitLogType @default(DONE)
-  habit     Habit        @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  id         String       @id @default(cuid())
+  date       DateTime
+  notes      String?
+  reflection String?
+  imageUrl   String?
+  habitId    String
+  createdAt  DateTime     @default(now())
+  logType    HabitLogType @default(DONE)
+  habit      Habit        @relation(fields: [habitId], references: [id], onDelete: Cascade)
 
   @@index([habitId, date])
 }
