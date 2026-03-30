@@ -1,32 +1,190 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { logHabit, adjustHabitLogs, upgradeHabit, declineUpgrade, updateHabit, deleteHabit, createHabit, resetHabitCharm, resetHabit } from "@/app/actions/habit";
-import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2, Plane, BedDouble, Frown, Briefcase, HelpCircle, ArrowUpCircle, Trash2, Target, Save, X, RotateCcw, Pause, Sparkles, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
+import { logHabit, adjustHabitLogs, upgradeHabit, declineUpgrade, updateHabit, deleteHabit, createHabit, resetHabitCharm, resetHabit, pauseRitual, updateRitualHabits } from "@/app/actions/habit";
+import { Check, Flame, Trophy, Calendar, Plus, Pencil, ChevronLeft, ChevronRight, AlertTriangle, Minus, Loader2, Plane, BedDouble, Frown, Briefcase, HelpCircle, ArrowUpCircle, Trash2, Target, Save, X, RotateCcw, Pause, Sparkles, ChevronDown, ChevronUp, ArrowRight, Sun, Moon, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Habit, HabitLog, Product, HabitLogType } from "@prisma/client";
 import { CORE_HABITS } from "@/lib/habit-templates";
+import { useRitualTimer, type RitualType } from "@/lib/ritual-timer-context";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-  DrawerFooter,
 } from "@/components/ui/drawer";
 
 type HabitWithLogs = Habit & { logs: HabitLog[] };
+type RitualDayStatus = "full" | "partial" | "paused" | "missed";
+
+interface EditableRitualHabit {
+    clientId: string;
+    id?: string;
+    title: string;
+    description: string;
+    focusArea: string;
+    duration: number;
+    targetDays: number;
+    orderIndex: number;
+}
+
+const DAY_MS = 1000 * 60 * 60 * 24;
+const RITUAL_PAUSE_OPTIONS: { id: Exclude<HabitLogType, "DONE">; icon: typeof BedDouble; label: string }[] = [
+    { id: "SICK", icon: BedDouble, label: "Sick / Rest" },
+    { id: "TRAVEL", icon: Plane, label: "Traveling" },
+    { id: "STRESSED", icon: Frown, label: "Stressed" },
+    { id: "BUSY", icon: Briefcase, label: "Busy" },
+    { id: "OTHER", icon: HelpCircle, label: "Other" },
+];
+
+function getVirtualTodayUTC() {
+    const now = new Date();
+    const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    if (istTime.getHours() < 4) istTime.setDate(istTime.getDate() - 1);
+    return Date.UTC(istTime.getFullYear(), istTime.getMonth(), istTime.getDate());
+}
+
+function getUTCDateLabel(dateUTC: number) {
+    return new Date(dateUTC).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+function getDateStringFromUTC(dateUTC: number) {
+    const date = new Date(dateUTC);
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+function getLatestLogForDay(logs: HabitLog[], utcDate: number) {
+    return logs
+        .filter(log => {
+            const logDate = new Date(log.date);
+            return Date.UTC(logDate.getUTCFullYear(), logDate.getUTCMonth(), logDate.getUTCDate()) === utcDate;
+        })
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+}
+
+function parseDurationToSeconds(duration: string) {
+    const value = parseInt(duration, 10);
+    if (!Number.isFinite(value)) return 60;
+    return duration.toLowerCase().includes("min") ? value * 60 : value;
+}
+
+function createClientId() {
+    return globalThis.crypto?.randomUUID?.() ?? `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getRitualDayStatus(habits: HabitWithLogs[], utcDate: number): RitualDayStatus {
+    if (habits.length === 0) return "missed";
+
+    const dayLogs = habits.map(habit => getLatestLogForDay(habit.logs, utcDate));
+    const allDone = dayLogs.every(log => log?.logType === "DONE");
+    const anyDone = dayLogs.some(log => log?.logType === "DONE");
+    const allPausedByLogs = dayLogs.every(log => log && log.logType !== "DONE");
+    const allPausedByDate = habits.every(habit => habit.pauseUntil && habit.pauseUntil.getTime() > utcDate);
+
+    if (allPausedByLogs || allPausedByDate) return "paused";
+    if (allDone) return "full";
+    if (anyDone) return "partial";
+    return "missed";
+}
+
+function normalizeRitualDraft(habits: EditableRitualHabit[]) {
+    return habits.map((habit, index) => ({
+        ...habit,
+        title: habit.title.trim(),
+        description: habit.description.trim(),
+        duration: Number.isFinite(habit.duration) ? Math.max(15, habit.duration) : 60,
+        targetDays: Number.isFinite(habit.targetDays) ? Math.max(1, habit.targetDays) : 66,
+        orderIndex: index
+    }));
+}
+
+function buildEditableHabit(habit: HabitWithLogs): EditableRitualHabit {
+    return {
+        clientId: habit.id,
+        id: habit.id,
+        title: habit.title,
+        description: habit.description || "",
+        focusArea: habit.focusArea,
+        duration: habit.duration || 60,
+        targetDays: habit.targetDays,
+        orderIndex: habit.orderIndex
+    };
+}
 
 export default function HabitDashboard({ habits, product }: { habits: HabitWithLogs[], product: Product }) {
     const router = useRouter();
+    const { startRitual: startGlobalRitual } = useRitualTimer();
     const [viewMode, setViewMode] = useState<'cards' | 'history'>('cards');
     const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
     const [isResetDrawerOpen, setIsResetDrawerOpen] = useState(false);
+    const [ritualPauseType, setRitualPauseType] = useState<RitualType | null>(null);
+    const [ritualManageType, setRitualManageType] = useState<RitualType | null>(null);
+
+    const morningHabits = habits.filter(h => h.ritualType === "MORNING").sort((a, b) => a.orderIndex - b.orderIndex);
+    const nightHabits = habits.filter(h => h.ritualType === "NIGHT").sort((a, b) => a.orderIndex - b.orderIndex);
+    const otherHabits = habits.filter(h => h.ritualType === "OTHER" || !h.ritualType);
+    const todayUTC = useMemo(() => getVirtualTodayUTC(), []);
+
+    const handleStartRitual = (type: RitualType) => {
+        const ritualHabits = type === "MORNING" ? morningHabits : nightHabits;
+        if (ritualHabits.length === 0) {
+            toast.error(`No habits in your ${type.toLowerCase()} ritual.`);
+            return;
+        }
+
+        if (getRitualDayStatus(ritualHabits, todayUTC) === "paused") {
+            toast.error(`${type === "MORNING" ? "Morning" : "Night"} ritual is paused for today.`);
+            return;
+        }
+
+        startGlobalRitual({
+            productId: product.id,
+            type,
+            habits: ritualHabits.map(habit => ({
+                id: habit.id,
+                title: habit.title,
+                description: habit.description,
+                duration: habit.duration
+            }))
+        });
+    };
+
+    // Messaging System (Phase 5)
+    useEffect(() => {
+        const checkMessages = () => {
+            const yesterdayUTC = todayUTC - (1000 * 60 * 60 * 24);
+
+            // 1. Milestones
+            if (product.currentStreak === 7) {
+                toast("7 days with yourself", { icon: "✨", description: "You're showing up. Keep going." });
+            } else if (product.currentStreak === 21) {
+                toast("21 days of showing up", { icon: "🔥", description: "This is becoming part of who you are." });
+            }
+
+            // 2. Missed Day (Check if yesterday was a complete miss and not today)
+            const yesterdayHasProgress = getRitualDayStatus(morningHabits, yesterdayUTC) !== "missed" || getRitualDayStatus(nightHabits, yesterdayUTC) !== "missed";
+            const todayHasProgress = getRitualDayStatus(morningHabits, todayUTC) !== "missed" || getRitualDayStatus(nightHabits, todayUTC) !== "missed";
+
+            if (!yesterdayHasProgress && !todayHasProgress) {
+                toast("Come back when you’re ready", { icon: "🌙", description: "We're here whenever you need your ritual." });
+            }
+
+            // 3. Weekly Reflection (On Sundays)
+            const ist = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+            if (ist.getDay() === 0) {
+                toast("What did this week feel like?", { icon: "🪞" });
+            }
+        };
+
+        const timer = setTimeout(checkMessages, 1000);
+        return () => clearTimeout(timer);
+    }, [morningHabits, nightHabits, product.currentStreak, todayUTC]);
 
     return (
-        <div className="flex flex-col h-full relative overflow-hidden">
+        <div className="flex flex-col h-full relative overflow-hidden bg-[#FDF2EC]">
              {/* Local Action Bar */}
              <div className="px-6 py-2 flex items-center justify-end gap-3 z-10">
                 <button 
@@ -54,22 +212,52 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
              {/* Main Content */}
              <main className="flex-1 p-4 pt-2 z-10 overflow-y-auto no-scrollbar pb-32">
                  {viewMode === 'cards' ? (
-                     <div className="grid grid-cols-2 gap-3 w-full">
-                        {habits.map(habit => (
-                            <HabitCard key={habit.id} habit={habit} router={router} />
-                        ))}
-                        {habits.length < 10 && (
-                            <motion.button 
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setIsAddDrawerOpen(true)}
-                                className="bg-white/40 border-2 border-dashed border-[#5B2D7D]/10 rounded-[40px] p-4 flex flex-col items-center justify-center aspect-[2/3] group hover:border-[#5B2D7D]/20 transition-all"
-                            >
-                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-3 text-[#5B2D7D]/30 group-hover:text-[#5B2D7D]/50 transition-colors">
-                                    <Plus className="w-6 h-6" />
-                                </div>
-                                <span className="text-[10px] font-bold text-[#5B2D7D]/30 group-hover:text-[#5B2D7D]/50 uppercase tracking-widest text-center">Add Habit</span>
-                            </motion.button>
+                     <div className="flex flex-col gap-6">
+                        {/* Medallion Status */}
+                        <MedallionStreak habits={habits} product={product} />
+
+                        {/* Rituals Section */}
+                        {(morningHabits.length > 0 || nightHabits.length > 0) && (
+                            <div className="grid grid-cols-2 gap-3">
+                                {morningHabits.length > 0 && (
+                                    <RitualCard 
+                                        type="MORNING" 
+                                        habits={morningHabits} 
+                                        onPause={() => setRitualPauseType("MORNING")}
+                                        onManage={() => setRitualManageType("MORNING")}
+                                        onBegin={() => handleStartRitual("MORNING")} 
+                                    />
+                                )}
+                                {nightHabits.length > 0 && (
+                                    <RitualCard 
+                                        type="NIGHT" 
+                                        habits={nightHabits} 
+                                        onPause={() => setRitualPauseType("NIGHT")}
+                                        onManage={() => setRitualManageType("NIGHT")}
+                                        onBegin={() => handleStartRitual("NIGHT")} 
+                                    />
+                                )}
+                            </div>
                         )}
+
+                        {/* Other Habits Grid */}
+                        <div className="grid grid-cols-2 gap-3 w-full">
+                            {otherHabits.map(habit => (
+                                <HabitCard key={habit.id} habit={habit} router={router} />
+                            ))}
+                            {habits.length < 10 && (
+                                <motion.button 
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => setIsAddDrawerOpen(true)}
+                                    className="bg-white/40 border-2 border-dashed border-[#5B2D7D]/10 rounded-[40px] p-4 flex flex-col items-center justify-center aspect-[2/3] group hover:border-[#5B2D7D]/20 transition-all"
+                                >
+                                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-3 text-[#5B2D7D]/30 group-hover:text-[#5B2D7D]/50 transition-colors">
+                                        <Plus className="w-6 h-6" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-[#5B2D7D]/30 group-hover:text-[#5B2D7D]/50 uppercase tracking-widest text-center">Add Habit</span>
+                                </motion.button>
+                            )}
+                        </div>
                      </div>
                  ) : (
                      <div className="flex flex-col gap-4 w-full">
@@ -93,7 +281,685 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                 onClose={() => setIsResetDrawerOpen(false)} 
                 router={router}
              />
+
+             <RitualPauseDrawer
+                productId={product.id}
+                ritualType={ritualPauseType}
+                habits={ritualPauseType === "MORNING" ? morningHabits : nightHabits}
+                isOpen={!!ritualPauseType}
+                onClose={() => setRitualPauseType(null)}
+                router={router}
+             />
+
+             <RitualManageDrawer
+                productId={product.id}
+                ritualType={ritualManageType}
+                habits={ritualManageType === "MORNING" ? morningHabits : nightHabits}
+                isOpen={!!ritualManageType}
+                onClose={() => setRitualManageType(null)}
+                onBegin={() => {
+                    if (ritualManageType) {
+                        setRitualManageType(null);
+                        handleStartRitual(ritualManageType);
+                    }
+                }}
+                onPause={() => {
+                    if (ritualManageType) {
+                        setRitualManageType(null);
+                        setRitualPauseType(ritualManageType);
+                    }
+                }}
+                router={router}
+             />
         </div>
+    );
+}
+
+function MedallionStreak({ habits, product }: { habits: HabitWithLogs[], product: Product }) {
+    const todayUTC = getVirtualTodayUTC();
+
+    const morningHabits = habits.filter(h => h.ritualType === "MORNING");
+    const nightHabits = habits.filter(h => h.ritualType === "NIGHT");
+
+    const getDayStatus = (utc: number) => {
+        const morningStatus = morningHabits.length > 0 ? getRitualDayStatus(morningHabits, utc) : "missed";
+        const nightStatus = nightHabits.length > 0 ? getRitualDayStatus(nightHabits, utc) : "missed";
+
+        if (
+            habits.length > 0 &&
+            (morningHabits.length === 0 || morningStatus === "paused") &&
+            (nightHabits.length === 0 || nightStatus === "paused")
+        ) {
+            return "paused";
+        }
+        if ((morningHabits.length === 0 || morningStatus === "full") && (nightHabits.length === 0 || nightStatus === "full")) return "full";
+        if (morningStatus === "full" || morningStatus === "partial" || nightStatus === "full" || nightStatus === "partial") return "partial";
+        return "missed";
+    };
+
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(todayUTC);
+        d.setDate(d.getDate() - (6 - i));
+        const utc = d.getTime();
+        return {
+            utc,
+            status: getDayStatus(utc),
+            label: d.toLocaleDateString('en-US', { weekday: 'narrow' })
+        };
+    });
+
+    return (
+        <div className="bg-white rounded-[40px] p-6 shadow-sm border border-[#5B2D7D]/5">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h2 className="text-xl font-black text-[#5B2D7D] uppercase tracking-tighter leading-none mb-1">
+                        {product.name || "Daily Rituals"}
+                    </h2>
+                    <span className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">
+                        7-Day Overview
+                    </span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-orange-50 px-4 py-2 rounded-2xl border border-orange-100">
+                    <Flame className="w-5 h-5 text-orange-500 fill-orange-500" />
+                    <span className="text-xl font-black text-orange-600">{product.currentStreak}</span>
+                </div>
+            </div>
+
+            <div className="flex justify-between items-center px-1">
+                {last7Days.map((day, i) => (
+                    <div key={i} className="flex flex-col items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                            day.status === 'full' ? 'bg-[#A4C538] text-white shadow-lg shadow-[#A4C538]/20' :
+                            day.status === 'partial' ? 'bg-[#A4C538]/30 text-[#5B2D7D]' :
+                            day.status === 'paused' ? 'bg-blue-100 text-blue-500' :
+                            'bg-[#FDF2EC] text-[#5B2D7D]/20'
+                        }`}>
+                            {day.status === 'full' && <Check className="w-5 h-5" strokeWidth={3} />}
+                            {day.status === 'partial' && <div className="w-4 h-4 rounded-full border-2 border-[#A4C538] border-r-transparent animate-spin-slow" />}
+                            {day.status === 'paused' && <Pause className="w-4 h-4" />}
+                            {day.status === 'missed' && <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                        </div>
+                        <span className="text-[10px] font-black text-[#5B2D7D]/30 uppercase">{day.label}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: RitualType, habits: HabitWithLogs[], onBegin: () => void, onPause: () => void, onManage: () => void }) {
+    const todayStatus = getRitualDayStatus(habits, getVirtualTodayUTC());
+    const isDone = todayStatus === "full";
+    const isPartial = todayStatus === "partial";
+    const isPaused = todayStatus === "paused";
+    const accentClasses = type === "MORNING"
+        ? {
+            surface: isDone ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-orange-100 text-[#5B2D7D]",
+            soft: "bg-orange-50 text-orange-500",
+            badge: "bg-orange-50 text-orange-600 border-orange-100"
+        }
+        : {
+            surface: isDone ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-indigo-100 text-[#5B2D7D]",
+            soft: "bg-indigo-50 text-indigo-500",
+            badge: "bg-indigo-50 text-indigo-600 border-indigo-100"
+        };
+
+    return (
+        <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={onBegin}
+            className={`relative p-5 rounded-[40px] flex flex-col items-center justify-center aspect-[4/5] shadow-sm border overflow-hidden group ${accentClasses.surface}`}
+        >
+            <div className="absolute left-3 top-3 z-10">
+                <button
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onPause();
+                    }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all ${isDone ? "bg-white/20 text-white" : "bg-[#FDF2EC] text-[#5B2D7D]/50 hover:bg-[#EADDDE]"}`}
+                >
+                    <Pause className="w-4 h-4" />
+                </button>
+            </div>
+
+            <div className="absolute right-3 top-3 z-10">
+                <button
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onManage();
+                    }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all ${isDone ? "bg-white/20 text-white" : "bg-[#5B2D7D] text-white hover:bg-[#4A246A]"}`}
+                >
+                    <Pencil className="w-4 h-4" />
+                </button>
+            </div>
+
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 mt-6 transition-colors ${isDone ? "bg-white/20" : accentClasses.soft}`}>
+                {type === "MORNING" ? <Sun className={`w-6 h-6 ${isDone ? "text-white" : "text-orange-500"}`} /> : <Moon className={`w-6 h-6 ${isDone ? "text-white" : "text-indigo-400"}`} />}
+            </div>
+            <h3 className="font-black text-xs uppercase tracking-widest mb-1">{type} Ritual</h3>
+            <div className={`text-[10px] font-bold opacity-40 uppercase tracking-tighter ${isDone ? "text-white" : ""}`}>
+                {isDone ? "Completed" : isPaused ? "Paused Today" : (isPartial ? "In Progress" : `${habits.length} Habits`)}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <div className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${isDone ? "bg-white/15 text-white border-white/20" : accentClasses.badge}`}>
+                    {habits.length} {habits.length === 1 ? "Task" : "Tasks"}
+                </div>
+                {isPaused && (
+                    <div className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${isDone ? "bg-white/15 text-white border-white/20" : "bg-blue-50 text-blue-600 border-blue-100"}`}>
+                        Paused
+                    </div>
+                )}
+            </div>
+
+            <div className="absolute bottom-4 right-4 w-8 h-8 rounded-full bg-[#5B2D7D] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <ArrowRight className="w-4 h-4" />
+            </div>
+        </motion.button>
+    );
+}
+
+function RitualPauseDrawer({
+    productId,
+    ritualType,
+    habits,
+    isOpen,
+    onClose,
+    router
+}: {
+    productId: string;
+    ritualType: RitualType | null;
+    habits: HabitWithLogs[];
+    isOpen: boolean;
+    onClose: () => void;
+    router: any;
+}) {
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handlePause = async (logType: Exclude<HabitLogType, "DONE">) => {
+        if (!ritualType) return;
+
+        setIsSaving(true);
+        try {
+            const result = await pauseRitual(productId, ritualType, logType);
+            if (result.success) {
+                toast.success(`${ritualType === "MORNING" ? "Morning" : "Night"} ritual paused for today.`);
+                onClose();
+                router.refresh();
+            } else {
+                toast.error(result.error || "Failed to pause ritual");
+            }
+        } catch (error) {
+            toast.error("Failed to pause ritual");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl border-none font-[Outfit]">
+                <DrawerHeader className="sr-only">
+                    <DrawerTitle>Pause Ritual</DrawerTitle>
+                    <DrawerDescription>Pause every task in this ritual for today.</DrawerDescription>
+                </DrawerHeader>
+                <div className="p-6 pb-12">
+                    <div className="text-center mb-6">
+                        <h3 className="text-xl font-bold text-[#5B2D7D]">{ritualType === "MORNING" ? "Pause morning ritual?" : "Pause night ritual?"}</h3>
+                        <p className="text-[#5B2D7D]/60 text-sm mt-1 px-4">
+                            This will apply the same pause reason to all {habits.length} tasks in this ritual for today.
+                        </p>
+                    </div>
+                    <div className="mb-6 flex flex-wrap justify-center gap-2">
+                        {habits.map(habit => (
+                            <span key={habit.id} className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/60 shadow-sm">
+                                {habit.title}
+                            </span>
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        {RITUAL_PAUSE_OPTIONS.map(option => (
+                            <motion.button
+                                key={option.id}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handlePause(option.id)}
+                                disabled={isSaving}
+                                className="bg-white p-5 rounded-[24px] flex flex-col items-center justify-center gap-2 hover:bg-[#5B2D7D]/5 transition-colors border border-transparent active:border-[#5B2D7D]/10 disabled:opacity-50"
+                            >
+                                <option.icon className="w-6 h-6 text-[#5B2D7D]/70" />
+                                <span className="text-xs font-bold text-[#5B2D7D]">{option.label}</span>
+                            </motion.button>
+                        ))}
+                    </div>
+                </div>
+            </DrawerContent>
+        </Drawer>
+    );
+}
+
+function RitualManageDrawer({
+    productId,
+    ritualType,
+    habits,
+    isOpen,
+    onClose,
+    onBegin,
+    onPause,
+    router
+}: {
+    productId: string;
+    ritualType: RitualType | null;
+    habits: HabitWithLogs[];
+    isOpen: boolean;
+    onClose: () => void;
+    onBegin: () => void;
+    onPause: () => void;
+    router: any;
+}) {
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [draftHabits, setDraftHabits] = useState<EditableRitualHabit[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [addMode, setAddMode] = useState<"template" | "custom">("template");
+    const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
+    const [customTitle, setCustomTitle] = useState("");
+    const [customDuration, setCustomDuration] = useState(60);
+    const [customTarget, setCustomTarget] = useState(66);
+
+    useEffect(() => {
+        if (isOpen) {
+            setDraftHabits(habits.map(buildEditableHabit).sort((a, b) => a.orderIndex - b.orderIndex));
+        } else {
+            setIsEditMode(false);
+            setExpandedCategoryId(null);
+            setAddMode("template");
+            setCustomTitle("");
+            setCustomDuration(60);
+            setCustomTarget(66);
+        }
+    }, [habits, isOpen]);
+
+    if (!ritualType) return null;
+
+    const ritualName = ritualType === "MORNING" ? "Morning Ritual" : "Night Ritual";
+    const ritualStatus = getRitualDayStatus(habits, getVirtualTodayUTC());
+    const recentDays = Array.from({ length: 7 }, (_, index) => {
+        const utcDate = getVirtualTodayUTC() - ((6 - index) * DAY_MS);
+        return {
+            utcDate,
+            status: getRitualDayStatus(habits, utcDate)
+        };
+    });
+
+    const moveHabit = (clientId: string, direction: -1 | 1) => {
+        setDraftHabits(prev => {
+            const currentIndex = prev.findIndex(habit => habit.clientId === clientId);
+            const nextIndex = currentIndex + direction;
+            if (currentIndex === -1 || nextIndex < 0 || nextIndex >= prev.length) return prev;
+            const next = [...prev];
+            const [item] = next.splice(currentIndex, 1);
+            next.splice(nextIndex, 0, item);
+            return normalizeRitualDraft(next);
+        });
+    };
+
+    const updateDraftHabit = (clientId: string, patch: Partial<EditableRitualHabit>) => {
+        setDraftHabits(prev => prev.map(habit => habit.clientId === clientId ? { ...habit, ...patch } : habit));
+    };
+
+    const removeDraftHabit = (clientId: string) => {
+        setDraftHabits(prev => normalizeRitualDraft(prev.filter(habit => habit.clientId !== clientId)));
+    };
+
+    const addTemplateHabit = (categoryId: string, levelNum: number) => {
+        const coreHabit = CORE_HABITS.find(habit => habit.id === categoryId);
+        const level = coreHabit?.levels.find(item => item.level === levelNum);
+        if (!coreHabit || !level) return;
+
+        setDraftHabits(prev => normalizeRitualDraft([
+            ...prev,
+            {
+                clientId: createClientId(),
+                title: level.description,
+                description: `Level ${level.level}: ${level.duration} • ${level.trigger}`,
+                focusArea: coreHabit.id,
+                duration: parseDurationToSeconds(level.duration),
+                targetDays: 66,
+                orderIndex: prev.length
+            }
+        ]));
+        setExpandedCategoryId(null);
+    };
+
+    const addCustomHabit = () => {
+        if (!customTitle.trim()) return;
+
+        setDraftHabits(prev => normalizeRitualDraft([
+            ...prev,
+            {
+                clientId: createClientId(),
+                title: customTitle.trim(),
+                description: "Custom ritual task",
+                focusArea: "custom",
+                duration: customDuration,
+                targetDays: customTarget,
+                orderIndex: prev.length
+            }
+        ]));
+        setCustomTitle("");
+        setCustomDuration(60);
+        setCustomTarget(66);
+    };
+
+    const handleSave = async () => {
+        const normalized = normalizeRitualDraft(draftHabits);
+        if (normalized.some(habit => !habit.title)) {
+            toast.error("Each ritual task needs a title.");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const result = await updateRitualHabits(
+                productId,
+                ritualType,
+                normalized.map(({ clientId, orderIndex, ...habit }) => habit)
+            );
+
+            if (result.success) {
+                toast.success(`${ritualName} updated.`);
+                setIsEditMode(false);
+                router.refresh();
+            } else {
+                toast.error(result.error || "Failed to update ritual");
+            }
+        } catch (error) {
+            toast.error("Failed to update ritual");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl border-none font-[Outfit] max-h-[96dvh]">
+                <DrawerHeader className="sr-only">
+                    <DrawerTitle>{ritualName}</DrawerTitle>
+                    <DrawerDescription>Review history and manage every task in this ritual.</DrawerDescription>
+                </DrawerHeader>
+                <div className="p-6 pb-20 overflow-y-auto no-scrollbar">
+                    <div className="mb-8 flex items-center justify-between px-2">
+                        <div>
+                            <h3 className="text-2xl font-black text-[#5B2D7D] uppercase tracking-tighter leading-none mb-1">{ritualName}</h3>
+                            <span className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">Manage & History</span>
+                        </div>
+                        <button
+                            onClick={() => setIsEditMode(prev => !prev)}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isEditMode ? "bg-[#5B2D7D] text-white" : "bg-white text-[#5B2D7D] shadow-sm"}`}
+                        >
+                            {isEditMode ? <X className="w-5 h-5" /> : <Pencil className="w-4 h-4" />}
+                        </button>
+                    </div>
+
+                    {!isEditMode ? (
+                        <>
+                            <div className="bg-white p-6 rounded-[32px] shadow-sm mb-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h4 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-1">Today</h4>
+                                        <p className="text-lg font-bold text-[#5B2D7D]">{ritualStatus === "full" ? "Completed" : ritualStatus === "paused" ? "Paused for today" : ritualStatus === "partial" ? "In progress" : "Ready to begin"}</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={onPause} className="h-10 rounded-full bg-[#FDF2EC] px-4 text-xs font-black uppercase tracking-widest text-[#5B2D7D]">
+                                            Pause
+                                        </button>
+                                        <button onClick={onBegin} className="h-10 rounded-full bg-[#5B2D7D] px-4 text-xs font-black uppercase tracking-widest text-white shadow-sm">
+                                            Begin
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-7 gap-2">
+                                    {recentDays.map(day => (
+                                        <div key={day.utcDate} className="flex flex-col items-center gap-2">
+                                            <div className={`w-full aspect-square rounded-2xl flex items-center justify-center ${
+                                                day.status === "full" ? "bg-[#A4C538] text-white" :
+                                                day.status === "partial" ? "bg-[#A4C538]/25 text-[#5B2D7D]" :
+                                                day.status === "paused" ? "bg-blue-100 text-blue-500" :
+                                                "bg-[#FDF2EC] text-[#5B2D7D]/20"
+                                            }`}>
+                                                {day.status === "full" && <Check className="w-4 h-4" strokeWidth={3} />}
+                                                {day.status === "partial" && <div className="w-2.5 h-2.5 rounded-full bg-current" />}
+                                                {day.status === "paused" && <Pause className="w-4 h-4" />}
+                                                {day.status === "missed" && <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-[#5B2D7D]/30">
+                                                {new Date(day.utcDate).toLocaleDateString("en-US", { weekday: "narrow" })}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-[32px] shadow-sm mb-6">
+                                <h4 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Ritual Tasks</h4>
+                                <div className="space-y-3">
+                                    {habits.map((habit, index) => (
+                                        <div key={habit.id} className="flex items-center justify-between rounded-[24px] bg-[#FDF2EC] px-4 py-4">
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/30">{index + 1}</span>
+                                                    <span className="text-sm font-bold text-[#5B2D7D] truncate">{habit.title}</span>
+                                                </div>
+                                                <p className="text-xs text-[#5B2D7D]/50 truncate">{habit.description || "No description"}</p>
+                                            </div>
+                                            <div className="text-right ml-4 shrink-0">
+                                                <p className="text-sm font-black text-[#5B2D7D]">{habit.duration || 60}s</p>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/30">{habit.currentStreak}/{habit.targetDays}d</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-[32px] shadow-sm">
+                                <h4 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Recent Days</h4>
+                                <div className="space-y-3">
+                                    {recentDays.slice().reverse().map(day => (
+                                        <div key={day.utcDate} className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-bold text-[#5B2D7D]">{getUTCDateLabel(day.utcDate)}</p>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/30">{day.status}</p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {habits.map(habit => {
+                                                    const log = getLatestLogForDay(habit.logs, day.utcDate);
+                                                    return (
+                                                        <span
+                                                            key={`${habit.id}-${day.utcDate}`}
+                                                            className={`h-8 min-w-8 rounded-full px-2 flex items-center justify-center text-[9px] font-black uppercase tracking-widest ${
+                                                                log?.logType === "DONE" ? "bg-[#A4C538]/20 text-[#5B2D7D]" :
+                                                                log ? "bg-blue-100 text-blue-600" :
+                                                                "bg-[#FDF2EC] text-[#5B2D7D]/20"
+                                                            }`}
+                                                        >
+                                                            {log?.logType === "DONE" ? "✓" : log ? "P" : "·"}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="space-y-6">
+                            <div className="bg-white p-6 rounded-[32px] shadow-sm">
+                                <h4 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Edit Tasks</h4>
+                                <div className="space-y-4">
+                                    {draftHabits.map((habit, index) => (
+                                        <div key={habit.clientId} className="rounded-[28px] bg-[#FDF2EC] p-4 border border-[#5B2D7D]/5">
+                                            <div className="mb-4 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#5B2D7D]/40 shadow-sm">
+                                                        <GripVertical className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/30">Task {index + 1}</p>
+                                                        <p className="text-sm font-bold text-[#5B2D7D]">{habit.focusArea === "custom" ? "Custom" : habit.focusArea}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => moveHabit(habit.clientId, -1)} disabled={index === 0} className="w-9 h-9 rounded-full bg-white text-[#5B2D7D] shadow-sm disabled:opacity-30">
+                                                        <ChevronUp className="w-4 h-4 mx-auto" />
+                                                    </button>
+                                                    <button onClick={() => moveHabit(habit.clientId, 1)} disabled={index === draftHabits.length - 1} className="w-9 h-9 rounded-full bg-white text-[#5B2D7D] shadow-sm disabled:opacity-30">
+                                                        <ChevronDown className="w-4 h-4 mx-auto" />
+                                                    </button>
+                                                    <button onClick={() => removeDraftHabit(habit.clientId)} className="w-9 h-9 rounded-full bg-red-50 text-red-500">
+                                                        <Trash2 className="w-4 h-4 mx-auto" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <input
+                                                    type="text"
+                                                    value={habit.title}
+                                                    onChange={(event) => updateDraftHabit(habit.clientId, { title: event.target.value })}
+                                                    className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-white px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                                    placeholder="Task title"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={habit.description}
+                                                    onChange={(event) => updateDraftHabit(habit.clientId, { description: event.target.value })}
+                                                    className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-white px-4 py-3 text-sm text-[#5B2D7D] outline-none"
+                                                    placeholder="Short description"
+                                                />
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <input
+                                                        type="number"
+                                                        min={15}
+                                                        step={15}
+                                                        value={habit.duration}
+                                                        onChange={(event) => updateDraftHabit(habit.clientId, { duration: parseInt(event.target.value) || 60 })}
+                                                        className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-white px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                                    />
+                                                    <select
+                                                        value={habit.targetDays}
+                                                        onChange={(event) => updateDraftHabit(habit.clientId, { targetDays: parseInt(event.target.value) })}
+                                                        className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-white px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                                    >
+                                                        <option value={21}>21 Days</option>
+                                                        <option value={66}>66 Days</option>
+                                                        <option value={100}>100 Days</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-[32px] shadow-sm">
+                                <div className="mb-4 flex gap-2">
+                                    <button onClick={() => setAddMode("template")} className={`h-10 rounded-full px-4 text-xs font-black uppercase tracking-widest ${addMode === "template" ? "bg-[#5B2D7D] text-white" : "bg-[#FDF2EC] text-[#5B2D7D]"}`}>
+                                        Template
+                                    </button>
+                                    <button onClick={() => setAddMode("custom")} className={`h-10 rounded-full px-4 text-xs font-black uppercase tracking-widest ${addMode === "custom" ? "bg-[#5B2D7D] text-white" : "bg-[#FDF2EC] text-[#5B2D7D]"}`}>
+                                        Custom
+                                    </button>
+                                </div>
+
+                                {addMode === "template" ? (
+                                    <div className="space-y-3">
+                                        {CORE_HABITS.map(category => (
+                                            <div key={category.id} className="overflow-hidden rounded-[24px] border border-[#5B2D7D]/5 bg-[#FDF2EC]">
+                                                <button
+                                                    onClick={() => setExpandedCategoryId(prev => prev === category.id ? null : category.id)}
+                                                    className="flex w-full items-center justify-between p-4"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-2xl">{category.icon}</span>
+                                                        <div className="text-left">
+                                                            <h5 className="font-bold text-[#5B2D7D]">{category.title}</h5>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/30">{category.levels.length} levels</p>
+                                                        </div>
+                                                    </div>
+                                                    {expandedCategoryId === category.id ? <ChevronUp className="w-4 h-4 text-[#5B2D7D]/40" /> : <ChevronDown className="w-4 h-4 text-[#5B2D7D]/40" />}
+                                                </button>
+                                                <AnimatePresence>
+                                                    {expandedCategoryId === category.id && (
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: "auto", opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="overflow-hidden px-3 pb-3 space-y-2"
+                                                        >
+                                                            {category.levels.map(level => (
+                                                                <button
+                                                                    key={level.level}
+                                                                    onClick={() => addTemplateHabit(category.id, level.level)}
+                                                                    className="w-full rounded-2xl bg-white px-4 py-4 text-left shadow-sm hover:bg-[#5B2D7D] hover:text-white transition-all"
+                                                                >
+                                                                    <p className="text-sm font-bold leading-tight">{level.description}</p>
+                                                                    <p className="mt-1 text-[10px] font-black uppercase tracking-widest opacity-40">{level.duration} • {level.trigger}</p>
+                                                                </button>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <input
+                                            type="text"
+                                            value={customTitle}
+                                            onChange={(event) => setCustomTitle(event.target.value)}
+                                            className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-[#FDF2EC] px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                            placeholder="Task name"
+                                        />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input
+                                                type="number"
+                                                min={15}
+                                                step={15}
+                                                value={customDuration}
+                                                onChange={(event) => setCustomDuration(parseInt(event.target.value) || 60)}
+                                                className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-[#FDF2EC] px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                            />
+                                            <select
+                                                value={customTarget}
+                                                onChange={(event) => setCustomTarget(parseInt(event.target.value))}
+                                                className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-[#FDF2EC] px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                            >
+                                                <option value={21}>21 Days</option>
+                                                <option value={66}>66 Days</option>
+                                                <option value={100}>100 Days</option>
+                                            </select>
+                                        </div>
+                                        <button onClick={addCustomHabit} className="w-full rounded-2xl bg-[#5B2D7D] py-4 text-sm font-bold text-white shadow-lg shadow-[#5B2D7D]/20">
+                                            Add Custom Task
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                className="w-full rounded-2xl bg-[#5B2D7D] py-4 text-sm font-bold text-white shadow-lg shadow-[#5B2D7D]/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-4 h-4" /> Save Ritual Changes</>}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </DrawerContent>
+        </Drawer>
     );
 }
 
@@ -234,8 +1100,8 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
 
     return (
         <Drawer open={isOpen} onOpenChange={onClose}>
-            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl font-[Outfit] max-h-[90vh]">
-                <div className="p-6 pb-12 overflow-y-auto no-scrollbar">
+            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl font-[Outfit] max-h-[96dvh]">
+                <div className="p-6 pb-20 overflow-y-auto no-scrollbar">
                     <DrawerHeader className="px-0 text-left mb-4">
                         <DrawerTitle className="text-2xl font-bold text-[#5B2D7D]">Add New Habit</DrawerTitle>
                         <DrawerDescription>Pick a specific ritual to add to your medallion.</DrawerDescription>
@@ -488,6 +1354,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
             id: 'temp-' + Date.now(),
             date: targetDate,
             notes: notes || null,
+            reflection: null,
             imageUrl: imageUrl || null,
             logType: type,
             habitId: habit.id,
@@ -536,6 +1403,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                 id: 'temp-' + Date.now(),
                 date: targetDate,
                 notes: null,
+                reflection: null,
                 imageUrl: null,
                 logType: 'DONE',
                 habitId: habit.id,
@@ -1110,7 +1978,7 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
 
     return (
         <Drawer open={isOpen} onOpenChange={(o) => !o && onClose()}>
-            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl rounded-t-[32px] border-none font-[Outfit] max-h-[90vh]">
+            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl rounded-t-[32px] border-none font-[Outfit] max-h-[96dvh]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Log Habit Progress</DrawerTitle>
                     <DrawerDescription>Add a comment or photo to your habit track for {displayDate}.</DrawerDescription>

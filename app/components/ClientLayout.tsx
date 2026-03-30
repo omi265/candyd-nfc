@@ -7,6 +7,7 @@ import { useEffect, useState, useRef } from "react";
 import { getUserProducts } from "@/app/actions/memories";
 import { motion, useScroll, useTransform, useSpring } from "motion/react";
 import SplashScreen from "./SplashScreen";
+import { RitualTimerProvider } from "@/lib/ritual-timer-context";
 
 function GlobalLayout({ 
     children, 
@@ -176,7 +177,7 @@ export default function ClientLayout({
 
   // Always use the GlobalLayout but hide header on login/register pages
   return (
-    <>
+    <RitualTimerProvider>
       <SplashScreen isLoading={isLoading} />
       <GlobalLayout 
           user={user} 
@@ -187,6 +188,6 @@ export default function ClientLayout({
       >
           {children}
       </GlobalLayout>
-    </>
+    </RitualTimerProvider>
   );
 }
