@@ -28,13 +28,17 @@ export function HabitCharmDrawer({ product, open, onOpenChange }: HabitCharmDraw
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-[#FDF2EC]/95 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] font-[Outfit]">
+      <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] font-[Outfit]">
         <DrawerHeader className="sr-only">
             <DrawerTitle>Habit Charm</DrawerTitle>
             <DrawerDescription>{activeHabit ? "Track your habit" : "Setup your habit"}</DrawerDescription>
         </DrawerHeader>
         
-        <div className="flex-1 overflow-y-auto no-scrollbar relative">
+        <div className="flex-1 overflow-y-auto no-scrollbar relative z-10">
+            {/* Background Decorative Shapes inside drawer */}
+            <div className="absolute top-20 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute bottom-20 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+
             {activeHabit ? (
                 <HabitDashboardContent habit={activeHabit} />
             ) : (
@@ -86,7 +90,7 @@ function HabitSetupContent({ product }: { product: any }) {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center p-6 min-h-[50vh]">
+        <div className="flex flex-col items-center justify-center p-6 min-h-[50vh] relative z-20">
             <div className="w-full max-w-md">
                 <AnimatePresence mode="wait">
                     {step === 1 && (
@@ -110,9 +114,9 @@ function HabitSetupContent({ product }: { product: any }) {
                                             setSelectedArea(area);
                                             handleNext();
                                         }}
-                                        className="bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center gap-4 text-left group border border-transparent hover:border-[#5B2D7D]/20"
+                                        className="bg-white/40 backdrop-blur-md p-4 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center gap-4 text-left group border border-white/30 hover:border-white/50"
                                     >
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${area.color}`}>
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${area.color} shadow-sm`}>
                                             {area.icon}
                                         </div>
                                         <div>
@@ -149,8 +153,8 @@ function HabitSetupContent({ product }: { product: any }) {
                                         onClick={() => setSelectedHabit(lvl.description)}
                                         className={`p-4 rounded-2xl border transition-all text-left font-medium ${
                                             selectedHabit === lvl.description 
-                                            ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]' 
-                                            : 'bg-white text-[#5B2D7D] border-transparent hover:border-[#5B2D7D]/20 shadow-sm'
+                                            ? 'bg-[#5B2D7D] text-white border-[#5B2D7D] shadow-lg shadow-[#5B2D7D]/20' 
+                                            : 'bg-white/40 backdrop-blur-md text-[#5B2D7D] border-white/30 hover:border-white/50 shadow-sm'
                                         }`}
                                     >
                                         <div className="flex flex-col">
@@ -175,7 +179,7 @@ function HabitSetupContent({ product }: { product: any }) {
                                         className={`w-full p-4 pl-12 rounded-2xl border outline-none transition-all ${
                                             customHabit 
                                             ? 'border-[#5B2D7D] bg-white text-[#5B2D7D]' 
-                                            : 'border-transparent bg-white/50 text-[#5B2D7D] focus:bg-white focus:border-[#5B2D7D]/30'
+                                            : 'border-white/30 bg-white/20 backdrop-blur-md text-[#5B2D7D] focus:bg-white focus:border-white/50'
                                         }`}
                                     />
                                 </div>

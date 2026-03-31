@@ -115,7 +115,12 @@ export default function HabitSetup({ product }: { product: Product }) {
     };
 
     return (
-        <div className="min-h-dvh bg-[#FDF2EC] flex flex-col font-[Outfit] relative">
+        <div className="min-h-dvh bg-[#FDF2EC] flex flex-col font-[Outfit] relative overflow-hidden">
+            {/* Background Decorative Shapes */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl transform translate-x-20 -translate-y-20 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform -translate-x-10 translate-y-10 pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#5B2D7D]/5 rounded-full blur-3xl pointer-events-none" />
+
             <AnimatePresence>
                 {isPending && (
                     <motion.div 
@@ -124,7 +129,7 @@ export default function HabitSetup({ product }: { product: Product }) {
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[100] bg-[#FDF2EC]/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
                     >
-                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-xl">
+                        <div className="w-20 h-20 bg-white/40 backdrop-blur-xl border border-white/50 rounded-full flex items-center justify-center mb-6 shadow-xl">
                             <Loader2 className="w-10 h-10 text-[#5B2D7D] animate-spin" />
                         </div>
                         <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Building Your Medallion</h2>
@@ -134,11 +139,11 @@ export default function HabitSetup({ product }: { product: Product }) {
             </AnimatePresence>
 
             {/* Header */}
-            <header className="px-6 pt-10 pb-6 text-center shrink-0">
+            <header className="px-6 pt-10 pb-6 text-center shrink-0 relative z-10">
                 <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"
+                    className="w-16 h-16 bg-white/40 backdrop-blur-xl border border-white/50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"
                 >
                     <Sparkles className="w-8 h-8 text-[#5B2D7D]" />
                 </motion.div>
@@ -147,7 +152,7 @@ export default function HabitSetup({ product }: { product: Product }) {
             </header>
 
             {/* Main Content Area */}
-            <div className="flex-1 px-6 overflow-y-auto pb-40 no-scrollbar">
+            <div className="flex-1 px-6 overflow-y-auto pb-40 no-scrollbar relative z-10">
                 
                 <AnimatePresence mode="wait">
                     {/* STEP 1: NAME */}
@@ -159,7 +164,7 @@ export default function HabitSetup({ product }: { product: Product }) {
                             exit={{ opacity: 0, x: -20 }}
                             className="space-y-6"
                         >
-                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#5B2D7D]/5">
+                            <div className="bg-white/40 backdrop-blur-xl rounded-[32px] p-6 shadow-sm border border-white/50">
                                 <label className="block text-[10px] font-black text-[#5B2D7D]/30 uppercase tracking-widest mb-4">
                                     Name your charm
                                 </label>
@@ -187,7 +192,7 @@ export default function HabitSetup({ product }: { product: Product }) {
                             className="space-y-6"
                         >
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shadow-sm">
                                     <Sun className="w-5 h-5 text-orange-600" />
                                 </div>
                                 <h2 className="text-xl font-bold text-[#5B2D7D]">Morning Ritual</h2>
@@ -200,13 +205,13 @@ export default function HabitSetup({ product }: { product: Product }) {
                                     <button
                                         key={template.id}
                                         onClick={() => applyTemplate(template)}
-                                        className="bg-white p-5 rounded-3xl text-left border border-[#5B2D7D]/5 shadow-sm active:scale-[0.98] transition-all"
+                                        className="bg-white/40 backdrop-blur-md p-5 rounded-3xl text-left border border-white/30 shadow-sm active:scale-[0.98] transition-all"
                                     >
                                         <h3 className="font-bold text-[#5B2D7D] mb-1">{template.title}</h3>
                                         <p className="text-xs text-[#5B2D7D]/50 mb-3">{template.description}</p>
                                         <div className="flex gap-2">
                                             {template.habits.map((h, i) => (
-                                                <div key={i} className="px-2 py-1 bg-[#FDF2EC] rounded-lg text-[10px] text-[#5B2D7D]/60">
+                                                <div key={i} className="px-2 py-1 bg-[#5B2D7D]/5 rounded-lg text-[10px] text-[#5B2D7D]/60 border border-[#5B2D7D]/5">
                                                     {h.title}
                                                 </div>
                                             ))}
@@ -219,9 +224,9 @@ export default function HabitSetup({ product }: { product: Product }) {
                                 <h3 className="text-xs font-black text-[#5B2D7D]/30 uppercase tracking-widest mb-4 ml-1">Custom Stack</h3>
                                 <div className="space-y-3">
                                     {morningHabits.map((h, i) => (
-                                        <div key={i} className="bg-white p-4 rounded-2xl flex items-center justify-between border border-[#5B2D7D]/5">
+                                        <div key={i} className="bg-white/40 backdrop-blur-md p-4 rounded-2xl flex items-center justify-between border border-white/30 shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-[#FDF2EC] flex items-center justify-center text-[10px] font-bold text-[#5B2D7D]">
+                                                <div className="w-8 h-8 rounded-full bg-[#5B2D7D]/10 flex items-center justify-center text-[10px] font-bold text-[#5B2D7D]">
                                                     {i + 1}
                                                 </div>
                                                 <div>
@@ -256,7 +261,7 @@ export default function HabitSetup({ product }: { product: Product }) {
                             className="space-y-6"
                         >
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shadow-sm">
                                     <Moon className="w-5 h-5 text-indigo-600" />
                                 </div>
                                 <h2 className="text-xl font-bold text-[#5B2D7D]">Night Ritual</h2>
@@ -269,13 +274,13 @@ export default function HabitSetup({ product }: { product: Product }) {
                                     <button
                                         key={template.id}
                                         onClick={() => applyTemplate(template)}
-                                        className="bg-white p-5 rounded-3xl text-left border border-[#5B2D7D]/5 shadow-sm active:scale-[0.98] transition-all"
+                                        className="bg-white/40 backdrop-blur-md p-5 rounded-3xl text-left border border-white/30 shadow-sm active:scale-[0.98] transition-all"
                                     >
                                         <h3 className="font-bold text-[#5B2D7D] mb-1">{template.title}</h3>
                                         <p className="text-xs text-[#5B2D7D]/50 mb-3">{template.description}</p>
                                         <div className="flex gap-2">
                                             {template.habits.map((h, i) => (
-                                                <div key={i} className="px-2 py-1 bg-[#FDF2EC] rounded-lg text-[10px] text-[#5B2D7D]/60">
+                                                <div key={i} className="px-2 py-1 bg-[#5B2D7D]/5 rounded-lg text-[10px] text-[#5B2D7D]/60 border border-[#5B2D7D]/5">
                                                     {h.title}
                                                 </div>
                                             ))}
@@ -288,9 +293,9 @@ export default function HabitSetup({ product }: { product: Product }) {
                                 <h3 className="text-xs font-black text-[#5B2D7D]/30 uppercase tracking-widest mb-4 ml-1">Custom Stack</h3>
                                 <div className="space-y-3">
                                     {nightHabits.map((h, i) => (
-                                        <div key={i} className="bg-white p-4 rounded-2xl flex items-center justify-between border border-[#5B2D7D]/5">
+                                        <div key={i} className="bg-white/40 backdrop-blur-md p-4 rounded-2xl flex items-center justify-between border border-white/30 shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-[#FDF2EC] flex items-center justify-center text-[10px] font-bold text-[#5B2D7D]">
+                                                <div className="w-8 h-8 rounded-full bg-[#5B2D7D]/10 flex items-center justify-center text-[10px] font-bold text-[#5B2D7D]">
                                                     {i + 1}
                                                 </div>
                                                 <div>
@@ -325,7 +330,7 @@ export default function HabitSetup({ product }: { product: Product }) {
                             className="space-y-6"
                         >
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center shadow-sm">
                                     <Zap className="w-5 h-5 text-pink-600" />
                                 </div>
                                 <h2 className="text-xl font-bold text-[#5B2D7D]">Other Habits</h2>
@@ -335,9 +340,9 @@ export default function HabitSetup({ product }: { product: Product }) {
 
                             <div className="space-y-3">
                                 {otherHabits.map((h, i) => (
-                                    <div key={i} className="bg-white p-4 rounded-2xl flex items-center justify-between border border-[#5B2D7D]/5">
+                                    <div key={i} className="bg-white/40 backdrop-blur-md p-4 rounded-2xl flex items-center justify-between border border-white/30 shadow-sm">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-[#FDF2EC] flex items-center justify-center">
+                                            <div className="w-8 h-8 rounded-full bg-[#5B2D7D]/10 flex items-center justify-center">
                                                 <Zap className="w-4 h-4 text-[#5B2D7D]" />
                                             </div>
                                             <div>
@@ -370,8 +375,8 @@ export default function HabitSetup({ product }: { product: Product }) {
                             exit={{ opacity: 0, x: -20 }}
                             className="space-y-6"
                         >
-                            <div className="bg-white rounded-[40px] p-8 shadow-sm border border-[#5B2D7D]/5 text-center">
-                                <div className="w-20 h-20 bg-[#FDF2EC] rounded-full flex items-center justify-center mx-auto mb-6">
+                            <div className="bg-white/40 backdrop-blur-xl rounded-[40px] p-8 shadow-sm border border-white/50 text-center">
+                                <div className="w-20 h-20 bg-[#5B2D7D]/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
                                     <Check className="w-10 h-10 text-[#5B2D7D]" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Ready to Start?</h2>
@@ -398,12 +403,12 @@ export default function HabitSetup({ product }: { product: Product }) {
             </div>
 
             {/* Navigation Bar */}
-            <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#FDF2EC] via-[#FDF2EC] to-transparent">
+            <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#FDF2EC] via-[#FDF2EC] to-transparent z-40">
                 <div className="flex gap-3 max-w-md mx-auto">
                     {step > 1 && (
                         <button
                             onClick={() => setStep(s => s - 1)}
-                            className="h-14 px-6 rounded-2xl bg-white text-[#5B2D7D] font-bold shadow-sm border border-[#5B2D7D]/5 active:scale-95 transition-all"
+                            className="h-14 px-6 rounded-2xl bg-white/40 backdrop-blur-md text-[#5B2D7D] font-bold shadow-sm border border-white/30 active:scale-95 transition-all"
                         >
                             Back
                         </button>
@@ -442,7 +447,7 @@ function HabitSelector({ ritualType, onSelect }: { ritualType: "MORNING" | "NIGH
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full h-14 rounded-2xl border-2 border-dashed border-[#5B2D7D]/10 flex items-center justify-center gap-2 text-[#5B2D7D]/30 hover:border-[#5B2D7D]/20 hover:text-[#5B2D7D]/40 transition-all"
+                className="w-full h-14 rounded-2xl border-2 border-dashed border-[#5B2D7D]/20 bg-white/20 backdrop-blur-sm flex items-center justify-center gap-2 text-[#5B2D7D]/30 hover:border-[#5B2D7D]/40 hover:text-[#5B2D7D]/40 transition-all"
             >
                 <Plus className="w-5 h-5" />
                 <span className="text-sm font-bold">Add {ritualType === "OTHER" ? "Habit" : "to Ritual"}</span>
@@ -466,11 +471,11 @@ function HabitSelector({ ritualType, onSelect }: { ritualType: "MORNING" | "NIGH
                             animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
                             exit={{ opacity: 0, scale: 0.9, y: 20, x: "-50%" }}
                             style={{ left: "50%", top: "15%" }}
-                            className="fixed w-[calc(100%-48px)] max-w-md bg-white rounded-[40px] shadow-2xl border border-[#5B2D7D]/5 p-6 z-[120] max-h-[75vh] overflow-y-auto no-scrollbar"
+                            className="fixed w-[calc(100%-48px)] max-w-md bg-[#FDF2EC]/90 backdrop-blur-xl rounded-[40px] shadow-2xl border border-white/30 p-6 z-[120] max-h-[75vh] overflow-y-auto no-scrollbar"
                         >
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-xl font-bold text-[#5B2D7D]">Choose Habit</h3>
-                                <button onClick={() => setIsOpen(false)} className="w-10 h-10 rounded-full bg-[#FDF2EC] flex items-center justify-center text-[#5B2D7D]/40">
+                                <button onClick={() => setIsOpen(false)} className="w-10 h-10 rounded-full bg-white/40 flex items-center justify-center text-[#5B2D7D]/40 border border-white/50">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
@@ -478,7 +483,7 @@ function HabitSelector({ ritualType, onSelect }: { ritualType: "MORNING" | "NIGH
                             {!isCustom ? (
                                 <div className="space-y-3">
                                     {CORE_HABITS.map(cat => (
-                                        <div key={cat.id} className="bg-[#FDF2EC]/50 rounded-3xl overflow-hidden border border-[#5B2D7D]/5">
+                                        <div key={cat.id} className="bg-white/40 backdrop-blur-md rounded-3xl overflow-hidden border border-white/30 shadow-sm">
                                             <button 
                                                 onClick={() => setExpandedCat(expandedCat === cat.id ? null : cat.id)}
                                                 className="w-full p-4 flex items-center justify-between"
@@ -511,7 +516,7 @@ function HabitSelector({ ritualType, onSelect }: { ritualType: "MORNING" | "NIGH
                                                                     });
                                                                     setIsOpen(false);
                                                                 }}
-                                                                className="w-full text-left p-4 rounded-2xl bg-white hover:bg-[#5B2D7D] hover:text-white transition-all group shadow-sm"
+                                                                className="w-full text-left p-4 rounded-2xl bg-white/60 hover:bg-[#5B2D7D] hover:text-white transition-all group shadow-sm"
                                                             >
                                                                 <p className="text-sm font-bold leading-tight mb-1">{l.description}</p>
                                                                 <p className="text-[10px] opacity-40 group-hover:opacity-60 font-bold uppercase tracking-widest">{l.duration} • {l.trigger}</p>
@@ -524,7 +529,7 @@ function HabitSelector({ ritualType, onSelect }: { ritualType: "MORNING" | "NIGH
                                     ))}
                                     <button
                                         onClick={() => setIsCustom(true)}
-                                        className="w-full p-5 rounded-[24px] bg-[#5B2D7D]/5 text-[#5B2D7D] font-bold text-sm flex items-center justify-center gap-2 border-2 border-dashed border-[#5B2D7D]/10"
+                                        className="w-full p-5 rounded-[24px] bg-white/20 backdrop-blur-md text-[#5B2D7D] font-bold text-sm flex items-center justify-center gap-2 border-2 border-dashed border-[#5B2D7D]/10"
                                     >
                                         <Plus className="w-5 h-5" /> Create Custom Habit
                                     </button>
@@ -539,7 +544,7 @@ function HabitSelector({ ritualType, onSelect }: { ritualType: "MORNING" | "NIGH
                                                 value={customTitle}
                                                 onChange={(e) => setCustomTitle(e.target.value)}
                                                 placeholder="e.g. Read 1 page"
-                                                className="w-full p-4 rounded-2xl bg-[#FDF2EC] text-[#5B2D7D] font-bold outline-none focus:ring-2 ring-[#5B2D7D]/10 border border-[#5B2D7D]/5"
+                                                className="w-full p-4 rounded-2xl bg-white/40 border border-white/50 text-[#5B2D7D] font-bold outline-none focus:ring-2 ring-[#5B2D7D]/10"
                                                 autoFocus
                                             />
                                         </div>
@@ -550,13 +555,13 @@ function HabitSelector({ ritualType, onSelect }: { ritualType: "MORNING" | "NIGH
                                                     type="number" 
                                                     value={customDuration}
                                                     onChange={(e) => setCustomDuration(parseInt(e.target.value))}
-                                                    className="w-full p-4 rounded-2xl bg-[#FDF2EC] text-[#5B2D7D] font-bold outline-none border border-[#5B2D7D]/5"
+                                                    className="w-full p-4 rounded-2xl bg-white/40 border border-white/50 text-[#5B2D7D] font-bold outline-none focus:ring-2 ring-[#5B2D7D]/10"
                                                 />
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex gap-3">
-                                        <button onClick={() => setIsCustom(false)} className="flex-1 h-14 rounded-2xl bg-[#FDF2EC] text-[#5B2D7D] font-bold text-sm">Back</button>
+                                        <button onClick={() => setIsCustom(false)} className="flex-1 h-14 rounded-2xl bg-white/20 text-[#5B2D7D] font-bold text-sm">Back</button>
                                         <button 
                                             onClick={() => {
                                                 if (!customTitle) return;

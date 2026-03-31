@@ -82,9 +82,14 @@ function RitualTimerOverlay() {
   return (
     <>
       <Drawer open={isPlayerOpen} onOpenChange={(open) => !open && closePlayer()}>
-        <DrawerContent className="bg-[#FDF2EC] border-none font-[Outfit] h-[100dvh] max-h-[100dvh] rounded-none z-[100]">
-          <div className="flex flex-col h-full p-6 pb-12 overflow-hidden">
-            <button onClick={closePlayer} className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/50 backdrop-blur-md flex items-center justify-center text-[#5B2D7D] active:scale-90 z-20">
+        <DrawerContent className="bg-[#FDF2EC]/60 backdrop-blur-3xl border-none font-[Outfit] h-[100dvh] max-h-[100dvh] rounded-none z-[100] overflow-hidden">
+          {/* Background Decorative Shapes */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl transform translate-x-20 -translate-y-20 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl transform -translate-x-10 translate-y-10 pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-[#5B2D7D]/5 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col h-full p-6 pb-12 overflow-hidden relative z-10">
+            <button onClick={closePlayer} className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/40 backdrop-blur-xl flex items-center justify-center text-[#5B2D7D] shadow-sm border border-white/50 active:scale-90 z-20">
               <ChevronDown className="w-6 h-6" />
             </button>
 
@@ -101,13 +106,13 @@ function RitualTimerOverlay() {
                     <div className="text-[10px] font-black text-[#5B2D7D]/30 uppercase tracking-[0.2em] mb-4">
                       Habit {ritual.currentIndex + 1} of {ritual.habits.length}
                     </div>
-                    <h2 className="text-3xl font-bold text-[#5B2D7D] px-6">{currentHabit.title}</h2>
-                    <p className="text-[#5B2D7D]/40 text-sm mt-2">{currentHabit.description}</p>
+                    <h2 className="text-3xl font-bold text-[#5B2D7D] px-6 leading-tight">{currentHabit.title}</h2>
+                    <p className="text-[#5B2D7D]/40 text-sm mt-2 font-medium">{currentHabit.description}</p>
                   </div>
 
                   <div className="relative w-64 h-64 flex items-center justify-center">
                     <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="white" strokeWidth="4" />
+                      <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="4" />
                       <motion.circle
                         cx="50"
                         cy="50"
@@ -121,24 +126,24 @@ function RitualTimerOverlay() {
                         transition={{ duration: 1, ease: "linear" }}
                       />
                     </svg>
-                    <div className="text-6xl font-black text-[#5B2D7D]">{ritual.timeLeft}s</div>
+                    <div className="text-6xl font-black text-[#5B2D7D] tracking-tighter">{ritual.timeLeft}s</div>
                   </div>
 
                   <div className="w-full space-y-8 px-6">
                     <div className="flex items-center justify-center gap-6">
-                      <button onClick={extendTimer} className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-[#5B2D7D] shadow-sm active:scale-90">
+                      <button onClick={extendTimer} className="w-14 h-14 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center text-[#5B2D7D] shadow-sm border border-white/50 active:scale-90">
                         <Plus className="w-6 h-6" />
                       </button>
-                      <button onClick={togglePause} className="w-20 h-20 rounded-full bg-white shadow-xl flex items-center justify-center text-[#5B2D7D] active:scale-95">
+                      <button onClick={togglePause} className="w-20 h-20 rounded-full bg-white/60 backdrop-blur-xl shadow-xl border border-white/50 flex items-center justify-center text-[#5B2D7D] active:scale-95">
                         {ritual.isPaused ? <Play className="w-8 h-8 fill-[#5B2D7D]" /> : <Pause className="w-8 h-8 fill-[#5B2D7D]" />}
                       </button>
-                      <button onClick={nextHabit} className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-[#5B2D7D] shadow-sm active:scale-90">
+                      <button onClick={nextHabit} className="w-14 h-14 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center text-[#5B2D7D] shadow-sm border border-white/50 active:scale-90">
                         <ArrowRight className="w-6 h-6" />
                       </button>
                     </div>
 
                     <div className="flex gap-3">
-                      <button onClick={skipHabit} className="flex-1 h-14 rounded-2xl bg-[#5B2D7D]/5 text-[#5B2D7D] font-bold active:scale-[0.98] transition-all">
+                      <button onClick={skipHabit} className="flex-1 h-14 rounded-2xl bg-white/30 backdrop-blur-md text-[#5B2D7D] font-bold border border-white/30 active:scale-[0.98] transition-all">
                         Skip Habit
                       </button>
                       <button onClick={nextHabit} className="flex-1 h-14 rounded-2xl bg-[#5B2D7D] text-white font-bold shadow-lg active:scale-[0.98] transition-all">
@@ -156,25 +161,27 @@ function RitualTimerOverlay() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex-1 flex flex-col items-center justify-center text-center p-4"
                 >
-                  <div className="w-20 h-20 bg-[#A4C538]/10 rounded-full flex items-center justify-center mb-6 text-[#A4C538]">
+                  <div className="w-20 h-20 bg-white/40 backdrop-blur-xl border border-white/50 rounded-full flex items-center justify-center mb-6 text-[#A4C538] shadow-sm">
                     <Check className="w-10 h-10" strokeWidth={3} />
                   </div>
-                  <h2 className="text-2xl font-bold text-[#5B2D7D] mb-8">Ritual Complete</h2>
+                  <h2 className="text-3xl font-black text-[#5B2D7D] uppercase tracking-tighter mb-8">Ritual Complete</h2>
 
                   <div className="w-full space-y-3 mb-12 overflow-y-auto no-scrollbar max-h-[40vh]">
                     {ritual.habits.map((habit) => (
-                      <div key={habit.id} className="flex items-center justify-between p-4 bg-white rounded-2xl">
-                        <span className="font-bold text-[#5B2D7D]">{habit.title}</span>
+                      <div key={habit.id} className="flex items-center justify-between p-5 bg-white/40 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm">
+                        <span className="font-bold text-[#5B2D7D] text-sm">{habit.title}</span>
                         {ritual.skippedIds.includes(habit.id) ? (
-                          <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">Skipped</span>
+                          <span className="text-[10px] font-black text-red-500/60 uppercase tracking-widest bg-red-50/50 px-2 py-1 rounded-lg">Skipped</span>
                         ) : (
-                          <Check className="w-5 h-5 text-[#A4C538]" />
+                          <div className="w-8 h-8 bg-[#A4C538]/20 rounded-full flex items-center justify-center">
+                            <Check className="w-5 h-5 text-[#A4C538]" strokeWidth={3} />
+                          </div>
                         )}
                       </div>
                     ))}
                   </div>
 
-                  <button onClick={goToReflection} className="w-full h-14 rounded-full bg-[#5B2D7D] text-white font-bold shadow-lg shadow-[#5B2D7D]/20 active:scale-95">
+                  <button onClick={goToReflection} className="w-full h-16 rounded-full bg-[#5B2D7D] text-white font-bold text-lg shadow-xl shadow-[#5B2D7D]/20 active:scale-95">
                     Continue
                   </button>
                 </motion.div>
@@ -185,20 +192,20 @@ function RitualTimerOverlay() {
                   key="reflection"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex-1 flex flex-col items-center justify-center text-center"
+                  className="flex-1 flex flex-col items-center justify-center text-center px-4"
                 >
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
+                  <div className="w-16 h-16 bg-white/40 backdrop-blur-xl border border-white/50 rounded-full flex items-center justify-center mb-6 shadow-sm">
                     <Sparkles className="w-8 h-8 text-[#5B2D7D]" />
                   </div>
-                  <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">How do you feel?</h2>
-                  <p className="text-sm text-[#5B2D7D]/40 mb-8">Capture your current energy in one word or feeling.</p>
+                  <h2 className="text-3xl font-black text-[#5B2D7D] uppercase tracking-tighter mb-2 leading-none">How do you feel?</h2>
+                  <p className="text-sm font-medium text-[#5B2D7D]/40 mb-12">Capture your current energy in one word.</p>
 
                   <input
                     type="text"
                     value={ritual.reflection}
                     onChange={(event) => setReflection(event.target.value)}
-                    placeholder="e.g. Grateful, Calm, Ready"
-                    className="w-full p-4 text-xl text-center bg-transparent border-b-2 border-[#5B2D7D]/10 text-[#5B2D7D] font-bold outline-none focus:border-[#5B2D7D]/30 mb-12"
+                    placeholder="Grateful, Calm, Ready..."
+                    className="w-full p-4 text-3xl text-center bg-transparent border-b-2 border-[#5B2D7D]/10 text-[#5B2D7D] font-black placeholder:text-[#5B2D7D]/20 outline-none focus:border-[#5B2D7D]/30 mb-16 transition-colors"
                     autoFocus
                   />
 
@@ -208,9 +215,9 @@ function RitualTimerOverlay() {
                       finishRitual().finally(() => setIsSaving(false));
                     }}
                     disabled={isSaving}
-                    className="w-full h-14 rounded-full bg-[#5B2D7D] text-white font-bold shadow-lg shadow-[#5B2D7D]/20 active:scale-95 disabled:opacity-50 flex items-center justify-center"
+                    className="w-full h-16 rounded-full bg-[#5B2D7D] text-white font-bold text-lg shadow-xl shadow-[#5B2D7D]/20 active:scale-95 disabled:opacity-50 flex items-center justify-center"
                   >
-                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save & Close"}
+                    {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : "Save & Complete Ritual"}
                   </button>
                 </motion.div>
               )}

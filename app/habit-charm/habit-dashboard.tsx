@@ -194,17 +194,21 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
 
     return (
         <div className="flex flex-col h-full relative overflow-hidden bg-transparent">
+             {/* Background Decorative Shapes */}
+             <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl transform translate-x-20 -translate-y-20 pointer-events-none" />
+             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform -translate-x-10 translate-y-10 pointer-events-none" />
+
              {/* Local Action Bar */}
              <div className="px-6 py-2 flex items-center justify-end gap-3 z-10">
                 <button 
                     onClick={() => setIsResetDrawerOpen(true)}
-                    className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-[#5B2D7D] hover:bg-[#EADDDE] transition-colors"
+                    className="w-10 h-10 rounded-full bg-white/40 backdrop-blur-md shadow-sm flex items-center justify-center text-[#5B2D7D] border border-white/50 hover:bg-white/60 transition-colors"
                 >
                     <RotateCcw className="w-4 h-4" />
                 </button>
                 <button 
                     onClick={() => setViewMode(prev => prev === 'cards' ? 'history' : 'cards')}
-                    className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-[#5B2D7D] hover:bg-[#EADDDE] transition-colors"
+                    className="w-10 h-10 rounded-full bg-white/40 backdrop-blur-md shadow-sm flex items-center justify-center text-[#5B2D7D] border border-white/50 hover:bg-white/60 transition-colors"
                 >
                     {viewMode === 'cards' ? <Calendar className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
                 </button>
@@ -258,9 +262,9 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                                 <motion.button 
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => setIsAddDrawerOpen(true)}
-                                    className="bg-white/40 border-2 border-dashed border-[#5B2D7D]/10 rounded-[40px] p-4 flex flex-col items-center justify-center aspect-[2/3] group hover:border-[#5B2D7D]/20 transition-all"
+                                    className="bg-white/40 backdrop-blur-md border-2 border-dashed border-white/50 rounded-[40px] p-4 flex flex-col items-center justify-center aspect-[2/3] group hover:border-[#5B2D7D]/20 hover:bg-white/60 transition-all shadow-sm"
                                 >
-                                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-3 text-[#5B2D7D]/30 group-hover:text-[#5B2D7D]/50 transition-colors">
+                                    <div className="w-12 h-12 rounded-full bg-white/60 flex items-center justify-center mb-3 text-[#5B2D7D]/30 group-hover:text-[#5B2D7D]/50 transition-colors">
                                         <Plus className="w-6 h-6" />
                                     </div>
                                     <span className="text-[10px] font-bold text-[#5B2D7D]/30 group-hover:text-[#5B2D7D]/50 uppercase tracking-widest text-center">Add Habit</span>
@@ -364,7 +368,7 @@ function MedallionStreak({ habits, product }: { habits: HabitWithLogs[], product
     });
 
     return (
-        <div className="bg-white rounded-[40px] p-6 shadow-sm border border-[#5B2D7D]/5">
+        <div className="bg-white/40 backdrop-blur-xl rounded-[40px] p-6 shadow-sm border border-white/50 relative overflow-hidden">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h2 className="text-xl font-black text-[#5B2D7D] uppercase tracking-tighter leading-none mb-1">
@@ -374,7 +378,7 @@ function MedallionStreak({ habits, product }: { habits: HabitWithLogs[], product
                         7-Day Overview
                     </span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-orange-50 px-4 py-2 rounded-2xl border border-orange-100">
+                <div className="flex items-center gap-1.5 bg-orange-50/50 backdrop-blur-sm px-4 py-2 rounded-2xl border border-orange-100/50">
                     <Flame className="w-5 h-5 text-orange-500 fill-orange-500" />
                     <span className="text-xl font-black text-orange-600">{product.currentStreak}</span>
                 </div>
@@ -386,8 +390,8 @@ function MedallionStreak({ habits, product }: { habits: HabitWithLogs[], product
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                             day.status === 'full' ? 'bg-[#A4C538] text-white shadow-lg shadow-[#A4C538]/20' :
                             day.status === 'partial' ? 'bg-[#A4C538]/30 text-[#5B2D7D]' :
-                            day.status === 'paused' ? 'bg-blue-100 text-blue-500' :
-                            'bg-[#FDF2EC] text-[#5B2D7D]/20'
+                            day.status === 'paused' ? 'bg-blue-100/50 backdrop-blur-sm text-blue-500 border border-blue-200/50' :
+                            'bg-[#FDF2EC]/50 text-[#5B2D7D]/20 border border-white/20'
                         }`}>
                             {day.status === 'full' && <Check className="w-5 h-5" strokeWidth={3} />}
                             {day.status === 'partial' && <div className="w-4 h-4 rounded-full border-2 border-[#A4C538] border-r-transparent animate-spin-slow" />}
@@ -409,14 +413,14 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
     const isPaused = todayStatus === "paused";
     const accentClasses = type === "MORNING"
         ? {
-            surface: isDone ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-orange-100 text-[#5B2D7D]",
-            soft: "bg-orange-50 text-orange-500",
-            badge: "bg-orange-50 text-orange-600 border-orange-100"
+            surface: isDone ? "bg-orange-500 border-orange-500 text-white" : "bg-white/40 backdrop-blur-xl border-white/50 text-[#5B2D7D]",
+            soft: "bg-orange-50/50 backdrop-blur-sm text-orange-500",
+            badge: "bg-orange-50/50 backdrop-blur-sm text-orange-600 border-orange-100/50"
         }
         : {
-            surface: isDone ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-indigo-100 text-[#5B2D7D]",
-            soft: "bg-indigo-50 text-indigo-500",
-            badge: "bg-indigo-50 text-indigo-600 border-indigo-100"
+            surface: isDone ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white/40 backdrop-blur-xl border-white/50 text-[#5B2D7D]",
+            soft: "bg-indigo-50/50 backdrop-blur-sm text-indigo-500",
+            badge: "bg-indigo-50/50 backdrop-blur-sm text-indigo-600 border-indigo-100/50"
         };
 
     return (
@@ -439,7 +443,7 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
                         event.stopPropagation();
                         onPause();
                     }}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all ${isDone ? "bg-white/20 text-white" : "bg-[#FDF2EC] text-[#5B2D7D]/50 hover:bg-[#EADDDE]"}`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-all ${isDone ? "bg-white/20 text-white" : "bg-white/60 backdrop-blur-md text-[#5B2D7D]/50 hover:bg-white/80 border border-white/50"}`}
                 >
                     <Pause className="w-4 h-4" />
                 </button>
@@ -457,7 +461,7 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
                 </button>
             </div>
 
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 mt-6 transition-colors ${isDone ? "bg-white/20" : accentClasses.soft}`}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 mt-6 transition-colors ${isDone ? "bg-white/20" : accentClasses.soft} shadow-sm`}>
                 {type === "MORNING" ? <Sun className={`w-6 h-6 ${isDone ? "text-white" : "text-orange-500"}`} /> : <Moon className={`w-6 h-6 ${isDone ? "text-white" : "text-indigo-400"}`} />}
             </div>
             <h3 className="font-black text-xs uppercase tracking-widest mb-1">{type} Ritual</h3>
@@ -470,7 +474,7 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
                     {habits.length} {habits.length === 1 ? "Task" : "Tasks"}
                 </div>
                 {isPaused && (
-                    <div className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${isDone ? "bg-white/15 text-white border-white/20" : "bg-blue-50 text-blue-600 border-blue-100"}`}>
+                    <div className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${isDone ? "bg-white/15 text-white border-white/20" : "bg-blue-50/50 backdrop-blur-sm text-blue-600 border-blue-100/50"}`}>
                         Paused
                     </div>
                 )}
@@ -522,33 +526,37 @@ function RitualPauseDrawer({
 
     return (
         <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl border-none font-[Outfit]">
+            <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Pause Ritual</DrawerTitle>
                     <DrawerDescription>Pause every task in this ritual for today.</DrawerDescription>
                 </DrawerHeader>
-                <div className="p-6 pb-12">
-                    <div className="text-center mb-6">
+                <div className="p-6 pb-12 relative overflow-hidden">
+                    {/* Background Decorative Shapes */}
+                    <div className="absolute top-20 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute bottom-20 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="text-center mb-6 relative z-10">
                         <h3 className="text-xl font-bold text-[#5B2D7D]">{ritualType === "MORNING" ? "Pause morning ritual?" : "Pause night ritual?"}</h3>
                         <p className="text-[#5B2D7D]/60 text-sm mt-1 px-4">
                             This will apply the same pause reason to all {habits.length} tasks in this ritual for today.
                         </p>
                     </div>
-                    <div className="mb-6 flex flex-wrap justify-center gap-2">
+                    <div className="mb-6 flex flex-wrap justify-center gap-2 relative z-10">
                         {habits.map(habit => (
-                            <span key={habit.id} className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/60 shadow-sm">
+                            <span key={habit.id} className="rounded-full bg-white/40 backdrop-blur-md px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/60 shadow-sm border border-white/50">
                                 {habit.title}
                             </span>
                         ))}
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 relative z-10">
                         {RITUAL_PAUSE_OPTIONS.map(option => (
                             <motion.button
                                 key={option.id}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => handlePause(option.id)}
                                 disabled={isSaving}
-                                className="bg-white p-5 rounded-[24px] flex flex-col items-center justify-center gap-2 hover:bg-[#5B2D7D]/5 transition-colors border border-transparent active:border-[#5B2D7D]/10 disabled:opacity-50"
+                                className="bg-white/60 backdrop-blur-md p-5 rounded-[24px] flex flex-col items-center justify-center gap-2 hover:bg-white/80 transition-colors border border-white/50 active:border-white/80 disabled:opacity-50 shadow-sm"
                             >
                                 <option.icon className="w-6 h-6 text-[#5B2D7D]/70" />
                                 <span className="text-xs font-bold text-[#5B2D7D]">{option.label}</span>
@@ -705,35 +713,40 @@ function RitualManageDrawer({
 
     return (
         <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl border-none font-[Outfit] max-h-[96dvh]">
+            <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit] max-h-[96dvh]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>{ritualName}</DrawerTitle>
                     <DrawerDescription>Review history and manage every task in this ritual.</DrawerDescription>
                 </DrawerHeader>
-                <div className="p-6 pb-20 overflow-y-auto no-scrollbar">
-                    <div className="mb-8 flex items-center justify-between px-2">
+                <div className="p-6 pb-20 overflow-y-auto no-scrollbar relative">
+                    {/* Background Decorative Shapes */}
+                    <div className="absolute top-20 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute bottom-40 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="mb-8 flex items-center justify-between px-2 relative z-10">
                         <div>
                             <h3 className="text-2xl font-black text-[#5B2D7D] uppercase tracking-tighter leading-none mb-1">{ritualName}</h3>
                             <span className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">Manage & History</span>
                         </div>
                         <button
                             onClick={() => setIsEditMode(prev => !prev)}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isEditMode ? "bg-[#5B2D7D] text-white" : "bg-white text-[#5B2D7D] shadow-sm"}`}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isEditMode ? "bg-[#5B2D7D] text-white" : "bg-white/40 backdrop-blur-md text-[#5B2D7D] shadow-sm border border-white/50"}`}
                         >
                             {isEditMode ? <X className="w-5 h-5" /> : <Pencil className="w-4 h-4" />}
                         </button>
                     </div>
 
+                    <div className="relative z-10">
                     {!isEditMode ? (
                         <>
-                            <div className="bg-white p-6 rounded-[32px] shadow-sm mb-6">
+                            <div className="bg-white/40 backdrop-blur-xl p-6 rounded-[32px] shadow-sm mb-6 border border-white/50">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <h4 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-1">Today</h4>
                                         <p className="text-lg font-bold text-[#5B2D7D]">{ritualStatus === "full" ? "Completed" : ritualStatus === "paused" ? "Paused for today" : ritualStatus === "partial" ? "In progress" : "Ready to begin"}</p>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button onClick={onPause} className="h-10 rounded-full bg-[#FDF2EC] px-4 text-xs font-black uppercase tracking-widest text-[#5B2D7D]">
+                                        <button onClick={onPause} className="h-10 rounded-full bg-white/40 backdrop-blur-md px-4 text-xs font-black uppercase tracking-widest text-[#5B2D7D] border border-white/50">
                                             Pause
                                         </button>
                                         <button onClick={onBegin} className="h-10 rounded-full bg-[#5B2D7D] px-4 text-xs font-black uppercase tracking-widest text-white shadow-sm">
@@ -744,11 +757,11 @@ function RitualManageDrawer({
                                 <div className="grid grid-cols-7 gap-2">
                                     {recentDays.map(day => (
                                         <div key={day.utcDate} className="flex flex-col items-center gap-2">
-                                            <div className={`w-full aspect-square rounded-2xl flex items-center justify-center ${
-                                                day.status === "full" ? "bg-[#A4C538] text-white" :
-                                                day.status === "partial" ? "bg-[#A4C538]/25 text-[#5B2D7D]" :
-                                                day.status === "paused" ? "bg-blue-100 text-blue-500" :
-                                                "bg-[#FDF2EC] text-[#5B2D7D]/20"
+                                            <div className={`w-full aspect-square rounded-2xl flex items-center justify-center border ${
+                                                day.status === "full" ? "bg-[#A4C538] border-[#A4C538] text-white" :
+                                                day.status === "partial" ? "bg-[#A4C538]/25 border-[#A4C538]/20 text-[#5B2D7D]" :
+                                                day.status === "paused" ? "bg-blue-100/50 border-blue-200/50 text-blue-500" :
+                                                "bg-[#FDF2EC]/50 border-white/20 text-[#5B2D7D]/20"
                                             }`}>
                                                 {day.status === "full" && <Check className="w-4 h-4" strokeWidth={3} />}
                                                 {day.status === "partial" && <div className="w-2.5 h-2.5 rounded-full bg-current" />}
@@ -763,17 +776,17 @@ function RitualManageDrawer({
                                 </div>
                             </div>
 
-                            <div className="bg-white p-6 rounded-[32px] shadow-sm mb-6">
+                            <div className="bg-white/40 backdrop-blur-xl p-6 rounded-[32px] shadow-sm mb-6 border border-white/50">
                                 <h4 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Ritual Tasks</h4>
                                 <div className="space-y-3">
                                     {habits.map((habit, index) => (
-                                        <div key={habit.id} className="flex items-center justify-between rounded-[24px] bg-[#FDF2EC] px-4 py-4">
+                                        <div key={habit.id} className="flex items-center justify-between rounded-[24px] bg-white/40 backdrop-blur-md px-4 py-4 border border-white/50">
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/30">{index + 1}</span>
                                                     <span className="text-sm font-bold text-[#5B2D7D] truncate">{habit.title}</span>
                                                 </div>
-                                                <p className="text-xs text-[#5B2D7D]/50 truncate">{habit.description || "No description"}</p>
+                                                <p className="text-xs text-[#5B2D7D]/50 truncate font-medium">{habit.description || "No description"}</p>
                                             </div>
                                             <div className="text-right ml-4 shrink-0">
                                                 <p className="text-sm font-black text-[#5B2D7D]">{habit.duration || 60}s</p>
@@ -784,9 +797,9 @@ function RitualManageDrawer({
                                 </div>
                             </div>
 
-                            <div className="bg-white p-6 rounded-[32px] shadow-sm">
-                                <h4 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Recent Days</h4>
-                                <div className="space-y-3">
+                            <div className="bg-white/40 backdrop-blur-xl p-6 rounded-[32px] shadow-sm border border-white/50">
+                                <h4 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Recent History</h4>
+                                <div className="space-y-4">
                                     {recentDays.slice().reverse().map(day => (
                                         <div key={day.utcDate} className="flex items-center justify-between">
                                             <div>
@@ -799,10 +812,10 @@ function RitualManageDrawer({
                                                     return (
                                                         <span
                                                             key={`${habit.id}-${day.utcDate}`}
-                                                            className={`h-8 min-w-8 rounded-full px-2 flex items-center justify-center text-[9px] font-black uppercase tracking-widest ${
-                                                                log?.logType === "DONE" ? "bg-[#A4C538]/20 text-[#5B2D7D]" :
-                                                                log ? "bg-blue-100 text-blue-600" :
-                                                                "bg-[#FDF2EC] text-[#5B2D7D]/20"
+                                                            className={`h-8 min-w-8 rounded-full px-2 flex items-center justify-center text-[9px] font-black uppercase tracking-widest shadow-sm border ${
+                                                                log?.logType === "DONE" ? "bg-[#A4C538]/20 border-[#A4C538]/20 text-[#5B2D7D]" :
+                                                                log ? "bg-blue-100/50 border-blue-200/50 text-blue-600" :
+                                                                "bg-[#FDF2EC]/50 border-white/20 text-[#5B2D7D]/20"
                                                             }`}
                                                         >
                                                             {log?.logType === "DONE" ? "✓" : log ? "P" : "·"}
@@ -817,14 +830,14 @@ function RitualManageDrawer({
                         </>
                     ) : (
                         <div className="space-y-6">
-                            <div className="bg-white p-6 rounded-[32px] shadow-sm">
+                            <div className="bg-white/40 backdrop-blur-xl p-6 rounded-[32px] shadow-sm border border-white/50">
                                 <h4 className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-4">Edit Tasks</h4>
                                 <div className="space-y-4">
                                     {draftHabits.map((habit, index) => (
-                                        <div key={habit.clientId} className="rounded-[28px] bg-[#FDF2EC] p-4 border border-[#5B2D7D]/5">
+                                        <div key={habit.clientId} className="rounded-[28px] bg-white/40 backdrop-blur-md p-4 border border-white/50 shadow-sm">
                                             <div className="mb-4 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#5B2D7D]/40 shadow-sm">
+                                                    <div className="w-10 h-10 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center text-[#5B2D7D]/40 shadow-sm border border-white/50">
                                                         <GripVertical className="w-4 h-4" />
                                                     </div>
                                                     <div>
@@ -833,13 +846,13 @@ function RitualManageDrawer({
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <button onClick={() => moveHabit(habit.clientId, -1)} disabled={index === 0} className="w-9 h-9 rounded-full bg-white text-[#5B2D7D] shadow-sm disabled:opacity-30">
+                                                    <button onClick={() => moveHabit(habit.clientId, -1)} disabled={index === 0} className="w-9 h-9 rounded-full bg-white/60 text-[#5B2D7D] shadow-sm border border-white/50 disabled:opacity-30">
                                                         <ChevronUp className="w-4 h-4 mx-auto" />
                                                     </button>
-                                                    <button onClick={() => moveHabit(habit.clientId, 1)} disabled={index === draftHabits.length - 1} className="w-9 h-9 rounded-full bg-white text-[#5B2D7D] shadow-sm disabled:opacity-30">
+                                                    <button onClick={() => moveHabit(habit.clientId, 1)} disabled={index === draftHabits.length - 1} className="w-9 h-9 rounded-full bg-white/60 text-[#5B2D7D] shadow-sm border border-white/50 disabled:opacity-30">
                                                         <ChevronDown className="w-4 h-4 mx-auto" />
                                                     </button>
-                                                    <button onClick={() => removeDraftHabit(habit.clientId)} className="w-9 h-9 rounded-full bg-red-50 text-red-500">
+                                                    <button onClick={() => removeDraftHabit(habit.clientId)} className="w-9 h-9 rounded-full bg-red-50/50 text-red-500 border border-red-100/50">
                                                         <Trash2 className="w-4 h-4 mx-auto" />
                                                     </button>
                                                 </div>
@@ -850,34 +863,40 @@ function RitualManageDrawer({
                                                     type="text"
                                                     value={habit.title}
                                                     onChange={(event) => updateDraftHabit(habit.clientId, { title: event.target.value })}
-                                                    className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-white px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                                    className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 py-3 text-[#5B2D7D] font-bold outline-none placeholder:text-[#5B2D7D]/20"
                                                     placeholder="Task title"
                                                 />
                                                 <input
                                                     type="text"
                                                     value={habit.description}
                                                     onChange={(event) => updateDraftHabit(habit.clientId, { description: event.target.value })}
-                                                    className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-white px-4 py-3 text-sm text-[#5B2D7D] outline-none"
+                                                    className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 py-3 text-sm text-[#5B2D7D] outline-none font-medium placeholder:text-[#5B2D7D]/20"
                                                     placeholder="Short description"
                                                 />
                                                 <div className="grid grid-cols-2 gap-3">
-                                                    <input
-                                                        type="number"
-                                                        min={15}
-                                                        step={15}
-                                                        value={habit.duration}
-                                                        onChange={(event) => updateDraftHabit(habit.clientId, { duration: parseInt(event.target.value) || 60 })}
-                                                        className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-white px-4 py-3 text-[#5B2D7D] font-bold outline-none"
-                                                    />
-                                                    <select
-                                                        value={habit.targetDays}
-                                                        onChange={(event) => updateDraftHabit(habit.clientId, { targetDays: parseInt(event.target.value) })}
-                                                        className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-white px-4 py-3 text-[#5B2D7D] font-bold outline-none"
-                                                    >
-                                                        <option value={21}>21 Days</option>
-                                                        <option value={66}>66 Days</option>
-                                                        <option value={100}>100 Days</option>
-                                                    </select>
+                                                    <div className="relative">
+                                                        <span className="absolute left-4 top-1 text-[8px] font-black text-[#5B2D7D]/30 uppercase">Secs</span>
+                                                        <input
+                                                            type="number"
+                                                            min={15}
+                                                            step={15}
+                                                            value={habit.duration}
+                                                            onChange={(event) => updateDraftHabit(habit.clientId, { duration: parseInt(event.target.value) || 60 })}
+                                                            className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 pt-5 pb-2 text-[#5B2D7D] font-bold outline-none"
+                                                        />
+                                                    </div>
+                                                    <div className="relative">
+                                                        <span className="absolute left-4 top-1 text-[8px] font-black text-[#5B2D7D]/30 uppercase">Goal</span>
+                                                        <select
+                                                            value={habit.targetDays}
+                                                            onChange={(event) => updateDraftHabit(habit.clientId, { targetDays: parseInt(event.target.value) })}
+                                                            className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 pt-5 pb-2 text-[#5B2D7D] font-bold outline-none appearance-none"
+                                                        >
+                                                            <option value={21}>21 Days</option>
+                                                            <option value={66}>66 Days</option>
+                                                            <option value={100}>100 Days</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -885,12 +904,12 @@ function RitualManageDrawer({
                                 </div>
                             </div>
 
-                            <div className="bg-white p-6 rounded-[32px] shadow-sm">
-                                <div className="mb-4 flex gap-2">
-                                    <button onClick={() => setAddMode("template")} className={`h-10 rounded-full px-4 text-xs font-black uppercase tracking-widest ${addMode === "template" ? "bg-[#5B2D7D] text-white" : "bg-[#FDF2EC] text-[#5B2D7D]"}`}>
-                                        Template
+                            <div className="bg-white/40 backdrop-blur-xl p-6 rounded-[32px] shadow-sm border border-white/50">
+                                <div className="mb-6 flex gap-2">
+                                    <button onClick={() => setAddMode("template")} className={`flex-1 h-12 rounded-2xl px-4 text-xs font-black uppercase tracking-widest transition-all ${addMode === "template" ? "bg-[#5B2D7D] text-white shadow-lg" : "bg-white/40 backdrop-blur-md text-[#5B2D7D] border border-white/50"}`}>
+                                        Templates
                                     </button>
-                                    <button onClick={() => setAddMode("custom")} className={`h-10 rounded-full px-4 text-xs font-black uppercase tracking-widest ${addMode === "custom" ? "bg-[#5B2D7D] text-white" : "bg-[#FDF2EC] text-[#5B2D7D]"}`}>
+                                    <button onClick={() => setAddMode("custom")} className={`flex-1 h-12 rounded-2xl px-4 text-xs font-black uppercase tracking-widest transition-all ${addMode === "custom" ? "bg-[#5B2D7D] text-white shadow-lg" : "bg-white/40 backdrop-blur-md text-[#5B2D7D] border border-white/50"}`}>
                                         Custom
                                     </button>
                                 </div>
@@ -898,7 +917,7 @@ function RitualManageDrawer({
                                 {addMode === "template" ? (
                                     <div className="space-y-3">
                                         {CORE_HABITS.map(category => (
-                                            <div key={category.id} className="overflow-hidden rounded-[24px] border border-[#5B2D7D]/5 bg-[#FDF2EC]">
+                                            <div key={category.id} className="overflow-hidden rounded-[24px] border border-white/30 bg-white/40 backdrop-blur-md">
                                                 <button
                                                     onClick={() => setExpandedCategoryId(prev => prev === category.id ? null : category.id)}
                                                     className="flex w-full items-center justify-between p-4"
@@ -924,10 +943,10 @@ function RitualManageDrawer({
                                                                 <button
                                                                     key={level.level}
                                                                     onClick={() => addTemplateHabit(category.id, level.level)}
-                                                                    className="w-full rounded-2xl bg-white px-4 py-4 text-left shadow-sm hover:bg-[#5B2D7D] hover:text-white transition-all"
+                                                                    className="w-full rounded-2xl bg-white/60 backdrop-blur-md px-4 py-4 text-left shadow-sm border border-white/30 hover:bg-[#5B2D7D] hover:text-white hover:border-[#5B2D7D] transition-all group"
                                                                 >
-                                                                    <p className="text-sm font-bold leading-tight">{level.description}</p>
-                                                                    <p className="mt-1 text-[10px] font-black uppercase tracking-widest opacity-40">{level.duration} • {level.trigger}</p>
+                                                                    <p className="text-sm font-bold leading-tight group-hover:text-white">{level.description}</p>
+                                                                    <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-[#5B2D7D]/30 group-hover:text-white/60">{level.duration} • {level.trigger}</p>
                                                                 </button>
                                                             ))}
                                                         </motion.div>
@@ -942,7 +961,7 @@ function RitualManageDrawer({
                                             type="text"
                                             value={customTitle}
                                             onChange={(event) => setCustomTitle(event.target.value)}
-                                            className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-[#FDF2EC] px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                            className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 py-4 text-[#5B2D7D] font-bold outline-none placeholder:text-[#5B2D7D]/20"
                                             placeholder="Task name"
                                         />
                                         <div className="grid grid-cols-2 gap-3">
@@ -952,19 +971,19 @@ function RitualManageDrawer({
                                                 step={15}
                                                 value={customDuration}
                                                 onChange={(event) => setCustomDuration(parseInt(event.target.value) || 60)}
-                                                className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-[#FDF2EC] px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                                className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 py-4 text-[#5B2D7D] font-bold outline-none"
                                             />
                                             <select
                                                 value={customTarget}
                                                 onChange={(event) => setCustomTarget(parseInt(event.target.value))}
-                                                className="w-full rounded-2xl border border-[#5B2D7D]/10 bg-[#FDF2EC] px-4 py-3 text-[#5B2D7D] font-bold outline-none"
+                                                className="w-full rounded-2xl border border-white/50 bg-white/60 px-4 py-4 text-[#5B2D7D] font-bold outline-none appearance-none"
                                             >
                                                 <option value={21}>21 Days</option>
                                                 <option value={66}>66 Days</option>
                                                 <option value={100}>100 Days</option>
                                             </select>
                                         </div>
-                                        <button onClick={addCustomHabit} className="w-full rounded-2xl bg-[#5B2D7D] py-4 text-sm font-bold text-white shadow-lg shadow-[#5B2D7D]/20">
+                                        <button onClick={addCustomHabit} className="w-full rounded-2xl bg-[#5B2D7D] py-4 text-sm font-bold text-white shadow-lg shadow-[#5B2D7D]/20 active:scale-95 transition-all">
                                             Add Custom Task
                                         </button>
                                     </div>
@@ -974,12 +993,13 @@ function RitualManageDrawer({
                             <button
                                 onClick={handleSave}
                                 disabled={isSaving}
-                                className="w-full rounded-2xl bg-[#5B2D7D] py-4 text-sm font-bold text-white shadow-lg shadow-[#5B2D7D]/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="w-full rounded-[24px] bg-[#5B2D7D] py-5 text-sm font-bold text-white shadow-xl shadow-[#5B2D7D]/20 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95 transition-all"
                             >
                                 {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-4 h-4" /> Save Ritual Changes</>}
                             </button>
                         </div>
                     )}
+                    </div>
                 </div>
             </DrawerContent>
         </Drawer>
@@ -1009,31 +1029,35 @@ function ResetCharmDrawer({ productId, isOpen, onClose, router }: { productId: s
 
     return (
         <Drawer open={isOpen} onOpenChange={onClose}>
-            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl font-[Outfit]">
+            <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Reset Habit Charm</DrawerTitle>
                     <DrawerDescription>Clear all progress and start fresh with this charm.</DrawerDescription>
                 </DrawerHeader>
-                <div className="p-8 pb-12 flex flex-col items-center text-center">
-                    <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-6 text-orange-600">
+                <div className="p-8 pb-12 flex flex-col items-center text-center relative overflow-hidden">
+                    {/* Background Decorative Shapes */}
+                    <div className="absolute top-10 right-0 w-32 h-32 bg-orange-100/30 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute bottom-10 left-0 w-32 h-32 bg-[#5B2D7D]/5 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="w-20 h-20 bg-orange-100/50 backdrop-blur-md rounded-full flex items-center justify-center mb-6 text-orange-600 shadow-sm border border-orange-200/50 relative z-10">
                         <AlertTriangle className="w-10 h-10" />
                     </div>
-                    <h3 className="text-2xl font-bold text-[#5B2D7D] mb-2">Reset This Charm?</h3>
-                    <p className="text-[#5B2D7D]/60 mb-8 max-w-xs">
+                    <h3 className="text-2xl font-bold text-[#5B2D7D] mb-2 relative z-10">Reset This Charm?</h3>
+                    <p className="text-[#5B2D7D]/60 mb-8 max-w-xs relative z-10">
                         This will archive your current streaks and logs for a fresh start. You won&apos;t see previous history, but it will be saved in our system.
                     </p>
 
-                    <div className="flex flex-col gap-3 w-full">
+                    <div className="flex flex-col gap-3 w-full relative z-10">
                         <button 
                             onClick={handleReset}
                             disabled={isResetting}
-                            className="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all"
                         >
                             {isResetting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Yes, Reset Everything"}
                         </button>
                         <button 
                             onClick={onClose}
-                            className="w-full py-3 rounded-xl font-bold text-[#5B2D7D]/40 hover:bg-[#5B2D7D]/5 transition-colors"
+                            className="w-full py-3 rounded-xl font-bold text-[#5B2D7D]/40 hover:bg-white/40 transition-colors"
                         >
                             Cancel
                         </button>
@@ -1123,15 +1147,19 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
 
     return (
         <Drawer open={isOpen} onOpenChange={onClose}>
-            <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl font-[Outfit] max-h-[96dvh]">
-                <div className="p-6 pb-20 overflow-y-auto no-scrollbar">
-                    <DrawerHeader className="px-0 text-left mb-4">
+            <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit] max-h-[96dvh]">
+                <div className="p-6 pb-20 overflow-y-auto no-scrollbar relative">
+                    {/* Background Decorative Shapes */}
+                    <div className="absolute top-20 right-0 w-32 h-32 bg-[#5B2D7D]/5 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute bottom-40 left-0 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none" />
+
+                    <DrawerHeader className="px-0 text-left mb-4 relative z-10">
                         <DrawerTitle className="text-2xl font-bold text-[#5B2D7D]">Add New Habit</DrawerTitle>
                         <DrawerDescription>Pick a specific ritual to add to your medallion.</DrawerDescription>
                     </DrawerHeader>
 
                     {/* Accordion List */}
-                    <div className="space-y-3">
+                    <div className="space-y-3 relative z-10">
                         {CORE_HABITS.map((category) => {
                             const isExpanded = expandedCategoryId === category.id;
                             const isSelected = selectedHabit?.id === category.id;
@@ -1140,8 +1168,8 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
                                 <div key={category.id} className="overflow-hidden">
                                     <button
                                         onClick={() => toggleCategory(category.id)}
-                                        className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
-                                            isExpanded ? "bg-[#5B2D7D] text-white shadow-md" : "bg-white"
+                                        className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all shadow-sm border ${
+                                            isExpanded ? "bg-[#5B2D7D] border-[#5B2D7D] text-white shadow-md" : "bg-white/60 backdrop-blur-md border-white/50"
                                         }`}
                                     >
                                         <div className="flex items-center gap-3">
@@ -1164,7 +1192,7 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
                                                 initial={{ height: 0, opacity: 0 }}
                                                 animate={{ height: "auto", opacity: 1 }}
                                                 exit={{ height: 0, opacity: 0 }}
-                                                className="mt-2 bg-white/50 rounded-2xl p-2 space-y-1 overflow-hidden"
+                                                className="mt-2 bg-white/40 backdrop-blur-md rounded-2xl p-2 space-y-1 overflow-hidden border border-white/30"
                                             >
                                                 {category.levels.map((lvl) => {
                                                     const isThisSelected = selectedHabit?.id === category.id && selectedHabit?.level === lvl.level;
@@ -1173,7 +1201,7 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
                                                             key={lvl.level}
                                                             onClick={() => { handleSelectHabit(category.id, lvl.level); setMode('template'); }}
                                                             className={`w-full text-left p-3 rounded-xl flex flex-col gap-1 transition-colors ${
-                                                                isThisSelected ? "bg-[#5B2D7D]/10" : "hover:bg-[#EADDDE]/30"
+                                                                isThisSelected ? "bg-[#5B2D7D]/10" : "hover:bg-white/60"
                                                             }`}
                                                         >
                                                             <div className="flex items-center justify-between">
@@ -1205,12 +1233,12 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
                         <div className="overflow-hidden">
                             <button
                                 onClick={() => { setMode('custom'); setExpandedCategoryId(expandedCategoryId === 'custom' ? null : 'custom'); }}
-                                className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed transition-all ${
-                                    expandedCategoryId === 'custom' ? "border-[#5B2D7D] bg-[#5B2D7D]/5" : "border-[#5B2D7D]/20 bg-white/40"
+                                className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed transition-all shadow-sm ${
+                                    expandedCategoryId === 'custom' ? "border-[#5B2D7D] bg-[#5B2D7D]/5" : "border-white/50 bg-white/40 backdrop-blur-md"
                                 }`}
                             >
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                    expandedCategoryId === 'custom' ? "bg-[#5B2D7D]" : "bg-[#EADDDE]"
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
+                                    expandedCategoryId === 'custom' ? "bg-[#5B2D7D]" : "bg-white/60"
                                 }`}>
                                     <Plus className={`w-5 h-5 ${expandedCategoryId === 'custom' ? "text-white" : "text-[#5B2D7D]"}`} />
                                 </div>
@@ -1225,7 +1253,7 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: "auto", opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        className="mt-2 bg-white rounded-2xl p-4 shadow-sm space-y-4 overflow-hidden"
+                                        className="mt-2 bg-white/40 backdrop-blur-md rounded-2xl p-4 shadow-sm space-y-4 overflow-hidden border border-white/30"
                                     >
                                         <div className="space-y-4">
                                             <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest ml-1">Habit Title</label>
@@ -1234,14 +1262,14 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
                                                 value={customTitle}
                                                 onChange={(e) => setCustomName(e.target.value)}
                                                 placeholder="What is the ritual?"
-                                                className="w-full px-4 py-3 rounded-xl bg-[#FDF2EC]/50 border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none"
+                                                className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/30 text-[#5B2D7D] outline-none placeholder:text-[#5B2D7D]/20 font-bold"
                                             />
                                             <div>
                                                 <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-2 ml-1">Daily Target</label>
                                                 <select 
                                                     value={customTarget}
                                                     onChange={(e) => setCustomTarget(parseInt(e.target.value))}
-                                                    className="w-full px-4 py-3 rounded-xl bg-[#FDF2EC]/50 border border-[#5B2D7D]/10 text-[#5B2D7D] text-sm outline-none appearance-none"
+                                                    className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/30 text-[#5B2D7D] text-sm outline-none appearance-none font-bold"
                                                 >
                                                     <option value={21}>21 Days</option>
                                                     <option value={66}>66 Days</option>
@@ -1256,11 +1284,11 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
                     </div>
 
                     {/* Final Action */}
-                    <div className="mt-8">
+                    <div className="mt-8 relative z-10">
                         <button 
                             onClick={handleAdd}
                             disabled={isSaving || (mode === 'template' && !selectedHabit) || (mode === 'custom' && !customTitle.trim())}
-                            className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full py-5 bg-[#A4C538] text-[#5B2D7D] rounded-[24px] font-black text-lg shadow-xl shadow-[#A4C538]/20 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all"
                         >
                             {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                                 <>
@@ -1285,7 +1313,7 @@ function HabitHistoryCard({ habit, optimisticLogs }: { habit: HabitWithLogs, opt
     pastDate.setDate(todayIST.getDate() - (range - 1));
     
     return (
-        <div className="bg-white rounded-[32px] p-5 shadow-sm">
+        <div className="bg-white/40 backdrop-blur-xl rounded-[32px] p-5 shadow-sm border border-white/50">
             <div className="flex items-center justify-between mb-6">
                 <div className="max-w-[60%]">
                     <h3 className="text-lg font-bold text-[#5B2D7D] truncate">{habit.title}</h3>
@@ -1296,14 +1324,14 @@ function HabitHistoryCard({ habit, optimisticLogs }: { habit: HabitWithLogs, opt
                         <Flame className="w-4 h-4 text-orange-500" />
                         <span className="text-sm font-bold text-[#5B2D7D]">{habit.currentStreak}</span>
                     </div>
-                    <div className="flex bg-[#FDF2EC] rounded-lg p-1">
+                    <div className="flex bg-white/40 backdrop-blur-md rounded-lg p-1 border border-white/30">
                         <button 
                             onClick={() => setRange(7)}
-                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 7 ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D]/40'}`}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 7 ? 'bg-[#5B2D7D] text-white shadow-sm' : 'text-[#5B2D7D]/40'}`}
                         >7D</button>
                         <button 
                             onClick={() => setRange(30)}
-                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 30 ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D]/40'}`}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 30 ? 'bg-[#5B2D7D] text-white shadow-sm' : 'text-[#5B2D7D]/40'}`}
                         >30D</button>
                     </div>
                 </div>
@@ -1324,14 +1352,14 @@ function RitualHistoryCard({ type, habits }: { type: RitualType; habits: HabitWi
     const title = type === "MORNING" ? "Morning Ritual" : "Night Ritual";
     const accent = type === "MORNING"
         ? {
-            chip: "bg-orange-50 text-orange-600 border-orange-100",
+            chip: "bg-orange-50/50 text-orange-600 border-orange-100/50",
             icon: "text-orange-500",
-            soft: "bg-orange-50"
+            soft: "bg-orange-50/50 backdrop-blur-sm"
         }
         : {
-            chip: "bg-indigo-50 text-indigo-600 border-indigo-100",
+            chip: "bg-indigo-50/50 text-indigo-600 border-indigo-100/50",
             icon: "text-indigo-500",
-            soft: "bg-indigo-50"
+            soft: "bg-indigo-50/50 backdrop-blur-sm"
         };
 
     const today = new Date();
@@ -1344,11 +1372,11 @@ function RitualHistoryCard({ type, habits }: { type: RitualType; habits: HabitWi
     const totalStreak = habits.reduce((max, habit) => Math.max(max, habit.currentStreak), 0);
 
     return (
-        <div className="bg-white rounded-[32px] p-5 shadow-sm">
+        <div className="bg-white/40 backdrop-blur-xl rounded-[32px] p-5 shadow-sm border border-white/50">
             <div className="flex items-center justify-between mb-6">
                 <div className="max-w-[60%]">
                     <div className="flex items-center gap-2 mb-1">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center ${accent.soft}`}>
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm ${accent.soft}`}>
                             {type === "MORNING" ? <Sun className={`w-4 h-4 ${accent.icon}`} /> : <Moon className={`w-4 h-4 ${accent.icon}`} />}
                         </div>
                         <div>
@@ -1360,18 +1388,18 @@ function RitualHistoryCard({ type, habits }: { type: RitualType; habits: HabitWi
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border ${accent.chip}`}>
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border backdrop-blur-sm ${accent.chip}`}>
                         <Flame className={`w-4 h-4 ${accent.icon}`} />
                         <span className="text-sm font-bold">{totalStreak}</span>
                     </div>
-                    <div className="flex bg-[#FDF2EC] rounded-lg p-1">
+                    <div className="flex bg-white/40 backdrop-blur-md rounded-lg p-1 border border-white/30">
                         <button
                             onClick={() => setRange(7)}
-                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 7 ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D]/40'}`}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 7 ? 'bg-[#5B2D7D] text-white shadow-sm' : 'text-[#5B2D7D]/40'}`}
                         >7D</button>
                         <button
                             onClick={() => setRange(30)}
-                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 30 ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D]/40'}`}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-colors ${range === 30 ? 'bg-[#5B2D7D] text-white shadow-sm' : 'text-[#5B2D7D]/40'}`}
                         >30D</button>
                     </div>
                 </div>
@@ -1612,19 +1640,19 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
         <>
         <motion.div 
             whileTap={{ scale: 0.98 }}
-            className="bg-white rounded-[40px] p-4 flex flex-col items-center shadow-sm relative overflow-visible aspect-[2/3] group"
+            className="bg-white/40 backdrop-blur-xl rounded-[40px] p-4 flex flex-col items-center shadow-sm relative overflow-visible aspect-[2/3] group border border-white/50"
         >
             {/* Top Bar Actions */}
             <div className="absolute top-3 left-3 z-20 flex gap-2">
                 {!isLogged ? (
                     <button 
                         onClick={(e) => { e.stopPropagation(); setShowAnomaly(true); }}
-                        className="w-11 h-11 rounded-full bg-[#FDF2EC] text-[#5B2D7D]/40 flex items-center justify-center hover:bg-[#EADDDE] shadow-sm active:scale-90 transition-all"
+                        className="w-11 h-11 rounded-full bg-white/60 backdrop-blur-md text-[#5B2D7D]/40 flex items-center justify-center hover:bg-white/80 shadow-sm active:scale-90 transition-all border border-white/50"
                     >
                         <Pause className="w-4 h-4" />
                     </button>
                 ) : (
-                    <div className="w-11 h-11 rounded-full bg-[#A4C538]/10 text-[#A4C538] flex items-center justify-center shadow-sm">
+                    <div className="w-11 h-11 rounded-full bg-[#A4C538]/10 backdrop-blur-md text-[#A4C538] flex items-center justify-center shadow-sm border border-[#A4C538]/20">
                         {todayLog.logType === 'DONE' ? <Check className="w-5 h-5" strokeWidth={3} /> : <Pause className="w-4 h-4" />}
                     </div>
                 )}
@@ -1648,7 +1676,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                         className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-0"
                         viewBox="0 0 100 100"
                     >
-                        <circle cx="50" cy="50" r="46" fill="none" stroke="#FDF2EC" strokeWidth="6" />
+                        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(91, 45, 125, 0.05)" strokeWidth="6" />
                         <motion.circle
                             cx="50" cy="50" r="46" fill="none"
                             stroke={isLogged ? (todayLog?.logType === 'DONE' ? "#A4C538" : "#EAB308") : "#5B2D7D"}
@@ -1665,7 +1693,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                         className={`relative w-[80%] h-[80%] rounded-full flex items-center justify-center transition-all shadow-xl active:scale-95 z-10 shrink-0 ${
                             isLogged 
                             ? (todayLog?.logType === 'DONE' ? 'bg-[#A4C538] text-[#5B2D7D] shadow-[#A4C538]/20' : 'bg-[#EAB308] text-white shadow-[#EAB308]/20')
-                            : 'bg-[#FDF2EC] text-[#5B2D7D] hover:bg-[#EADDDE] hover:shadow-2xl'
+                            : 'bg-white/60 backdrop-blur-md text-[#5B2D7D] hover:bg-white/80 hover:shadow-2xl border border-white/50'
                         }`}
                     >
                         <div className="flex flex-col items-center justify-center">
@@ -1688,7 +1716,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                     <h3 className="font-bold text-[#5B2D7D] text-sm leading-tight mb-3 line-clamp-2">{habit.title}</h3>
                     
                     {/* Progress Bar Container */}
-                    <div className="w-full max-w-[120px] space-y-1.5 bg-[#5B2D7D]/5 p-2 rounded-2xl border border-[#5B2D7D]/5">
+                    <div className="w-full max-w-[120px] space-y-1.5 bg-white/40 backdrop-blur-md p-2 rounded-2xl border border-white/30 shadow-sm">
                         <div className="h-2 w-full bg-[#5B2D7D]/10 rounded-full overflow-hidden">
                             <motion.div 
                                 key={`${habit.id}-${habit.currentStreak}`}
