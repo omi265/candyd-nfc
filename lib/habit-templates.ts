@@ -149,3 +149,52 @@ export const CORE_HABITS: CoreHabit[] = [
 
 // Backwards compatibility alias if needed, or remove if refactoring everything
 export const HABIT_FOCUS_AREAS = CORE_HABITS;
+
+export interface RitualTemplate {
+    id: string;
+    title: string;
+    description: string;
+    type: "MORNING" | "NIGHT";
+    habits: {
+        title: string;
+        description: string;
+        focusArea: string;
+        duration: number; // in seconds
+    }[];
+}
+
+export const RITUAL_TEMPLATES: RitualTemplate[] = [
+    {
+        id: "slow-morning",
+        title: "Slow Morning",
+        description: "A gentle start to ease into your day.",
+        type: "MORNING",
+        habits: [
+            { title: "Hydrate", description: "Drink one full glass of water", focusArea: "hydrate", duration: 60 },
+            { title: "Breathe", description: "Take 3 deep breaths", focusArea: "breathe", duration: 30 },
+            { title: "Move", description: "Stand up and stretch arms overhead", focusArea: "move", duration: 15 }
+        ]
+    },
+    {
+        id: "productive-start",
+        title: "Productive Start",
+        description: "Ignite your focus and energy.",
+        type: "MORNING",
+        habits: [
+            { title: "Move", description: "5 squats or 10 step march", focusArea: "move", duration: 30 },
+            { title: "Learn", description: "Read one headline or fact", focusArea: "learn", duration: 30 },
+            { title: "Breathe", description: "Box breathing (4 cycles)", focusArea: "breathe", duration: 60 }
+        ]
+    },
+    {
+        id: "wind-down-night",
+        title: "Wind-down Night",
+        description: "Release the day and prepare for rest.",
+        type: "NIGHT",
+        habits: [
+            { title: "Reflect", description: "Name your current emotion", focusArea: "reflect", duration: 30 },
+            { title: "Rest", description: "Set phone to Do Not Disturb", focusArea: "rest", duration: 15 },
+            { title: "Gratitude", description: "Think of one thing you're grateful for", focusArea: "gratitude", duration: 60 }
+        ]
+    }
+];

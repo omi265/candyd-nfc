@@ -446,15 +446,15 @@ export async function reorderListItems(listId: string, itemIds: string[]) {
       return { error: "Unauthorized" };
     }
 
-    // Update order indices - Optimized with transaction
-    await db.$transaction(
-      itemIds.map((id, index) =>
-        db.lifeListItem.update({
-          where: { id },
-          data: { orderIndex: index },
-        })
-      )
-    );
+    // Update order indices - Optimized with interactive transaction
+    await db.$transaction(async (tx) => {
+      for (let i = 0; i < itemIds.length; i++) {
+        await tx.lifeListItem.update({
+          where: { id: itemIds[i] },
+          data: { orderIndex: i },
+        });
+      }
+    });
 
     revalidatePath(`/life-charm`);
     return { success: true };

@@ -375,15 +375,15 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
 
              // 2. Batch update existing items (reordering)
              if (existingItems.length > 0) {
-                 await db.$transaction(
-                     existingItems.map(item => {
+                 await db.$transaction(async (tx) => {
+                     for (const item of existingItems) {
                          const index = items.indexOf(item);
-                         return db.media.update({
+                         await tx.media.update({
                              where: { id: item.id },
                              data: { orderIndex: index }
                          });
-                     })
-                 );
+                     }
+                 });
              }
         }
         // Fallback: Add NEW media if provided via old method (only if orderedMedia not present)
