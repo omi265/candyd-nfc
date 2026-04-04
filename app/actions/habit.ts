@@ -465,6 +465,84 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
     } catch (e) { return { error: "Error" }; }
 }
 
+export async function logRitual(
+    habitIds: string[], 
+    skippedIds: string[], 
+    reflection?: string, 
+    notes?: string, 
+    imageUrl?: string, 
+    dateStr?: string
+) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const targetDate = getTargetHabitDate(dateStr);
+        const { startOfDay, endOfDay } = getDayRange(targetDate);
+
+        const habits = await db.habit.findMany({
+            where: {
+                id: { in: habitIds },
+                userId: session.user.id
+            }
+        });
+
+        if (habits.length === 0) return { error: "No habits found" };
+
+        await db.$transaction(async (tx) => {
+            for (let i = 0; i < habits.length; i++) {
+                const habit = habits[i];
+                if (skippedIds.includes(habit.id)) continue;
+
+                // Check if this is the last NON-SKIPPED habit to attach metadata
+                const isLastValid = habitIds.slice(i + 1).every(id => skippedIds.includes(id));
+
+                const existingLog = await tx.habitLog.findFirst({
+                    where: {
+                        habitId: habit.id,
+                        date: { gte: startOfDay, lt: endOfDay },
+                        ...(habit.resetAt ? { createdAt: { gt: habit.resetAt } } : {})
+                    },
+                    orderBy: { createdAt: "desc" }
+                });
+
+                const logData = {
+                    date: targetDate,
+                    logType: "DONE" as HabitLogType,
+                    notes: isLastValid ? (notes || undefined) : undefined,
+                    imageUrl: isLastValid ? (imageUrl || undefined) : undefined,
+                    reflection: isLastValid ? (reflection || undefined) : undefined,
+                };
+
+                if (existingLog) {
+                    await tx.habitLog.update({
+                        where: { id: existingLog.id },
+                        data: logData
+                    });
+                } else {
+                    await tx.habitLog.create({
+                        data: {
+                            ...logData,
+                            habitId: habit.id
+                        }
+                    });
+                }
+            }
+        });
+
+        // Recalculate stats for all habits
+        for (const habit of habits) {
+            await syncHabitStats(habit.id);
+        }
+
+        revalidatePath(`/habit-charm`);
+        return { success: true };
+    } catch (error) {
+        console.error("[LOG_RITUAL_ERROR]", error);
+        return { error: "Failed to log ritual" };
+    }
+}
+
 export async function adjustHabitLogs(habitId: string, dateStr: string, adjustment: number) {
     const session = await auth();
     if (!session?.user?.id) return { error: "Unauthorized" };

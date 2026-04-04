@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { logHabit } from "@/app/actions/habit";
+import { logHabit, logRitual } from "@/app/actions/habit";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check, ChevronDown, Loader2, Minus, Moon, Pause, Play, Plus, Sparkles, Sun, X } from "lucide-react";
@@ -492,21 +492,17 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
 
       const savingToast = toast.loading("Saving your ritual...");
       try {
-        for (let index = 0; index < ritual.habits.length; index++) {
-          const habit = ritual.habits[index];
-          if (!ritual.skippedIds.includes(habit.id)) {
-            const isLast = index === ritual.habits.length - 1 ||
-              (index < ritual.habits.length - 1 && ritual.habits.slice(index + 1).every(next => ritual.skippedIds.includes(next.id)));
+        const habitIds = ritual.habits.map(h => h.id);
+        const result = await logRitual(
+            habitIds,
+            ritual.skippedIds,
+            ritual.reflection || undefined,
+            ritual.notes || undefined,
+            ritual.imageUrl || undefined
+        );
 
-            await logHabit(
-                habit.id,
-                isLast ? (ritual.notes || undefined) : undefined,
-                "DONE",
-                isLast ? (ritual.imageUrl || undefined) : undefined,
-                undefined,
-                isLast ? (ritual.reflection || undefined) : undefined
-            );
-          }
+        if (result.error) {
+            throw new Error(result.error);
         }
 
         toast.dismiss(savingToast);
