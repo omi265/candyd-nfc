@@ -129,23 +129,43 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
     const [viewMode, setViewMode] = useState<'cards' | 'history'>('cards');
     const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
     const [isResetDrawerOpen, setIsResetDrawerOpen] = useState(false);
+    const [isRestartDrawerOpen, setIsRestartDrawerOpen] = useState(false);
+    const [pendingRitualType, setPendingRitualType] = useState<RitualType | null>(null);
     const [ritualPauseType, setRitualPauseType] = useState<RitualType | null>(null);
     const [ritualManageType, setRitualManageType] = useState<RitualType | null>(null);
+    const [viewLogData, setViewLogData] = useState<{
+        isOpen: boolean;
+        date: Date;
+        habitTitle: string;
+        reflection?: string | null;
+        notes?: string | null;
+        imageUrl?: string | null;
+        logType: string;
+    } | null>(null);
 
-    const morningHabits = habits.filter(h => h.ritualType === "MORNING").sort((a, b) => a.orderIndex - b.orderIndex);
-    const nightHabits = habits.filter(h => h.ritualType === "NIGHT").sort((a, b) => a.orderIndex - b.orderIndex);
+    const morningHabits = useMemo(() => habits.filter(h => h.ritualType === "MORNING").sort((a, b) => a.orderIndex - b.orderIndex), [habits]);
+    const nightHabits = useMemo(() => habits.filter(h => h.ritualType === "NIGHT").sort((a, b) => a.orderIndex - b.orderIndex), [habits]);
     const otherHabits = habits.filter(h => h.ritualType === "OTHER" || !h.ritualType);
     const todayUTC = useMemo(() => getVirtualTodayUTC(), []);
+    const hasShownMessages = useRef(false);
 
-    const handleStartRitual = (type: RitualType) => {
+    const handleStartRitual = (type: RitualType, force: boolean = false) => {
         const ritualHabits = type === "MORNING" ? morningHabits : nightHabits;
         if (ritualHabits.length === 0) {
             toast.error(`No habits in your ${type.toLowerCase()} ritual.`);
             return;
         }
 
-        if (getRitualDayStatus(ritualHabits, todayUTC) === "paused") {
+        const status = getRitualDayStatus(ritualHabits, todayUTC);
+
+        if (status === "paused") {
             toast.error(`${type === "MORNING" ? "Morning" : "Night"} ritual is paused for today.`);
+            return;
+        }
+
+        if (status === "full" && !force) {
+            setPendingRitualType(type);
+            setIsRestartDrawerOpen(true);
             return;
         }
 
@@ -163,9 +183,9 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
 
     // Messaging System (Phase 5)
     useEffect(() => {
-        const checkMessages = () => {
-            const yesterdayUTC = todayUTC - (1000 * 60 * 60 * 24);
+        if (hasShownMessages.current) return;
 
+        const checkMessages = () => {
             // 1. Milestones
             if (product.currentStreak === 7) {
                 toast("7 days with yourself", { icon: "✨", description: "You're showing up. Keep going." });
@@ -173,24 +193,18 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                 toast("21 days of showing up", { icon: "🔥", description: "This is becoming part of who you are." });
             }
 
-            // 2. Missed Day (Check if yesterday was a complete miss and not today)
-            const yesterdayHasProgress = getRitualDayStatus(morningHabits, yesterdayUTC) !== "missed" || getRitualDayStatus(nightHabits, yesterdayUTC) !== "missed";
-            const todayHasProgress = getRitualDayStatus(morningHabits, todayUTC) !== "missed" || getRitualDayStatus(nightHabits, todayUTC) !== "missed";
-
-            if (!yesterdayHasProgress && !todayHasProgress) {
-                toast("Come back when you’re ready", { icon: "🌙", description: "We're here whenever you need your ritual." });
-            }
-
-            // 3. Weekly Reflection (On Sundays)
+            // 2. Weekly Reflection (On Sundays)
             const ist = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
             if (ist.getDay() === 0) {
                 toast("What did this week feel like?", { icon: "🪞" });
             }
+
+            hasShownMessages.current = true;
         };
 
         const timer = setTimeout(checkMessages, 1000);
         return () => clearTimeout(timer);
-    }, [morningHabits, nightHabits, product.currentStreak, todayUTC]);
+    }, [product.currentStreak]);
 
     return (
         <div className="flex flex-col h-full relative overflow-hidden bg-transparent">
@@ -275,13 +289,13 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                  ) : (
                      <div className="flex flex-col gap-4 w-full">
                         {morningHabits.length > 0 && (
-                            <RitualHistoryCard type="MORNING" habits={morningHabits} />
+                            <RitualHistoryCard type="MORNING" habits={morningHabits} setViewLogData={setViewLogData} />
                         )}
                         {nightHabits.length > 0 && (
-                            <RitualHistoryCard type="NIGHT" habits={nightHabits} />
+                            <RitualHistoryCard type="NIGHT" habits={nightHabits} setViewLogData={setViewLogData} />
                         )}
                         {otherHabits.map(habit => (
-                            <HabitHistoryCard key={habit.id} habit={habit} optimisticLogs={habit.logs} />
+                            <HabitHistoryCard key={habit.id} habit={habit} optimisticLogs={habit.logs} setViewLogData={setViewLogData} />
                         ))}
                      </div>
                  )}
@@ -299,6 +313,22 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                 isOpen={isResetDrawerOpen} 
                 onClose={() => setIsResetDrawerOpen(false)} 
                 router={router}
+             />
+
+             <RitualRestartDrawer
+                isOpen={isRestartDrawerOpen}
+                onClose={() => {
+                    setIsRestartDrawerOpen(false);
+                    setPendingRitualType(null);
+                }}
+                onConfirm={() => {
+                    if (pendingRitualType) {
+                        handleStartRitual(pendingRitualType, true);
+                        setIsRestartDrawerOpen(false);
+                        setPendingRitualType(null);
+                    }
+                }}
+                type={pendingRitualType}
              />
 
              <RitualPauseDrawer
@@ -329,6 +359,11 @@ export default function HabitDashboard({ habits, product }: { habits: HabitWithL
                     }
                 }}
                 router={router}
+             />
+
+             <ReflectionLogDrawer
+                data={viewLogData}
+                onClose={() => setViewLogData(null)}
              />
         </div>
     );
@@ -407,10 +442,19 @@ function MedallionStreak({ habits, product }: { habits: HabitWithLogs[], product
 }
 
 function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: RitualType, habits: HabitWithLogs[], onBegin: () => void, onPause: () => void, onManage: () => void }) {
-    const todayStatus = getRitualDayStatus(habits, getVirtualTodayUTC());
+    const todayUTC = getVirtualTodayUTC();
+    const todayStatus = getRitualDayStatus(habits, todayUTC);
     const isDone = todayStatus === "full";
     const isPartial = todayStatus === "partial";
     const isPaused = todayStatus === "paused";
+
+    // Calculate actual progress percentage
+    const doneCount = habits.filter(h => {
+        const log = getLatestLogForDay(h.logs, todayUTC);
+        return log?.logType === "DONE";
+    }).length;
+    const progressPercent = habits.length > 0 ? (doneCount / habits.length) * 100 : 0;
+
     const accentClasses = type === "MORNING"
         ? {
             surface: isDone ? "bg-orange-500 border-orange-500 text-white" : "bg-white/40 backdrop-blur-xl border-white/50 text-[#5B2D7D]",
@@ -426,17 +470,9 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
     return (
         <motion.div
             whileTap={{ scale: 0.98 }}
-            onClick={onBegin}
-            onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onBegin();
-                }
-            }}
-            role="button"
-            tabIndex={0}
-            className={`relative p-5 rounded-[40px] flex flex-col items-center justify-center aspect-[4/5] shadow-sm border overflow-hidden group cursor-pointer ${accentClasses.surface}`}
+            className={`relative p-5 rounded-[40px] flex flex-col items-center justify-center aspect-[4/5] shadow-sm border overflow-hidden group ${accentClasses.surface}`}
         >
+            {/* Top Actions */}
             <div className="absolute left-3 top-3 z-10">
                 <button
                     onClick={(event) => {
@@ -461,27 +497,51 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
                 </button>
             </div>
 
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 mt-6 transition-colors ${isDone ? "bg-white/20" : accentClasses.soft} shadow-sm`}>
-                {type === "MORNING" ? <Sun className={`w-6 h-6 ${isDone ? "text-white" : "text-orange-500"}`} /> : <Moon className={`w-6 h-6 ${isDone ? "text-white" : "text-indigo-400"}`} />}
+            {/* Central Action Button (Similar to HabitCard) */}
+            <div className="relative flex items-center justify-center w-full max-w-[100px] aspect-square mb-4 mt-4">
+                <svg 
+                    className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-0"
+                    viewBox="0 0 100 100"
+                >
+                    <circle cx="50" cy="50" r="46" fill="none" stroke={isDone ? "rgba(255,255,255,0.2)" : "rgba(91, 45, 125, 0.05)"} strokeWidth="6" />
+                    {!isDone && isPartial && (
+                        <motion.circle
+                            cx="50" cy="50" r="46" fill="none"
+                            stroke={type === "MORNING" ? "#F97316" : "#4F46E5"}
+                            strokeWidth="6" strokeLinecap="round" pathLength="100"
+                            animate={{ strokeDasharray: `${progressPercent} 100` }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                        />
+                    )}
+                </svg>
+
+                <button
+                    onClick={onBegin}
+                    className={`relative w-[80%] h-[80%] rounded-full flex items-center justify-center transition-all shadow-xl active:scale-95 z-10 shrink-0 ${
+                        isDone 
+                        ? 'bg-white text-[#5B2D7D] hover:bg-white/90'
+                        : 'bg-white/60 backdrop-blur-md text-[#5B2D7D] hover:bg-white/80 border border-white/50'
+                    }`}
+                >
+                    {isDone ? (
+                        <Check className="w-8 h-8" strokeWidth={3} />
+                    ) : (
+                        type === "MORNING" ? <Sun className="w-8 h-8 text-orange-500" /> : <Moon className="w-8 h-8 text-indigo-400" />
+                    )}
+                </button>
             </div>
-            <h3 className="font-black text-xs uppercase tracking-widest mb-1">{type} Ritual</h3>
-            <div className={`text-[10px] font-bold opacity-40 uppercase tracking-tighter ${isDone ? "text-white" : ""}`}>
-                {isDone ? "Completed" : isPaused ? "Paused Today" : (isPartial ? "In Progress" : `${habits.length} Habits`)}
+
+            <div className="text-center">
+                <h3 className="font-black text-xs uppercase tracking-widest mb-1">{type} Ritual</h3>
+                <div className={`text-[10px] font-bold opacity-40 uppercase tracking-tighter ${isDone ? "text-white" : ""}`}>
+                    {isDone ? "Completed" : isPaused ? "Paused Today" : (isPartial ? "In Progress" : `${habits.length} Habits`)}
+                </div>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                 <div className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${isDone ? "bg-white/15 text-white border-white/20" : accentClasses.badge}`}>
                     {habits.length} {habits.length === 1 ? "Task" : "Tasks"}
                 </div>
-                {isPaused && (
-                    <div className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${isDone ? "bg-white/15 text-white border-white/20" : "bg-blue-50/50 backdrop-blur-sm text-blue-600 border-blue-100/50"}`}>
-                        Paused
-                    </div>
-                )}
-            </div>
-
-            <div className="absolute bottom-4 right-4 w-8 h-8 rounded-full bg-[#5B2D7D] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <ArrowRight className="w-4 h-4" />
             </div>
         </motion.div>
     );
@@ -1304,7 +1364,7 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
     );
 }
 
-function HabitHistoryCard({ habit, optimisticLogs }: { habit: HabitWithLogs, optimisticLogs: HabitLog[] }) {
+function HabitHistoryCard({ habit, optimisticLogs, setViewLogData }: { habit: HabitWithLogs, optimisticLogs: HabitLog[], setViewLogData: any }) {
     const [range, setRange] = useState<7 | 30>(30);
     const today = new Date();
     // Use IST for "today" in history calculation
@@ -1341,13 +1401,15 @@ function HabitHistoryCard({ habit, optimisticLogs }: { habit: HabitWithLogs, opt
                     logs={optimisticLogs} 
                     startDate={pastDate}
                     isWeekly={range === 7}
+                    habitTitle={habit.title}
+                    setViewLogData={setViewLogData}
                 />
             </div>
         </div>
     );
 }
 
-function RitualHistoryCard({ type, habits }: { type: RitualType; habits: HabitWithLogs[] }) {
+function RitualHistoryCard({ type, habits, setViewLogData }: { type: RitualType; habits: HabitWithLogs[]; setViewLogData: any }) {
     const [range, setRange] = useState<7 | 30>(30);
     const title = type === "MORNING" ? "Morning Ritual" : "Night Ritual";
     const accent = type === "MORNING"
@@ -1405,7 +1467,7 @@ function RitualHistoryCard({ type, habits }: { type: RitualType; habits: HabitWi
                 </div>
             </div>
             <div className="overflow-x-auto no-scrollbar -mx-2 px-2">
-                <RitualContributionGraph habits={habits} startDate={pastDate} isWeekly={range === 7} />
+                <RitualContributionGraph habits={habits} startDate={pastDate} isWeekly={range === 7} ritualTitle={title} setViewLogData={setViewLogData} />
             </div>
         </div>
     );
@@ -1476,6 +1538,8 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
             createdAt: new Date()
         };
 
+        const wasDrawerOpen = !!logDrawerData?.isOpen;
+
         setOptimisticLogs(prev => {
             // Replace if same date exists, else append
             const filtered = prev.filter(l => new Date(l.date).getTime() !== targetDate.getTime());
@@ -1490,11 +1554,24 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                 setOptimisticLogs(habit.logs); // Rollback on error
             } else {
                 if (type === 'DONE') {
-                    toast.success(dateStr ? `Log saved for ${dateStr}` : "Habit logged! Keep it up.");
+                    if (wasDrawerOpen) {
+                        toast.success(dateStr ? `Log updated for ${dateStr}` : "Notes saved!");
+                    } else {
+                        toast.success("Habit logged! Opening reflection...");
+                    }
                 } else {
                     toast.success("Logged. Rest is progress too.");
                 }
-                setLogDrawerData(null);
+
+                if (wasDrawerOpen) {
+                    setLogDrawerData(null);
+                } else if (type === 'DONE' && !dateStr) {
+                    // It was an immediate click from the card, open drawer for reflection after 1s
+                    setTimeout(() => {
+                        handleOpenLogDrawer('DONE');
+                    }, 1000);
+                }
+
                 if (result.progression) setUpgradeData(result.progression);
                 router.refresh();
             }
@@ -1688,7 +1765,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                     </svg>
 
                     <button
-                        onClick={() => !isLogged && handleOpenLogDrawer('DONE')}
+                        onClick={() => !isLogged && handleLog('DONE')}
                         disabled={isLogging || isLogged}
                         className={`relative w-[80%] h-[80%] rounded-full flex items-center justify-center transition-all shadow-xl active:scale-95 z-10 shrink-0 ${
                             isLogged 
@@ -2184,7 +2261,7 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
     );
 }
 
-function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], startDate: Date, isWeekly?: boolean }) {
+function ContributionGraph({ logs, startDate, isWeekly, habitTitle, setViewLogData }: { logs: HabitLog[], startDate: Date, isWeekly?: boolean, habitTitle: string, setViewLogData: any }) {
     const now = new Date();
     // Use IST for "today"
     const todayIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
@@ -2224,7 +2301,7 @@ function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], st
                 const diff = Math.round((d.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
                 if (diff === 1) runningS++; else if (diff > 1) runningS = 1;
             } else runningS = 1;
-            logMap.set(s, { type: l.logType, streak: runningS });
+            logMap.set(s, { log: l, type: l.logType, streak: runningS });
             lastDStr = s;
         });
 
@@ -2241,19 +2318,41 @@ function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], st
             return 'bg-[#D6BCFA] text-[#5B2D7D]';
         };
 
+        const handleDayClick = (date: Date) => {
+            const dateStr = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
+            const data = logMap.get(dateStr);
+            if (data && data.log && (data.log.reflection || data.log.notes || data.log.imageUrl)) {
+                setViewLogData({
+                    isOpen: true,
+                    date,
+                    habitTitle,
+                    reflection: data.log.reflection,
+                    notes: data.log.notes,
+                    imageUrl: data.log.imageUrl,
+                    logType: data.log.logType
+                });
+            }
+        };
+
         return (
             <div className="flex justify-between items-end gap-1 px-2 py-2">
                 {days.map((date, i) => {
                     const dateStr = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
-                    const hasLog = logMap.has(dateStr);
+                    const data = logMap.get(dateStr);
+                    const hasLog = !!data;
+                    const hasDetails = data && data.log && (data.log.reflection || data.log.notes || data.log.imageUrl);
                     
                     return (
                         <div key={i} className="flex flex-col items-center gap-2 flex-1 max-w-[40px]">
-                            <div className={`w-full aspect-square rounded-xl flex items-center justify-center transition-all ${getColorClass(date)}`}>
+                            <button 
+                                onClick={() => handleDayClick(date)}
+                                disabled={!hasDetails}
+                                className={`w-full aspect-square rounded-xl flex items-center justify-center transition-all ${getColorClass(date)} ${hasDetails ? 'cursor-pointer hover:opacity-80 shadow-md ring-2 ring-white/50 ring-offset-1 ring-offset-[#FDF2EC]' : 'cursor-default'}`}
+                            >
                                 <span className={`text-[10px] font-black ${hasLog ? (logMap.get(dateStr).streak > 3 || logMap.get(dateStr).type !== 'DONE' ? 'text-white' : 'text-[#5B2D7D]') : 'text-[#5B2D7D]/20'}`}>
                                     {date.getUTCDate()}
                                 </span>
-                            </div>
+                            </button>
                             <span className="text-[9px] font-bold text-[#5B2D7D]/40 uppercase">
                                 {date.toLocaleDateString('en-US', { weekday: 'narrow' })}
                             </span>
@@ -2296,11 +2395,11 @@ function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], st
             const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
             if (diff === 1) runningStreak++; else if (diff > 1) runningStreak = 1;
         } else runningStreak = 1;
-        logMap.set(dateStr, { type: l.logType, streakAtDate: runningStreak });
+        logMap.set(dateStr, { log: l, type: l.logType, streakAtDate: runningStreak });
         lastDateStr = dateStr;
     });
 
-    const getColor = (data?: { type: HabitLogType, streakAtDate: number }) => {
+    const getColor = (data?: { type: HabitLogType, streakAtDate: number, log?: HabitLog }) => {
         if (!data) return 'bg-transparent border border-[#5B2D7D]/5';
         if (data.type !== 'DONE') return 'bg-[#EAB308]'; 
         const streak = data.streakAtDate;
@@ -2308,6 +2407,21 @@ function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], st
         if (streak <= 6) return 'bg-[#9F7AEA]'; 
         if (streak <= 9) return 'bg-[#6B46C1]'; 
         return 'bg-[#44337A]'; 
+    };
+
+    const handleDayClick = (date: Date, dateStr: string) => {
+        const data = logMap.get(dateStr);
+        if (data && data.log && (data.log.reflection || data.log.notes || data.log.imageUrl)) {
+            setViewLogData({
+                isOpen: true,
+                date,
+                habitTitle,
+                reflection: data.log.reflection,
+                notes: data.log.notes,
+                imageUrl: data.log.imageUrl,
+                logType: data.log.logType
+            });
+        }
     };
 
     const cellSize = '28px';
@@ -2332,10 +2446,17 @@ function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], st
                                     const dateStr = date.getUTCFullYear() + '-' + String(date.getUTCMonth() + 1).padStart(2, '0') + '-' + String(date.getUTCDate()).padStart(2, '0');
                                     const data = logMap.get(dateStr);
                                     const isFuture = date.getTime() > todayUTC;
+                                    const hasDetails = data && data.log && (data.log.reflection || data.log.notes || data.log.imageUrl);
                                     return (
-                                        <div key={dIdx} className={`rounded-[10px] transition-all ${getColor(data)} ${isFuture ? 'opacity-0' : 'flex items-center justify-center shadow-xs'}`} style={{ width: cellSize, height: cellSize }}>
+                                        <button 
+                                            key={dIdx} 
+                                            disabled={isFuture || !hasDetails}
+                                            onClick={() => handleDayClick(date, dateStr)}
+                                            className={`rounded-[10px] transition-all ${getColor(data)} ${isFuture ? 'opacity-0 cursor-default' : 'flex items-center justify-center shadow-xs'} ${hasDetails && !isFuture ? 'cursor-pointer hover:opacity-80 shadow-md ring-2 ring-white/50 ring-offset-1 ring-offset-[#FDF2EC]' : 'cursor-default'}`} 
+                                            style={{ width: cellSize, height: cellSize }}
+                                        >
                                             {!isFuture && <span className={`text-[9px] font-black ${data ? 'text-white' : 'text-[#5B2D7D]/20'}`}>{date.getUTCDate()}</span>}
-                                        </div>
+                                        </button>
                                     );
                                 })}
                             </div>
@@ -2347,7 +2468,7 @@ function ContributionGraph({ logs, startDate, isWeekly }: { logs: HabitLog[], st
     );
 }
 
-function RitualContributionGraph({ habits, startDate, isWeekly }: { habits: HabitWithLogs[]; startDate: Date; isWeekly?: boolean }) {
+function RitualContributionGraph({ habits, startDate, isWeekly, ritualTitle, setViewLogData }: { habits: HabitWithLogs[]; startDate: Date; isWeekly?: boolean, ritualTitle: string, setViewLogData: any }) {
     const now = new Date();
     const todayIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
     const todayUTC = Date.UTC(todayIST.getFullYear(), todayIST.getMonth(), todayIST.getDate());
@@ -2367,6 +2488,17 @@ function RitualContributionGraph({ habits, startDate, isWeekly }: { habits: Habi
     const getBreakdownData = (date: Date) => {
         const utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
         return getRitualDayBreakdown(habits, utc);
+    };
+
+    const getRitualLogDetails = (date: Date) => {
+        const utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+        for (const habit of habits) {
+            const log = getLatestLogForDay(habit.logs, utc);
+            if (log && (log.reflection || log.notes || log.imageUrl)) {
+                return log;
+            }
+        }
+        return null;
     };
 
     const getColorClass = (status: RitualDayStatus) => {
@@ -2390,28 +2522,50 @@ function RitualContributionGraph({ habits, startDate, isWeekly }: { habits: Habi
             days.push(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())));
         }
 
+        const handleDayClick = (date: Date) => {
+            const details = getRitualLogDetails(date);
+            if (details) {
+                setViewLogData({
+                    isOpen: true,
+                    date,
+                    habitTitle: ritualTitle,
+                    reflection: details.reflection,
+                    notes: details.notes,
+                    imageUrl: details.imageUrl,
+                    logType: details.logType
+                });
+            }
+        };
+
         return (
             <div className="flex justify-between items-end gap-1 px-2 py-2">
                 {days.map((date, i) => {
                     const status = getStatusData(date);
                     const breakdown = getBreakdownData(date);
+                    const details = getRitualLogDetails(date);
+                    const hasDetails = !!details;
+
                     return (
                         <div key={i} className="flex flex-col items-center gap-2 flex-1 max-w-[40px]">
-                            <div className={`w-full aspect-square rounded-xl flex flex-col justify-between p-1.5 transition-all ${getColorClass(status)}`}>
-                                <div className="flex items-start justify-between">
+                            <button 
+                                onClick={() => handleDayClick(date)}
+                                disabled={!hasDetails}
+                                className={`w-full aspect-square rounded-xl flex flex-col justify-between p-1.5 transition-all ${getColorClass(status)} ${hasDetails ? 'cursor-pointer hover:opacity-80 shadow-md ring-2 ring-white/50 ring-offset-1 ring-offset-[#FDF2EC]' : 'cursor-default'}`}
+                            >
+                                <div className="flex items-start justify-between w-full">
                                     <span className={`text-[10px] font-black ${status === "full" || status === "paused" ? "text-current" : status === "partial" ? "text-[#5B2D7D]" : "text-[#5B2D7D]/20"}`}>
                                         {date.getUTCDate()}
                                     </span>
                                     {status === "full" && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
                                     {status === "paused" && <Pause className="w-3.5 h-3.5" />}
                                 </div>
-                                <div className="grid grid-cols-3 gap-1">
+                                <div className="grid grid-cols-3 gap-1 w-full">
                                     {Array.from({ length: Math.max(3, breakdown.length) }, (_, idx) => {
                                         const state = breakdown[idx] || "missed";
                                         return <div key={idx} className={`h-1.5 rounded-full ${getSegmentColor(state)}`} />;
                                     })}
                                 </div>
-                            </div>
+                            </button>
                             <span className="text-[9px] font-bold text-[#5B2D7D]/40 uppercase">
                                 {date.toLocaleDateString('en-US', { weekday: 'narrow' })}
                             </span>
@@ -2460,32 +2614,55 @@ function RitualContributionGraph({ habits, startDate, isWeekly }: { habits: Habi
                                     if (!date) return <div key={dIdx} style={{ width: cellSize, height: cellSize }} />;
                                     const status = getStatusData(date);
                                     const breakdown = getBreakdownData(date);
+                                    const details = getRitualLogDetails(date);
+                                    const hasDetails = !!details;
+                                    const isFuture = date.getTime() > todayUTC;
+
                                     return (
-                                        <div
+                                        <button
                                             key={dIdx}
-                                            className={`rounded-md border p-1 flex flex-col justify-between ${
+                                            disabled={isFuture || !hasDetails}
+                                            onClick={() => {
+                                                if (details) {
+                                                    setViewLogData({
+                                                        isOpen: true,
+                                                        date,
+                                                        habitTitle: ritualTitle,
+                                                        reflection: details.reflection,
+                                                        notes: details.notes,
+                                                        imageUrl: details.imageUrl,
+                                                        logType: details.logType
+                                                    });
+                                                }
+                                            }}
+                                            className={`rounded-md border p-1 flex flex-col justify-between transition-all ${
+                                                isFuture ? 'opacity-0 cursor-default' : 
                                                 status === "full" ? "bg-[#F3ECFB] border-[#D6BCFA]" :
                                                 status === "partial" ? "bg-white border-[#E7D9F6]" :
                                                 status === "paused" ? "bg-blue-50 border-blue-100" :
                                                 "bg-transparent border-[#5B2D7D]/5"
-                                            }`}
+                                            } ${hasDetails && !isFuture ? 'cursor-pointer hover:opacity-80 shadow-md ring-2 ring-white/50 ring-offset-1 ring-offset-[#FDF2EC]' : 'cursor-default'}`}
                                             style={{ width: cellSize, height: cellSize }}
-                                            title={`${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${status}`}
+                                            title={isFuture ? undefined : `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${status}`}
                                         >
-                                            <span className={`text-[9px] leading-none font-black ${
-                                                status === "missed" ? "text-[#5B2D7D]/25" :
-                                                status === "paused" ? "text-blue-600" :
-                                                "text-[#5B2D7D]"
-                                            }`}>
-                                                {date.getUTCDate()}
-                                            </span>
-                                            <div className="grid grid-cols-3 gap-[2px]">
-                                                {Array.from({ length: Math.max(3, breakdown.length) }, (_, idx) => {
-                                                    const state = breakdown[idx] || "missed";
-                                                    return <div key={idx} className={`h-1 rounded-full ${getSegmentColor(state)}`} />;
-                                                })}
-                                            </div>
-                                        </div>
+                                            {!isFuture && (
+                                                <>
+                                                    <span className={`text-[9px] leading-none font-black ${
+                                                        status === "missed" ? "text-[#5B2D7D]/25" :
+                                                        status === "paused" ? "text-blue-600" :
+                                                        "text-[#5B2D7D]"
+                                                    }`}>
+                                                        {date.getUTCDate()}
+                                                    </span>
+                                                    <div className="grid grid-cols-3 gap-[2px]">
+                                                        {Array.from({ length: Math.max(3, breakdown.length) }, (_, idx) => {
+                                                            const state = breakdown[idx] || "missed";
+                                                            return <div key={idx} className={`h-1 rounded-full ${getSegmentColor(state)}`} />;
+                                                        })}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </button>
                                     );
                                 })}
                             </div>
@@ -2494,5 +2671,118 @@ function RitualContributionGraph({ habits, startDate, isWeekly }: { habits: Habi
                 </div>
             </div>
         </div>
+    );
+}
+
+function RitualRestartDrawer({ isOpen, onClose, onConfirm, type }: { isOpen: boolean, onClose: () => void, onConfirm: () => void, type: RitualType | null }) {
+    return (
+        <Drawer open={isOpen} onOpenChange={onClose}>
+            <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit]">
+                <DrawerHeader className="sr-only">
+                    <DrawerTitle>Restart Ritual</DrawerTitle>
+                    <DrawerDescription>Confirm if you want to perform this ritual again.</DrawerDescription>
+                </DrawerHeader>
+                <div className="p-8 pb-12 flex flex-col items-center text-center relative overflow-hidden">
+                    {/* Background Decorative Shapes */}
+                    <div className="absolute top-10 right-0 w-32 h-32 bg-[#A4C538]/10 rounded-full blur-2xl pointer-events-none" />
+                    
+                    <div className="w-20 h-20 bg-[#A4C538]/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 text-[#A4C538] shadow-sm border border-[#A4C538]/20 relative z-10">
+                        <RotateCcw className="w-10 h-10" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-[#5B2D7D] mb-2 relative z-10">Repeat Ritual?</h3>
+                    <p className="text-[#5B2D7D]/60 mb-8 max-w-xs relative z-10">
+                        You&apos;ve already completed your {type?.toLowerCase()} ritual for today. Would you like to perform it again?
+                    </p>
+
+                    <div className="flex flex-col gap-3 w-full relative z-10">
+                        <button 
+                            onClick={onConfirm}
+                            className="w-full py-4 bg-[#5B2D7D] text-white rounded-2xl font-bold shadow-lg shadow-[#5B2D7D]/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                        >
+                            Yes, Start Again
+                        </button>
+                        <button 
+                            onClick={onClose}
+                            className="w-full py-3 rounded-xl font-bold text-[#5B2D7D]/40 hover:bg-white/40 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </DrawerContent>
+        </Drawer>
+    );
+}
+
+function ReflectionLogDrawer({
+    data,
+    onClose
+}: {
+    data: {
+        isOpen: boolean;
+        date: Date;
+        habitTitle: string;
+        reflection?: string | null;
+        notes?: string | null;
+        imageUrl?: string | null;
+        logType: string;
+    } | null;
+    onClose: () => void;
+}) {
+    if (!data || !data.isOpen) return null;
+
+    const displayDate = data.date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' });
+
+    return (
+        <Drawer open={data.isOpen} onOpenChange={(o) => !o && onClose()}>
+            <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl rounded-t-[32px] border-t border-white/30 font-[Outfit] max-h-[96dvh]">
+                <DrawerHeader className="sr-only">
+                    <DrawerTitle>Reflection Log</DrawerTitle>
+                    <DrawerDescription>View your past reflection for {displayDate}.</DrawerDescription>
+                </DrawerHeader>
+                <div className="p-6 pb-12 overflow-y-auto no-scrollbar relative">
+                    {/* Background Decorative Shapes */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute bottom-20 left-0 w-32 h-32 bg-[#5B2D7D]/5 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="flex flex-col items-center text-center mb-8 relative z-10">
+                        <div className="w-16 h-16 bg-white/40 backdrop-blur-xl border border-white/50 rounded-full shadow-sm flex items-center justify-center text-3xl mb-4">
+                            {data.logType === 'DONE' ? '✨' : '⏸️'}
+                        </div>
+                        <h3 className="text-xl font-bold text-[#5B2D7D]">{data.habitTitle}</h3>
+                        <p className="text-[#5B2D7D]/40 text-xs font-bold uppercase tracking-widest mt-1">{displayDate}</p>
+                    </div>
+
+                    <div className="space-y-6 relative z-10 w-full max-w-sm mx-auto">
+                        {data.reflection && (
+                            <div className="bg-white/40 backdrop-blur-md rounded-[24px] p-6 border border-white/50 shadow-sm text-center">
+                                <span className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest block mb-2">Energy</span>
+                                <p className="text-3xl font-black text-[#5B2D7D] tracking-tighter leading-none">{data.reflection}</p>
+                            </div>
+                        )}
+
+                        {data.notes && (
+                            <div className="bg-white/40 backdrop-blur-md rounded-[24px] p-6 border border-white/50 shadow-sm">
+                                <span className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest block mb-2">Notes</span>
+                                <p className="text-sm font-medium text-[#5B2D7D] whitespace-pre-wrap">{data.notes}</p>
+                            </div>
+                        )}
+
+                        {data.imageUrl && (
+                            <div className="rounded-[24px] overflow-hidden border border-white/50 shadow-sm bg-white/40 backdrop-blur-md p-2">
+                                <img src={data.imageUrl} alt="Reflection photo" className="w-full h-auto rounded-[16px] object-cover max-h-[40vh]" />
+                            </div>
+                        )}
+                        
+                        <button 
+                            onClick={onClose}
+                            className="w-full py-4 mt-4 bg-white/60 backdrop-blur-md text-[#5B2D7D] rounded-2xl font-bold shadow-sm border border-white/50 hover:bg-white/80 active:scale-[0.98] transition-all"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </DrawerContent>
+        </Drawer>
     );
 }

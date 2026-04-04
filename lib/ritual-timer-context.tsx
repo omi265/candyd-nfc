@@ -1,12 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { logHabit } from "@/app/actions/habit";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, ChevronDown, Loader2, Moon, Pause, Play, Plus, Sparkles, Sun } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Loader2, Minus, Moon, Pause, Play, Plus, Sparkles, Sun, X } from "lucide-react";
 
 export type RitualType = "MORNING" | "NIGHT";
 
@@ -29,6 +29,8 @@ interface RitualRuntimeState {
   skippedIds: string[];
   step: RitualStep;
   reflection: string;
+  notes?: string;
+  imageUrl?: string | null;
 }
 
 interface RitualTimerContextValue {
@@ -39,11 +41,15 @@ interface RitualTimerContextValue {
   closePlayer: () => void;
   togglePause: () => void;
   extendTimer: () => void;
+  reduceTimer: () => void;
   nextHabit: () => void;
   skipHabit: () => void;
   goToReflection: () => void;
   setReflection: (value: string) => void;
+  setNotes: (value: string) => void;
+  setImageUrl: (value: string | null) => void;
   finishRitual: () => Promise<void>;
+  cancelRitual: () => void;
   clearRitual: () => void;
 }
 
@@ -67,13 +73,54 @@ function RitualTimerOverlay() {
     closePlayer,
     togglePause,
     extendTimer,
+    reduceTimer,
     nextHabit,
     skipHabit,
     goToReflection,
     setReflection,
+    setNotes,
+    setImageUrl,
     finishRitual,
+    cancelRitual,
   } = useRitualTimer();
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          setIsUploading(true);
+          
+          try {
+              const { getCloudinarySignature } = await import("@/app/actions/upload");
+              const signatureData = await getCloudinarySignature();
+              const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
+
+              const formData = new FormData();
+              formData.append("file", file);
+              formData.append("api_key", apiKey!);
+              formData.append("timestamp", timestamp.toString());
+              formData.append("signature", signature);
+              formData.append("folder", folder);
+
+              const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+                  method: "POST",
+                  body: formData,
+              });
+
+              if (!response.ok) throw new Error("Upload failed");
+
+              const data = await response.json();
+              setImageUrl(data.secure_url);
+              toast.success("Image uploaded!");
+          } catch (error) {
+              toast.error("Failed to upload image");
+          } finally {
+              setIsUploading(false);
+          }
+      }
+  };
 
   if (!ritual) return null;
 
@@ -130,24 +177,29 @@ function RitualTimerOverlay() {
                   </div>
 
                   <div className="w-full space-y-8 px-6">
-                    <div className="flex items-center justify-center gap-6">
-                      <button onClick={extendTimer} className="w-14 h-14 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center text-[#5B2D7D] shadow-sm border border-white/50 active:scale-90">
-                        <Plus className="w-6 h-6" />
+                    <div className="flex items-center justify-center gap-4">
+                      <button onClick={reduceTimer} className="w-12 h-12 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center text-[#5B2D7D] shadow-sm border border-white/50 active:scale-90">
+                        <Minus className="w-5 h-5" />
                       </button>
                       <button onClick={togglePause} className="w-20 h-20 rounded-full bg-white/60 backdrop-blur-xl shadow-xl border border-white/50 flex items-center justify-center text-[#5B2D7D] active:scale-95">
                         {ritual.isPaused ? <Play className="w-8 h-8 fill-[#5B2D7D]" /> : <Pause className="w-8 h-8 fill-[#5B2D7D]" />}
                       </button>
-                      <button onClick={nextHabit} className="w-14 h-14 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center text-[#5B2D7D] shadow-sm border border-white/50 active:scale-90">
-                        <ArrowRight className="w-6 h-6" />
+                      <button onClick={extendTimer} className="w-12 h-12 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center text-[#5B2D7D] shadow-sm border border-white/50 active:scale-90">
+                        <Plus className="w-5 h-5" />
                       </button>
                     </div>
 
-                    <div className="flex gap-3">
-                      <button onClick={skipHabit} className="flex-1 h-14 rounded-2xl bg-white/30 backdrop-blur-md text-[#5B2D7D] font-bold border border-white/30 active:scale-[0.98] transition-all">
-                        Skip Habit
-                      </button>
-                      <button onClick={nextHabit} className="flex-1 h-14 rounded-2xl bg-[#5B2D7D] text-white font-bold shadow-lg active:scale-[0.98] transition-all">
-                        Next Habit
+                    <div className="flex flex-col gap-3">
+                      <div className="flex gap-3">
+                        <button onClick={skipHabit} className="flex-1 h-14 rounded-2xl bg-white/30 backdrop-blur-md text-[#5B2D7D] font-bold border border-white/30 active:scale-[0.98] transition-all">
+                          Skip
+                        </button>
+                        <button onClick={nextHabit} className="flex-1 h-14 rounded-2xl bg-[#5B2D7D] text-white font-bold shadow-lg active:scale-[0.98] transition-all">
+                          Next
+                        </button>
+                      </div>
+                      <button onClick={cancelRitual} className="w-full h-12 rounded-2xl text-[#5B2D7D]/40 text-xs font-black uppercase tracking-widest hover:text-red-400 transition-colors">
+                        Cancel Ritual
                       </button>
                     </div>
                   </div>
@@ -192,30 +244,87 @@ function RitualTimerOverlay() {
                   key="reflection"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex-1 flex flex-col items-center justify-center text-center px-4"
+                  className="flex-1 flex flex-col items-center justify-start text-center px-4 overflow-y-auto no-scrollbar w-full pb-8"
                 >
-                  <div className="w-16 h-16 bg-white/40 backdrop-blur-xl border border-white/50 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                  <div className="w-16 h-16 bg-white/40 backdrop-blur-xl border border-white/50 rounded-full flex items-center justify-center mb-4 mt-6 shadow-sm mx-auto shrink-0">
                     <Sparkles className="w-8 h-8 text-[#5B2D7D]" />
                   </div>
-                  <h2 className="text-3xl font-black text-[#5B2D7D] uppercase tracking-tighter mb-2 leading-none">How do you feel?</h2>
-                  <p className="text-sm font-medium text-[#5B2D7D]/40 mb-12">Capture your current energy in one word.</p>
+                  <h2 className="text-2xl font-black text-[#5B2D7D] uppercase tracking-tighter mb-2 leading-none">How do you feel?</h2>
+                  <p className="text-xs font-medium text-[#5B2D7D]/40 mb-6">Capture your energy and thoughts.</p>
 
-                  <input
-                    type="text"
-                    value={ritual.reflection}
-                    onChange={(event) => setReflection(event.target.value)}
-                    placeholder="Grateful, Calm, Ready..."
-                    className="w-full p-4 text-3xl text-center bg-transparent border-b-2 border-[#5B2D7D]/10 text-[#5B2D7D] font-black placeholder:text-[#5B2D7D]/20 outline-none focus:border-[#5B2D7D]/30 mb-16 transition-colors"
-                    autoFocus
-                  />
+                  <div className="w-full space-y-6 text-left">
+                      {/* Reflection Word */}
+                      <div>
+                          <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-2 ml-1">Energy (One Word)</label>
+                          <input
+                            type="text"
+                            value={ritual.reflection}
+                            onChange={(event) => setReflection(event.target.value)}
+                            placeholder="Grateful, Calm, Ready..."
+                            className="w-full p-4 text-xl bg-white/40 backdrop-blur-md border border-white/50 rounded-[20px] text-[#5B2D7D] font-bold placeholder:text-[#5B2D7D]/20 outline-none focus:ring-1 focus:ring-[#5B2D7D]/20 transition-all shadow-sm"
+                          />
+                      </div>
+
+                      {/* Comment/Notes */}
+                      <div>
+                          <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-2 ml-1">Optional Notes</label>
+                          <textarea 
+                              value={ritual.notes || ""}
+                              onChange={(e) => setNotes(e.target.value)}
+                              placeholder="How did the ritual go? Any deeper reflections?"
+                              rows={3}
+                              className="w-full bg-white/40 backdrop-blur-md border border-white/50 rounded-[20px] p-4 text-[#5B2D7D] text-sm outline-none resize-none focus:ring-1 focus:ring-[#5B2D7D]/20 transition-all shadow-sm font-medium placeholder:text-[#5B2D7D]/30"
+                          />
+                      </div>
+
+                      {/* Image Upload */}
+                      <div>
+                          <label className="block text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest mb-2 ml-1">Optional Photo</label>
+                          {ritual.imageUrl ? (
+                              <div className="relative aspect-video w-full rounded-[24px] overflow-hidden group shadow-sm">
+                                  <img src={ritual.imageUrl} alt="Ritual log" className="w-full h-full object-cover" />
+                                  <button 
+                                      onClick={() => setImageUrl(null)}
+                                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                      <X className="w-4 h-4" />
+                                  </button>
+                              </div>
+                          ) : (
+                              <button 
+                                  onClick={() => fileInputRef.current?.click()}
+                                  disabled={isUploading}
+                                  className="w-full aspect-video bg-white/40 backdrop-blur-md border-2 border-dashed border-white/50 rounded-[24px] flex flex-col items-center justify-center gap-2 hover:bg-white/60 transition-all active:scale-[0.98] shadow-sm"
+                              >
+                                  {isUploading ? (
+                                      <Loader2 className="w-6 h-6 animate-spin text-[#5B2D7D]/40" />
+                                  ) : (
+                                      <>
+                                          <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center text-[#5B2D7D]/40 border border-white/50 shadow-sm">
+                                              <Plus className="w-5 h-5" />
+                                          </div>
+                                          <span className="text-[10px] font-black text-[#5B2D7D]/40 uppercase tracking-widest">Snap or Upload</span>
+                                      </>
+                                  )}
+                              </button>
+                          )}
+                          <input 
+                              type="file" 
+                              ref={fileInputRef}
+                              onChange={handleFileChange}
+                              accept="image/*"
+                              className="hidden"
+                          />
+                      </div>
+                  </div>
 
                   <button
                     onClick={() => {
                       setIsSaving(true);
                       finishRitual().finally(() => setIsSaving(false));
                     }}
-                    disabled={isSaving}
-                    className="w-full h-16 rounded-full bg-[#5B2D7D] text-white font-bold text-lg shadow-xl shadow-[#5B2D7D]/20 active:scale-95 disabled:opacity-50 flex items-center justify-center"
+                    disabled={isSaving || isUploading}
+                    className="w-full h-16 rounded-full bg-[#5B2D7D] text-white font-bold text-lg shadow-xl shadow-[#5B2D7D]/20 active:scale-95 disabled:opacity-50 flex items-center justify-center mt-8 shrink-0"
                   >
                     {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : "Save & Complete Ritual"}
                   </button>
@@ -311,6 +420,12 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(timer);
   }, [ritual]);
 
+  useEffect(() => {
+    if (ritual?.step === "summary" && !isPlayerOpen) {
+      setIsPlayerOpen(true);
+    }
+  }, [ritual?.step, isPlayerOpen]);
+
   const value = useMemo<RitualTimerContextValue>(() => ({
     ritual,
     isPlayerOpen,
@@ -330,9 +445,17 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
       setIsPlayerOpen(true);
     },
     openPlayer: () => setIsPlayerOpen(true),
-    closePlayer: () => setIsPlayerOpen(false),
+    closePlayer: () => {
+      if (ritual?.step === "summary" || ritual?.step === "reflection") {
+        // Auto-finish if closing while on completion screens
+        value.finishRitual();
+      } else {
+        setIsPlayerOpen(false);
+      }
+    },
     togglePause: () => setRitual((prev) => prev ? { ...prev, isPaused: !prev.isPaused } : null),
     extendTimer: () => setRitual((prev) => prev ? { ...prev, timeLeft: prev.timeLeft + 30 } : null),
+    reduceTimer: () => setRitual((prev) => prev ? { ...prev, timeLeft: Math.max(0, prev.timeLeft - 30) } : null),
     nextHabit: () => setRitual((prev) => {
       if (!prev) return null;
       if (prev.currentIndex < prev.habits.length - 1) {
@@ -362,6 +485,8 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
     }),
     goToReflection: () => setRitual((prev) => prev ? { ...prev, step: "reflection" } : null),
     setReflection: (value) => setRitual((prev) => prev ? { ...prev, reflection: value } : null),
+    setNotes: (value) => setRitual((prev) => prev ? { ...prev, notes: value } : null),
+    setImageUrl: (value) => setRitual((prev) => prev ? { ...prev, imageUrl: value } : null),
     finishRitual: async () => {
       if (!ritual) return;
 
@@ -373,7 +498,14 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
             const isLast = index === ritual.habits.length - 1 ||
               (index < ritual.habits.length - 1 && ritual.habits.slice(index + 1).every(next => ritual.skippedIds.includes(next.id)));
 
-            await logHabit(habit.id, undefined, "DONE", undefined, undefined, isLast ? ritual.reflection : undefined);
+            await logHabit(
+                habit.id,
+                isLast ? (ritual.notes || undefined) : undefined,
+                "DONE",
+                isLast ? (ritual.imageUrl || undefined) : undefined,
+                undefined,
+                isLast ? (ritual.reflection || undefined) : undefined
+            );
           }
         }
 
@@ -386,6 +518,10 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
         toast.dismiss(savingToast);
         toast.error("Failed to save ritual");
       }
+    },
+    cancelRitual: () => {
+      setRitual(null);
+      setIsPlayerOpen(false);
     },
     clearRitual: () => {
       setRitual(null);
