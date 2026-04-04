@@ -36,6 +36,7 @@ interface RitualRuntimeState {
 interface RitualTimerContextValue {
   ritual: RitualRuntimeState | null;
   isPlayerOpen: boolean;
+  isSaving: boolean;
   startRitual: (config: { productId: string; type: RitualType; habits: RitualHabitSnapshot[] }) => void;
   openPlayer: () => void;
   closePlayer: () => void;
@@ -69,6 +70,7 @@ function RitualTimerOverlay() {
   const {
     ritual,
     isPlayerOpen,
+    isSaving,
     openPlayer,
     closePlayer,
     togglePause,
@@ -83,7 +85,6 @@ function RitualTimerOverlay() {
     finishRitual,
     cancelRitual,
   } = useRitualTimer();
-  const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,8 +129,25 @@ function RitualTimerOverlay() {
 
   return (
     <>
-      <Drawer open={isPlayerOpen} onOpenChange={(open) => !open && closePlayer()}>
-        <DrawerContent className="bg-[#FDF2EC]/60 backdrop-blur-3xl border-none font-[Outfit] h-[100dvh] max-h-[100dvh] rounded-none z-[100] overflow-hidden">
+      <AnimatePresence>
+        {isSaving && (
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[200] bg-[#FDF2EC]/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+            >
+                <div className="w-20 h-20 bg-white/40 backdrop-blur-xl border border-white/50 rounded-full flex items-center justify-center mb-6 shadow-xl">
+                    <Loader2 className="w-10 h-10 text-[#5B2D7D] animate-spin" />
+                </div>
+                <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Saving Ritual</h2>
+                <p className="text-[#5B2D7D]/60 max-w-[240px]">We&apos;re recording your progress. This will only take a moment.</p>
+            </motion.div>
+        )}
+      </AnimatePresence>
+
+      <Drawer open={isPlayerOpen} onOpenChange={(open) => !open && closePlayer()} repositionInputs={true}>
+        <DrawerContent className="bg-[#FDF2EC]/60 backdrop-blur-3xl border-none font-[Outfit] h-[100dvh] max-h-[100dvh] rounded-none z-[100] overflow-hidden flex flex-col">
           {/* Background Decorative Shapes */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl transform translate-x-20 -translate-y-20 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl transform -translate-x-10 translate-y-10 pointer-events-none" />
@@ -320,8 +338,7 @@ function RitualTimerOverlay() {
 
                   <button
                     onClick={() => {
-                      setIsSaving(true);
-                      finishRitual().finally(() => setIsSaving(false));
+                      finishRitual();
                     }}
                     disabled={isSaving || isUploading}
                     className="w-full h-16 rounded-full bg-[#5B2D7D] text-white font-bold text-lg shadow-xl shadow-[#5B2D7D]/20 active:scale-95 disabled:opacity-50 flex items-center justify-center mt-8 shrink-0"
@@ -394,6 +411,7 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [ritual, setRitual] = useState<RitualRuntimeState | null>(null);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!ritual || ritual.step !== "active" || ritual.isPaused) return;
@@ -429,6 +447,7 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
   const value = useMemo<RitualTimerContextValue>(() => ({
     ritual,
     isPlayerOpen,
+    isSaving,
     startRitual: ({ productId, type, habits }) => {
       if (habits.length === 0) return;
       setRitual({
@@ -488,8 +507,9 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
     setNotes: (value) => setRitual((prev) => prev ? { ...prev, notes: value } : null),
     setImageUrl: (value) => setRitual((prev) => prev ? { ...prev, imageUrl: value } : null),
     finishRitual: async () => {
-      if (!ritual) return;
+      if (!ritual || isSaving) return;
 
+      setIsSaving(true);
       const savingToast = toast.loading("Saving your ritual...");
       try {
         const habitIds = ritual.habits.map(h => h.id);
@@ -513,6 +533,8 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         toast.dismiss(savingToast);
         toast.error("Failed to save ritual");
+      } finally {
+        setIsSaving(false);
       }
     },
     cancelRitual: () => {
@@ -523,7 +545,7 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
       setRitual(null);
       setIsPlayerOpen(false);
     },
-  }), [isPlayerOpen, ritual, router]);
+  }), [isPlayerOpen, isSaving, ritual, router]);
 
   return (
     <RitualTimerContext.Provider value={value}>

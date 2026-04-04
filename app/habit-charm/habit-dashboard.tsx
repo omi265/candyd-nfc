@@ -470,7 +470,7 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
     return (
         <motion.div
             whileTap={{ scale: 0.98 }}
-            className={`relative p-5 rounded-[40px] flex flex-col items-center justify-center aspect-[4/5] shadow-sm border overflow-hidden group ${accentClasses.surface}`}
+            className={`relative p-5 rounded-[40px] flex flex-col items-center justify-center aspect-[4/5.5] shadow-sm border overflow-hidden group ${accentClasses.surface}`}
         >
             {/* Top Actions */}
             <div className="absolute left-3 top-3 z-10">
@@ -585,7 +585,7 @@ function RitualPauseDrawer({
     };
 
     return (
-        <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Drawer repositionInputs={true} open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Pause Ritual</DrawerTitle>
@@ -772,7 +772,7 @@ function RitualManageDrawer({
     };
 
     return (
-        <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Drawer repositionInputs={true} open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit] max-h-[96dvh]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>{ritualName}</DrawerTitle>
@@ -1088,7 +1088,7 @@ function ResetCharmDrawer({ productId, isOpen, onClose, router }: { productId: s
     };
 
     return (
-        <Drawer open={isOpen} onOpenChange={onClose}>
+        <Drawer repositionInputs={true} open={isOpen} onOpenChange={onClose}>
             <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Reset Habit Charm</DrawerTitle>
@@ -1206,7 +1206,7 @@ function AddHabitDrawer({ productId, isOpen, onClose, router }: { productId: str
     };
 
     return (
-        <Drawer open={isOpen} onOpenChange={onClose}>
+        <Drawer repositionInputs={true} open={isOpen} onOpenChange={onClose}>
             <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit] max-h-[96dvh]">
                 <div className="p-6 pb-20 overflow-y-auto no-scrollbar relative">
                     {/* Background Decorative Shapes */}
@@ -1832,7 +1832,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
         />
 
         {/* History & Stats Drawer */}
-        <Drawer open={showHistory} onOpenChange={(o) => { setShowHistory(o); if(!o) setIsEditMode(false); }}>
+        <Drawer repositionInputs={true} open={showHistory} onOpenChange={(o) => { setShowHistory(o); if(!o) setIsEditMode(false); }}>
             <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl border-none font-[Outfit] max-h-[95vh]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>{habit.title} History</DrawerTitle>
@@ -2027,7 +2027,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
         </Drawer>
 
         {/* Anomaly Drawer (Pause) */}
-        <Drawer open={showAnomaly} onOpenChange={setShowAnomaly}>
+        <Drawer repositionInputs={true} open={showAnomaly} onOpenChange={setShowAnomaly}>
             <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl border-none font-[Outfit]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Pause Habit</DrawerTitle>
@@ -2062,7 +2062,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
         </Drawer>
 
         {/* Level Up Drawer */}
-        <Drawer open={!!upgradeData} onOpenChange={(o) => !o && setUpgradeData(null)}>
+        <Drawer repositionInputs={true} open={!!upgradeData} onOpenChange={(o) => !o && setUpgradeData(null)}>
             <DrawerContent className="bg-[#5B2D7D] text-white rounded-t-[32px] border-none font-[Outfit]">
                  <DrawerHeader className="sr-only">
                     <DrawerTitle>Level Up Milestone</DrawerTitle>
@@ -2169,7 +2169,7 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
     const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' }) : new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
     return (
-        <Drawer open={isOpen} onOpenChange={(o) => !o && onClose()}>
+        <Drawer repositionInputs={true} open={isOpen} onOpenChange={(o) => !o && onClose()}>
             <DrawerContent className="bg-[#FDF2EC]/90 backdrop-blur-xl rounded-t-[32px] border-none font-[Outfit] max-h-[96dvh]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Log Habit Progress</DrawerTitle>
@@ -2676,7 +2676,7 @@ function RitualContributionGraph({ habits, startDate, isWeekly, ritualTitle, set
 
 function RitualRestartDrawer({ isOpen, onClose, onConfirm, type }: { isOpen: boolean, onClose: () => void, onConfirm: () => void, type: RitualType | null }) {
     return (
-        <Drawer open={isOpen} onOpenChange={onClose}>
+        <Drawer repositionInputs={true} open={isOpen} onOpenChange={onClose}>
             <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 font-[Outfit]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Restart Ritual</DrawerTitle>
@@ -2734,7 +2734,7 @@ function ReflectionLogDrawer({
     const displayDate = data.date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
     return (
-        <Drawer open={data.isOpen} onOpenChange={(o) => !o && onClose()}>
+        <Drawer repositionInputs={true} open={data.isOpen} onOpenChange={(o) => !o && onClose()}>
             <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl rounded-t-[32px] border-t border-white/30 font-[Outfit] max-h-[96dvh]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Reflection Log</DrawerTitle>
