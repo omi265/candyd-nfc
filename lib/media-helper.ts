@@ -22,8 +22,12 @@ export function extractPublicId(url: string): string | null {
 export function getOptimizedUrl(url: string, type: 'image' | 'video' = 'image', width?: number): string {
     if (!url || !url.includes('cloudinary.com')) return url;
 
-    // Split at '/upload/' to insert transformations
-    const parts = url.split('/upload/');
+    // Determine the delivery type (upload or authenticated)
+    const isAuth = url.includes('/authenticated/');
+    const typeKey = isAuth ? '/authenticated/' : '/upload/';
+    
+    // Split at the delivery type to insert transformations
+    const parts = url.split(typeKey);
     if (parts.length !== 2) return url;
 
     const [base, rest] = parts;
@@ -35,12 +39,5 @@ export function getOptimizedUrl(url: string, type: 'image' | 'video' = 'image', 
         transformations.push('c_limit'); // Scale down only, preserve aspect ratio
     }
     
-    // For videos, q_auto:eco can save more bandwidth without noticeable quality loss for playback
-    if (type === 'video') {
-       // We can stick to q_auto for balanced, or go 'q_auto:eco' for "faster"
-       // Let's stick to standard q_auto for now to ensure good quality, 
-       // but strictly resize them for mobile if width is passed.
-    }
-
-    return `${base}/upload/${transformations.join(',')}/${rest}`;
+    return `${base}${typeKey}${transformations.join(',')}/${rest}`;
 }

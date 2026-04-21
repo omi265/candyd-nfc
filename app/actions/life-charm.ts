@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
+import { extractPublicId, deleteFromCloudinary, getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
 import { CharmType, CharmState } from "@prisma/client";
 import {
   createLifeListSchema,
@@ -71,7 +71,24 @@ export async function getProductById(productId: string) {
     });
 
     if (!product || product.userId !== session.user.id) return null;
-    return product;
+
+    // Return signed URLs
+    return {
+        ...product,
+        lifeLists: product.lifeLists.map(list => ({
+            ...list,
+            items: list.items.map(item => ({
+                ...item,
+                experience: item.experience ? {
+                    ...item.experience,
+                    media: item.experience.media.map(m => ({
+                        ...m,
+                        url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+                    }))
+                } : null
+            }))
+        }))
+    };
   } catch (error) {
     console.error("Failed to get product:", error);
     return null;
@@ -206,7 +223,22 @@ export async function getLifeList(productId: string) {
       },
     });
 
-    return lifeList;
+    if (!lifeList) return null;
+
+    // Return signed URLs
+    return {
+        ...lifeList,
+        items: lifeList.items.map(item => ({
+            ...item,
+            experience: item.experience ? {
+                ...item.experience,
+                media: item.experience.media.map(m => ({
+                    ...m,
+                    url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+                }))
+            } : null
+        }))
+    };
   } catch (error) {
     console.error("Failed to get life list:", error);
     return null;
@@ -336,7 +368,18 @@ export async function getListItem(itemId: string) {
     });
 
     if (!item || item.lifeList.userId !== session.user.id) return null;
-    return item;
+
+    // Return signed URLs
+    return {
+        ...item,
+        experience: item.experience ? {
+            ...item.experience,
+            media: item.experience.media.map(m => ({
+                ...m,
+                url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+            }))
+        } : null
+    };
   } catch (error) {
     console.error("Failed to get list item:", error);
     return null;
@@ -566,7 +609,15 @@ export async function getExperience(id: string) {
     if (!experience || experience.item.lifeList.userId !== session.user.id) {
       return null;
     }
-    return experience;
+
+    // Return signed URLs
+    return {
+        ...experience,
+        media: experience.media.map(m => ({
+            ...m,
+            url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+        }))
+    };
   } catch (error) {
     console.error("Failed to get experience:", error);
     return null;

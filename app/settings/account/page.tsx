@@ -28,6 +28,7 @@ export default function AccountSettingsPage() {
     const router = useRouter();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Password change state
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -50,6 +51,26 @@ export default function AccountSettingsPage() {
             toast.error("An error occurred");
         } finally {
             setIsDeleting(false);
+        }
+    }
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        toast.info("Preparing your data archive...");
+        
+        try {
+            // Trigger download via window.location for simplicity with the ZIP stream
+            window.location.href = "/api/user/export";
+            
+            // Wait a bit before resetting state as the browser handles the download
+            setTimeout(() => {
+                setIsExporting(false);
+                toast.success("Export started!");
+            }, 2000);
+        } catch (error) {
+            console.error("Export failed:", error);
+            toast.error("Failed to start download");
+            setIsExporting(false);
         }
     }
 
@@ -267,9 +288,13 @@ export default function AccountSettingsPage() {
                                     <p className="text-[#9A92A6] text-sm mb-6 px-4">
                                         Before you go, we recommend downloading your memory library to your phone.
                                     </p>
-                                    <button className="w-full bg-[#C2D647] text-[#3E1C56] font-semibold py-4 rounded-full flex items-center justify-center gap-2 hover:bg-[#b0c43d] transition-colors">
-                                        <CloudDownload className="w-6 h-6 text-[#3E1C56]" />
-                                        Download data
+                                    <button 
+                                        onClick={handleExport}
+                                        disabled={isExporting}
+                                        className="w-full bg-[#C2D647] text-[#3E1C56] font-semibold py-4 rounded-full flex items-center justify-center gap-2 hover:bg-[#b0c43d] transition-colors disabled:opacity-50"
+                                    >
+                                        {isExporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <CloudDownload className="w-6 h-6 text-[#3E1C56]" />}
+                                        {isExporting ? "Preparing..." : "Download data"}
                                     </button>
                                 </div>
 

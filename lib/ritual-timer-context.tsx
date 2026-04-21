@@ -104,8 +104,10 @@ function RitualTimerOverlay() {
               formData.append("timestamp", timestamp.toString());
               formData.append("signature", signature);
               formData.append("folder", folder);
+              formData.append("type", "authenticated");
 
               const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+
                   method: "POST",
                   body: formData,
               });
@@ -191,7 +193,9 @@ function RitualTimerOverlay() {
                         transition={{ duration: 1, ease: "linear" }}
                       />
                     </svg>
-                    <div className="text-6xl font-black text-[#5B2D7D] tracking-tighter">{ritual.timeLeft}s</div>
+                    <div className="text-6xl font-black text-[#5B2D7D] tracking-tighter">
+                      {ritual.timeLeft >= 60 ? formatSeconds(ritual.timeLeft) : `${ritual.timeLeft}s`}
+                    </div>
                   </div>
 
                   <div className="w-full space-y-8 px-6">

@@ -98,6 +98,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
       formData.append("timestamp", sigData.timestamp.toString());
       formData.append("signature", sigData.signature);
       formData.append("folder", sigData.folder);
+      formData.append("type", sigData.type!);
 
       // 3. Upload to Cloudinary
       const uploadRes = await fetch(

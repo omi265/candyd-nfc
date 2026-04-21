@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { createHabitSchema, logHabitSchema } from "@/lib/schemas";
 import { HabitLogType, Habit, HabitLog } from "@prisma/client";
 import { CORE_HABITS } from "@/lib/habit-templates";
+import { getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 const RITUAL_TYPES = ["MORNING", "NIGHT"] as const;
@@ -338,9 +339,15 @@ export async function getHabits(productId: string) {
     });
 
     return habits.map(h => {
-        if (!h.resetAt) return h;
-        const resetTime = new Date(h.resetAt).getTime();
-        return { ...h, logs: h.logs.filter(l => new Date(l.createdAt).getTime() > resetTime) };
+        const resetTime = h.resetAt ? new Date(h.resetAt).getTime() : 0;
+        const filteredLogs = h.logs
+            .filter(l => new Date(l.createdAt).getTime() > resetTime)
+            .map(l => ({
+                ...l,
+                imageUrl: l.imageUrl ? getSignedUrlFromCloudinaryUrl(l.imageUrl) : null
+            }));
+            
+        return { ...h, logs: filteredLogs };
     });
   } catch (error) { return []; }
 }

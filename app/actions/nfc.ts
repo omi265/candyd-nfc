@@ -4,12 +4,37 @@ import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import cloudinary from "@/lib/cloudinary";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
+import { LRUCache } from "lru-cache";
+
+// Simple in-memory rate limiter
+const rateLimiter = new LRUCache<string, number>({
+  max: 1000,
+  ttl: 1000 * 60 * 15, // 15 minutes
+});
+
+function isRateLimited(ip: string, limit: number = 20): boolean {
+  const current = rateLimiter.get(ip) || 0;
+  if (current >= limit) return true;
+  rateLimiter.set(ip, current + 1);
+  return false;
+}
+
+function maskEmail(email: string): string {
+    const [name, domain] = email.split("@");
+    if (!name || !domain) return email;
+    if (name.length <= 2) return `${name}***@${domain}`;
+    return `${name.substring(0, 2)}***@${domain}`;
+}
 
 export async function getProductOwnerInfo(token: string) {
+  // Use a generic IP or identifier since we can't easily get client IP in Server Actions without headers
+  // In a real Vercel/Next.js env, we'd use headers() to get x-forwarded-for
+  
   try {
     const product = await db.product.findUnique({
       where: { token },
-      include: { user: { select: { email: true, name: true, setupRequired: true } } }
+      include: { user: { select: { id: true, email: true, name: true, setupRequired: true } } }
     });
 
     if (!product || !product.active) {
@@ -20,10 +45,14 @@ export async function getProductOwnerInfo(token: string) {
         return { unassigned: true, type: product.type, charmName: product.name };
     }
 
+    const session = await auth();
+    const isOwner = session?.user?.id === product.user.id;
+
     return {
-      email: product.user.email,
+      email: isOwner ? product.user.email : maskEmail(product.user.email),
       name: product.user.name,
-      setupRequired: product.user.setupRequired
+      setupRequired: product.user.setupRequired,
+      isOwner
     };
   } catch (error) {
     console.error("Failed to get product owner info:", error);
@@ -105,20 +134,26 @@ export async function getGuestCloudinarySignature(token: string) {
     try {
         const product = await db.product.findUnique({
             where: { token },
-            select: { id: true, active: true }
+            select: { id: true, active: true, allowGuestUploads: true }
         });
 
         if (!product || !product.active) {
             throw new Error("Invalid or inactive tag");
         }
 
+        if (!product.allowGuestUploads) {
+            throw new Error("Guest uploads are disabled for this charm");
+        }
+
         const timestamp = Math.round(new Date().getTime() / 1000);
         const folder = "candyd_guest_memories";
+        const type = "authenticated";
 
         const signature = cloudinary.utils.api_sign_request(
             {
                 timestamp,
                 folder,
+                type,
             },
             process.env.CLOUDINARY_API_SECRET!
         );
@@ -127,6 +162,7 @@ export async function getGuestCloudinarySignature(token: string) {
             signature,
             timestamp,
             folder,
+            type,
             cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
             apiKey: process.env.CLOUDINARY_API_KEY,
         };

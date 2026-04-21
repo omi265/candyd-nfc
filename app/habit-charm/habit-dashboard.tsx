@@ -2141,6 +2141,7 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
                 formData.append("timestamp", timestamp.toString());
                 formData.append("signature", signature);
                 formData.append("folder", folder);
+                formData.append("type", "authenticated");
 
                 const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
                     method: "POST",

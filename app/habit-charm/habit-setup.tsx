@@ -512,7 +512,7 @@ function HabitSelector({ ritualType, onSelect }: { ritualType: "MORNING" | "NIGH
                                                                         ritualType,
                                                                         title: l.description,
                                                                         description: `Level ${l.level}: ${l.duration}`,
-                                                                        duration: l.duration.includes('sec') ? parseInt(l.duration) : 60
+                                                                        duration: l.duration.includes('min') ? parseInt(l.duration) * 60 : (l.duration.includes('sec') ? parseInt(l.duration) : 60)
                                                                     });
                                                                     setIsOpen(false);
                                                                 }}

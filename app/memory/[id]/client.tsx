@@ -215,6 +215,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     const [isUploading, setIsUploading] = useState(false);
     const [isReordering, setIsReordering] = useState(false);
     const [optionalExpanded, setOptionalExpanded] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Form State
     const [title, setTitle] = useState(memory.title);
@@ -332,6 +333,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
             formData.append("timestamp", timestamp.toString());
             formData.append("signature", signature);
             formData.append("folder", folder);
+            formData.append("type", "authenticated");
 
             const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
                 method: "POST",
@@ -587,18 +589,20 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         }
     };
 
-    const handleDelete = async () => {
-        if (confirm("Are you sure you want to delete this memory?")) {
-             const toastId = toast.loading("Deleting memory...");
-             const result = await deleteMemory(memory.id);
-             if (result.success) {
-                 toast.dismiss(toastId);
-                 toast.success("Memory deleted successfully");
-                 router.push("/memories");
-             } else {
-                 toast.dismiss(toastId);
-                 toast.error(result.error || "Failed to delete memory");
-             }
+    const handleDelete = () => {
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        const toastId = toast.loading("Deleting memory...");
+        const result = await deleteMemory(memory.id);
+        if (result.success) {
+            toast.dismiss(toastId);
+            toast.success("Memory deleted successfully");
+            router.push("/memories");
+        } else {
+            toast.dismiss(toastId);
+            toast.error(result.error || "Failed to delete memory");
         }
     };
 
@@ -974,6 +978,54 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                  </div>
                  </div>
              </div>
+
+             {/* Delete Confirmation Modal */}
+             <AnimatePresence>
+                 {showDeleteConfirm && (
+                     <>
+                         <motion.div
+                             initial={{ opacity: 0 }}
+                             animate={{ opacity: 1 }}
+                             exit={{ opacity: 0 }}
+                             onClick={() => setShowDeleteConfirm(false)}
+                             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]"
+                         />
+                         <div className="fixed inset-0 flex items-center justify-center z-[101] px-6 pointer-events-none">
+                             <motion.div
+                                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                 animate={{ opacity: 1, scale: 1, y: 0 }}
+                                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                 className="bg-white rounded-[32px] p-8 w-full max-w-sm shadow-2xl pointer-events-auto"
+                             >
+                                 <div className="flex flex-col items-center text-center">
+                                     <div className="w-20 h-20 rounded-full bg-[#FBE0D6] flex items-center justify-center mb-6">
+                                         <Trash2 className="w-10 h-10 text-[#C27A59]" />
+                                     </div>
+                                     <h3 className="text-[#5B2D7D] text-2xl font-black uppercase mb-2">Delete this memory?</h3>
+                                     <p className="text-[#A68CAB] text-sm leading-relaxed mb-8">
+                                         This action is permanent and will remove this memory from your collection.
+                                     </p>
+
+                                     <div className="flex flex-col w-full gap-3">
+                                         <button
+                                             onClick={confirmDelete}
+                                             className="w-full bg-[#C27A59] text-white font-bold py-4 rounded-full shadow-lg shadow-[#C27A59]/20 active:scale-95 transition-transform"
+                                         >
+                                             Yes, delete
+                                         </button>
+                                         <button
+                                             onClick={() => setShowDeleteConfirm(false)}
+                                             className="w-full bg-[#EADDDE]/50 text-[#5B2D7D] font-bold py-4 rounded-full active:scale-95 transition-transform"
+                                         >
+                                             Cancel
+                                         </button>
+                                     </div>
+                                 </div>
+                             </motion.div>
+                         </div>
+                     </>
+                 )}
+             </AnimatePresence>
         </div>
     )
 }

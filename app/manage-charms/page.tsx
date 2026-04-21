@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { getUserProducts, deleteProduct, getCharmStats } from "@/app/actions/memories";
+import { getUserProducts, deleteProduct, getCharmStats, updateProductGuestUploads } from "@/app/actions/memories";
 
 // --- Icons ---
 import { 
@@ -18,7 +18,8 @@ import {
     Image as ImageIcon,
     Nfc,
     Users,
-    Sparkles
+    Sparkles,
+    ShieldCheck
 } from "lucide-react";
 
 
@@ -80,6 +81,27 @@ export default function ManageCharmsPage() {
         const params = new URLSearchParams(searchParams.toString());
         params.set('charmId', product.id);
         router.replace(`/manage-charms?${params.toString()}`);
+    };
+
+    const handleToggleGuestUploads = async () => {
+        if (!selectedProduct) return;
+        const newValue = !selectedProduct.allowGuestUploads;
+        
+        // Optimistic update
+        setSelectedProduct({ ...selectedProduct, allowGuestUploads: newValue });
+        setProducts(products.map(p => p.id === selectedProduct.id ? { ...p, allowGuestUploads: newValue } : p));
+
+        try {
+            const result = await updateProductGuestUploads(selectedProduct.id, newValue);
+            if (result.error) {
+                // Revert
+                setSelectedProduct({ ...selectedProduct, allowGuestUploads: !newValue });
+                setProducts(products.map(p => p.id === selectedProduct.id ? { ...p, allowGuestUploads: !newValue } : p));
+                console.error(result.error);
+            }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     const handleDeleteCharm = async () => {
@@ -164,15 +186,24 @@ export default function ManageCharmsPage() {
                 {/* Actions */}
                 <div className="space-y-6">
                     <div>
-                        <button className="w-full bg-[#FFF9F6] rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                        <div className="bg-[#FFF9F6] rounded-2xl p-4 flex items-center justify-between shadow-sm">
                             <div className="flex items-center gap-4">
-                                <CloudDownload className="w-6 h-6 text-[#5B2D7D]" />
-                                <span className="text-[#3E1C56] text-lg font-medium">Download data</span>
+                                <ShieldCheck className="w-6 h-6 text-[#5B2D7D]" />
+                                <span className="text-[#3E1C56] text-lg font-medium">Guest access</span>
                             </div>
-                            <ChevronRight className="w-6 h-6 text-[#5B2D7D]" />
-                        </button>
+                            <button 
+                                onClick={handleToggleGuestUploads}
+                                className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${selectedProduct?.allowGuestUploads ? 'bg-[#D6CDE3]' : 'bg-gray-200'}`}
+                            >
+                                <motion.div 
+                                    className="w-5 h-5 bg-white rounded-full shadow-sm"
+                                    animate={{ x: selectedProduct?.allowGuestUploads ? 20 : 0 }}
+                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                />
+                            </button>
+                        </div>
                         <p className="text-[#9A92A6] text-sm mt-3 px-1 leading-relaxed">
-                            Backup all the media uploaded to this charm to your phone
+                            When enabled, anyone who scans this charm can upload a memory instantly.
                         </p>
                     </div>
 

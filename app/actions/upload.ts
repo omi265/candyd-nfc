@@ -12,11 +12,13 @@ export async function getCloudinarySignature(folder: string = "candyd_memories")
   }
 
   const timestamp = Math.round(new Date().getTime() / 1000);
+  const type = "authenticated";
 
   const signature = cloudinary.utils.api_sign_request(
     {
       timestamp,
       folder,
+      type,
     },
     process.env.CLOUDINARY_API_SECRET!
   );
@@ -25,6 +27,7 @@ export async function getCloudinarySignature(folder: string = "candyd_memories")
     signature,
     timestamp,
     folder,
+    type,
     cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
   };

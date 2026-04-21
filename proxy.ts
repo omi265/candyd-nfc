@@ -24,14 +24,15 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-      /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
+    /*
+     * Match all request paths except for:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder files
+     * - manifest.webmanifest, sw.js (PWA files)
+     * - .well-known (Apple/Android app verification)
+     * - image/svg/video files in public folder
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|\\.well-known|.*\\.svg$|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|\\.well-known|.*\\.svg$|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$).*)",
   ],
 };

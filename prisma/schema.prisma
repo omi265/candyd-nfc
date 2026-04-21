@@ -23,6 +23,7 @@ model User {
   people        Person[]
   products      Product[]
   tickets       SupportTicket[]
+  activityLogs  ActivityLog[]
 }
 
 model Product {
@@ -38,6 +39,7 @@ model Product {
   lastResetAt   DateTime?
   currentStreak Int        @default(0)
   longestStreak Int        @default(0)
+  allowGuestUploads Boolean  @default(false)
   habits        Habit[]
   lifeLists     LifeList[]
   memories      Memory[]
@@ -221,10 +223,22 @@ model SupportTicket {
 model PasswordResetToken {
   id      String   @id @default(cuid())
   email   String
-  token   String   @unique
+  token   String
   expires DateTime
 
   @@unique([email, token])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
+  ip        String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
 }
 
 enum HabitLogType {

@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import cloudinary from "@/lib/cloudinary";
-import { extractPublicId, deleteFromCloudinary, isValidCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { extractPublicId, deleteFromCloudinary, isValidCloudinaryUrl, getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
 
 const createMemorySchema = z.object({
   title: z.string().min(1, "Title is required").max(15, "Title too long"),
@@ -113,6 +113,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
     }
 
     revalidatePath("/"); // Update home page
+    revalidatePath("/memories");
     revalidatePath("/life-charm");
     return { success: true };
   } catch (error: any) {
@@ -147,7 +148,15 @@ export async function getMemories(productId?: string) {
         }
       }
     });
-    return memories;
+
+    // Return signed URLs for authenticated delivery
+    return memories.map(m => ({
+        ...m,
+        media: m.media.map(med => ({
+            ...med,
+            url: getSignedUrlFromCloudinaryUrl(med.url, med.type)
+        }))
+    }));
   } catch (error) {
     console.error("Failed to fetch memories:", error);
     return [];
@@ -248,7 +257,14 @@ export async function getMemory(id: string) {
         
         if (!memory || memory.userId !== session.user.id) return null;
         
-        return memory;
+        // Return signed URLs for authenticated delivery
+        return {
+            ...memory,
+            media: memory.media.map(m => ({
+                ...m,
+                url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+            }))
+        };
     } catch (error) {
         console.error("Failed to fetch memory:", error);
         return null;
@@ -428,6 +444,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
         }
 
         revalidatePath("/");
+        revalidatePath("/memories");
         revalidatePath("/life-charm");
         revalidatePath(`/memory/${id}`);
         return { success: true };
@@ -461,6 +478,7 @@ export async function deleteMemory(id: string) {
 
         await db.memory.delete({ where: { id } });
         revalidatePath("/");
+        revalidatePath("/memories");
         revalidatePath("/life-charm");
         return { success: true };
     } catch (error: any) {
@@ -503,30 +521,82 @@ export async function deleteProduct(id: string) {
     try {
         const product = await db.product.findUnique({
             where: { id },
-            select: { userId: true }
+            select: { userId: true, type: true }
         });
 
         if (!product || product.userId !== session.user.id) {
             return { error: "Unauthorized" };
         }
 
-        // 1. Gather all media associated with this product's memories
-        const memories = await db.memory.findMany({
-            where: { productId: id },
-            select: { 
-                id: true,
-                media: true 
-            }
-        });
-
         const publicIds: string[] = [];
-        for (const mem of memories) {
-            if (mem.media) {
-                mem.media.forEach(m => {
-                    const pid = extractPublicId(m.url);
-                    if (pid) publicIds.push(pid);
+
+        if (product.type === 'MEMORY' || product.type === 'LIFE') {
+            // 1. Gather all media from Memories
+            const memories = await db.memory.findMany({
+                where: { productId: id },
+                include: { media: true }
+            });
+
+            memories.forEach(mem => {
+                if (mem.media) {
+                    mem.media.forEach(m => {
+                        const pid = extractPublicId(m.url);
+                        if (pid) publicIds.push(pid);
+                    });
+                }
+            });
+
+            // 2. Gather all media from Life List Experiences
+            const lifeLists = await db.lifeList.findMany({
+                where: { productId: id },
+                include: {
+                    items: {
+                        include: {
+                            experience: {
+                                include: { media: true }
+                            }
+                        }
+                    }
+                }
+            });
+
+            lifeLists.forEach(ll => {
+                ll.items.forEach(item => {
+                    if (item.experience?.media) {
+                        item.experience.media.forEach(m => {
+                            const pid = extractPublicId(m.url);
+                            if (pid) publicIds.push(pid);
+                        });
+                    }
                 });
-            }
+            });
+
+            // 3. Delete DB records
+            await db.lifeList.deleteMany({ where: { productId: id } });
+            await db.memory.deleteMany({ where: { productId: id } });
+
+        } else if (product.type === 'HABIT') {
+            // 1. Gather all media from Habit Logs
+            const habits = await db.habit.findMany({
+                where: { productId: id },
+                include: {
+                    logs: {
+                        where: { imageUrl: { not: null } }
+                    }
+                }
+            });
+
+            habits.forEach(h => {
+                h.logs.forEach(log => {
+                    if (log.imageUrl) {
+                        const pid = extractPublicId(log.imageUrl);
+                        if (pid) publicIds.push(pid);
+                    }
+                });
+            });
+
+            // 2. Delete DB records
+            await db.habit.deleteMany({ where: { productId: id } });
         }
 
         // 2. Delete from Cloudinary
@@ -534,20 +604,12 @@ export async function deleteProduct(id: string) {
             await deleteFromCloudinary(publicIds);
         }
 
-        // 3. Delete Product (Cascades to memories usually, but we can be explicit if needed)
-        // Assuming DB cascade is set up, deleting product deletes memories?
-        // Let's verify: Prisma usually handles cascade if defined in schema.
-        // Even if not, we can delete memories manually first to be safe or just let product deletion handle it.
-        // To be safe and explicit:
-        await db.memory.deleteMany({
-            where: { productId: id }
-        });
-
         await db.product.delete({
             where: { id }
         });
 
         revalidatePath("/manage-charms");
+        revalidatePath("/memories");
         revalidatePath("/");
         return { success: true };
 
@@ -596,5 +658,31 @@ export async function getCharmStats(productId: string) {
     } catch (error) {
         console.error("Failed to fetch charm stats:", error);
         return { error: "Failed to fetch stats" };
+    }
+}
+
+export async function updateProductGuestUploads(productId: string, allow: boolean) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const product = await db.product.findUnique({
+            where: { id: productId },
+            select: { userId: true }
+        });
+
+        if (!product || product.userId !== session.user.id) {
+            return { error: "Unauthorized" };
+        }
+
+        await db.product.update({
+            where: { id: productId },
+            data: { allowGuestUploads: allow }
+        });
+
+        revalidatePath("/manage-charms");
+        return { success: true };
+    } catch (error: any) {
+        return { error: error.message };
     }
 }

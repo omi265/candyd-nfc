@@ -5,6 +5,21 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { getCloudinaryUsage } from "@/lib/cloudinary-helper";
 import { hash } from "bcryptjs";
+import crypto from "crypto";
+
+async function logActivity(action: string, details?: string, userId?: string) {
+    try {
+        await db.activityLog.create({
+            data: {
+                action,
+                details,
+                userId
+            }
+        });
+    } catch (error) {
+        console.error("Activity logging failed:", error);
+    }
+}
 
 export async function getAdminStats() {
   const session = await auth();
@@ -170,8 +185,9 @@ export async function createUserAndProduct(
   let isNewUser = false;
 
   if (!user) {
-    // Create new user with default password
-    const hashedPassword = await hash("candyd123", 10);
+    // Create new user with a secure random temporary password
+    const tempPassword = crypto.randomBytes(16).toString("hex");
+    const hashedPassword = await hash(tempPassword, 10);
     try {
             user = await db.user.create({
               data: {
@@ -247,6 +263,8 @@ export async function deleteProduct(id: string) {
     await db.product.delete({
       where: { id },
     });
+
+    await logActivity("PRODUCT_DELETED", `Product ${id} deleted by Admin`, session.user.id);
 
     revalidatePath("/admin");
     return { success: true };

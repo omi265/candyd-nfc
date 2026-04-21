@@ -10,7 +10,20 @@ import { revalidatePath } from "next/cache";
 import { deleteFromCloudinary, extractPublicId } from "@/lib/cloudinary-helper";
 import { changePasswordSchema } from "@/lib/schemas";
 import { sendPasswordResetEmail } from "@/lib/mail";
-import { v4 as uuidv4 } from "uuid";
+
+async function logActivity(action: string, details?: string, userId?: string) {
+    try {
+        await db.activityLog.create({
+            data: {
+                action,
+                details,
+                userId
+            }
+        });
+    } catch (error) {
+        console.error("Activity logging failed:", error);
+    }
+}
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -24,14 +37,18 @@ const updateProfileSchema = z.object({
 });
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
+  const email = formData.get("email") as string;
   try {
     await signIn("credentials", {
-      email: formData.get("email"),
+      email,
       password: formData.get("password"),
       redirectTo: "/",
     });
+    // Log success (Note: in reality, signIn might redirect before this line executes in some NextAuth versions)
+    await logActivity("LOGIN_SUCCESS", `User ${email} logged in`);
   } catch (error) {
     if (error instanceof AuthError) {
+      await logActivity("LOGIN_FAILED", `Failed login attempt for ${email}: ${error.type}`);
       switch (error.type) {
         case "CredentialsSignin":
           return "Invalid credentials.";
@@ -143,6 +160,8 @@ export async function changePassword(prevState: any, formData: FormData) {
             data: { password: hashedPassword }
         });
 
+        await logActivity("PASSWORD_CHANGED", "User changed their password", session.user.id);
+
         return { success: true };
     } catch (error) {
         console.error("Change Password Error:", error);
@@ -163,9 +182,9 @@ export async function forgotPassword(email: string) {
             return { success: true };
         }
 
-        // Generate token
-        const token = uuidv4();
-        const expires = new Date(new Date().getTime() + 3600 * 1000); // 1 hour
+        // Generate 6-digit OTP
+        const token = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = new Date(new Date().getTime() + 15 * 60 * 1000); // 15 minutes
 
         // Upsert token
         const existingToken = await db.passwordResetToken.findFirst({
@@ -196,20 +215,23 @@ export async function forgotPassword(email: string) {
     }
 }
 
-export async function resetPassword(token: string, password: string) {
-    if (!token || !password) return { error: "Token and password are required" };
+export async function resetPassword(email: string, token: string, password: string) {
+    if (!email || !token || !password) return { error: "Email, code, and password are required" };
 
     try {
-        const resetToken = await db.passwordResetToken.findUnique({
-            where: { token }
+        const resetToken = await db.passwordResetToken.findFirst({
+            where: { 
+                email,
+                token
+            }
         });
 
         if (!resetToken || resetToken.expires < new Date()) {
-            return { error: "Token invalid or expired" };
+            return { error: "Invalid or expired reset code" };
         }
 
         const user = await db.user.findUnique({
-            where: { email: resetToken.email }
+            where: { email }
         });
 
         if (!user) {
@@ -242,13 +264,24 @@ export async function deleteAccount() {
     try {
         const userId = session.user.id;
 
-        // 1. Gather all media from user's memories
+        // Gather all Public IDs for Cloudinary cleanup
+        const publicIds: string[] = [];
+
+        // 1. User Profile Image
+        const user = await db.user.findUnique({
+            where: { id: userId },
+            select: { image: true }
+        });
+        if (user?.image) {
+            const pid = extractPublicId(user.image);
+            if (pid) publicIds.push(pid);
+        }
+
+        // 2. Memory Media
         const memories = await db.memory.findMany({
             where: { userId },
             include: { media: true }
         });
-
-        const publicIds: string[] = [];
         memories.forEach(mem => {
             mem.media.forEach(m => {
                 const pid = extractPublicId(m.url);
@@ -256,7 +289,7 @@ export async function deleteAccount() {
             });
         });
 
-        // 2. Gather media from experiences
+        // 3. Experience Media
         const experiences = await db.experience.findMany({
             where: {
                 item: {
@@ -267,7 +300,6 @@ export async function deleteAccount() {
             },
             include: { media: true }
         });
-
         experiences.forEach(exp => {
             exp.media.forEach(m => {
                 const pid = extractPublicId(m.url);
@@ -275,15 +307,46 @@ export async function deleteAccount() {
             });
         });
 
-        // 3. Delete from Cloudinary
+        // 4. Habit Log Images
+        const habitLogs = await db.habitLog.findMany({
+            where: {
+                habit: {
+                    userId
+                },
+                imageUrl: { not: null }
+            },
+            select: { imageUrl: true }
+        });
+        habitLogs.forEach(log => {
+            if (log.imageUrl) {
+                const pid = extractPublicId(log.imageUrl);
+                if (pid) publicIds.push(pid);
+            }
+        });
+
+        // 5. Person Avatars
+        const people = await db.person.findMany({
+            where: { userId },
+            select: { avatarUrl: true }
+        });
+        people.forEach(p => {
+            if (p.avatarUrl) {
+                const pid = extractPublicId(p.avatarUrl);
+                if (pid) publicIds.push(pid);
+            }
+        });
+
+        // 6. Delete from Cloudinary
         if (publicIds.length > 0) {
             await deleteFromCloudinary(publicIds);
         }
 
-        // 4. Delete user (Cascades will handle DB cleanup)
+        // 7. Delete user (Cascades will handle DB cleanup)
         await db.user.delete({
             where: { id: userId }
         });
+
+        await logActivity("ACCOUNT_DELETED", `Account ${userId} deleted`);
 
         return { success: true };
     } catch (error) {

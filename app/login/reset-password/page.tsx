@@ -6,10 +6,11 @@ import Link from "next/link";
 import { resetPassword } from "@/app/actions/auth";
 import { toast } from "sonner";
 import Image from "next/image";
-import { Lock, Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { Lock, Loader2, Eye, EyeOff, CheckCircle2, KeyRound, Mail } from "lucide-react";
 
 function ResetPasswordContent() {
   const [isPending, startTransition] = useTransition();
+  const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,12 +18,18 @@ function ResetPasswordContent() {
   
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const emailFromUrl = searchParams.get("email") || "";
+  const [email, setEmail] = useState(emailFromUrl);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) {
-        toast.error("Invalid or missing reset token");
+    if (!email) {
+        toast.error("Email is required");
+        return;
+    }
+
+    if (!otp || otp.length !== 6) {
+        toast.error("Please enter a valid 6-digit code");
         return;
     }
 
@@ -37,7 +44,7 @@ function ResetPasswordContent() {
     }
 
     startTransition(async () => {
-      const result = await resetPassword(token, password);
+      const result = await resetPassword(email, otp, password);
       if (result.error) {
         toast.error(result.error);
       } else {
@@ -50,18 +57,6 @@ function ResetPasswordContent() {
     });
   };
 
-  if (!token && !isSuccess) {
-      return (
-        <div className="w-full max-w-md space-y-8 bg-white/40 backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-white/50 text-center">
-            <h1 className="text-2xl font-bold text-primary-purple">Invalid Token</h1>
-            <p className="text-sm text-text-gray">The password reset link is invalid or has expired.</p>
-            <Link href="/login/forgot-password" className="w-full inline-block rounded-2xl bg-primary-purple px-4 py-3.5 text-sm font-bold text-white mt-4">
-                Request new link
-            </Link>
-        </div>
-      );
-  }
-
   return (
     <div className="w-full max-w-md space-y-8 bg-white/40 backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-white/50">
         <div className="flex flex-col items-center text-center">
@@ -69,18 +64,53 @@ function ResetPasswordContent() {
                 <Image src="/Candyd_logo.svg" alt="Candyd Logo" fill className="object-contain" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-primary-purple">
-                {isSuccess ? "Password updated" : "Set new password"}
+                {isSuccess ? "Password updated" : "Reset password"}
             </h1>
             <p className="mt-2 text-sm text-text-gray">
                 {isSuccess 
                     ? "Your password has been reset successfully" 
-                    : "Create a strong password for your account"}
+                    : "Enter the 6-digit code sent to your email"}
             </p>
         </div>
 
         {!isSuccess ? (
             <form onSubmit={handleSubmit} className="mt-8 space-y-6">
                 <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-primary-purple ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
+                            Email Address
+                        </label>
+                        <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-purple/20" />
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                                placeholder="you@example.com"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-primary-purple ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
+                            6-Digit Code
+                        </label>
+                        <div className="relative">
+                            <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-purple/20" />
+                            <input
+                                type="text"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                                required
+                                maxLength={6}
+                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm tracking-[0.5em] font-mono text-lg"
+                                placeholder="000000"
+                            />
+                        </div>
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-primary-purple ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
                             New Password
