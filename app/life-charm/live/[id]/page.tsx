@@ -133,7 +133,7 @@ export default function MarkAsLivedPage() {
         }
 
         const formData = new FormData();
-        formData.append("file", item.file);
+        formData.append("file", file);
         formData.append("api_key", signatureData.apiKey!);
         formData.append("timestamp", signatureData.timestamp.toString());
         formData.append("signature", signatureData.signature);

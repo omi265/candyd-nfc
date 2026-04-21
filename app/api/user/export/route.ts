@@ -84,7 +84,7 @@ Thank you for being part of Candyd.
 `;
         zip.file("README.txt", readme);
 
-        const content = await zip.generateAsync({ type: "nodebuffer" });
+        const content = await zip.generateAsync({ type: "blob" });
 
         // 3. Return as stream
         return new NextResponse(content, {

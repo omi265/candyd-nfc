@@ -1,6 +1,7 @@
 import cloudinary from "@/lib/cloudinary";
+import { extractPublicId } from "./media-helper";
 
-export { extractPublicId } from "./media-helper";
+export { extractPublicId };
 
 /**
  * Validates that a URL is a valid Cloudinary URL
