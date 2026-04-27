@@ -19,6 +19,7 @@ function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailFromUrl = searchParams.get("email") || "";
+  const devCode = searchParams.get("devCode") || "";
   const [email, setEmail] = useState(emailFromUrl);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -75,6 +76,12 @@ function ResetPasswordContent() {
 
         {!isSuccess ? (
             <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                {devCode && (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Development Reset Code</p>
+                        <p className="mt-1 font-mono text-2xl font-black tracking-[0.35em] text-amber-900">{devCode}</p>
+                    </div>
+                )}
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-primary-purple ml-3 mb-1.5 uppercase tracking-wider text-[10px]">

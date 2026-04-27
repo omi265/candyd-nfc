@@ -186,6 +186,8 @@ export async function forgotPassword(email: string) {
         const token = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(new Date().getTime() + 15 * 60 * 1000); // 15 minutes
 
+        console.log(`[AUTH] Password reset OTP for ${email}: ${token}`);
+
         // Upsert token
         const existingToken = await db.passwordResetToken.findFirst({
             where: { email }
@@ -208,7 +210,7 @@ export async function forgotPassword(email: string) {
         // Send email
         await sendPasswordResetEmail(email, token);
 
-        return { success: true };
+        return { success: true, devCode: token };
     } catch (error) {
         console.error("Forgot Password Error:", error);
         return { error: "Something went wrong" };
