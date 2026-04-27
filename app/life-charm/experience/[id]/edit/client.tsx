@@ -140,7 +140,7 @@ export default function EditExperienceClient({
         formData.append("timestamp", signatureData.timestamp.toString());
         formData.append("signature", signatureData.signature);
         formData.append("folder", signatureData.folder);
-        formData.append("type", "authenticated");
+        formData.append("type", "upload");
 
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`,

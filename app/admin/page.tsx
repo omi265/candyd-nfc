@@ -5,6 +5,7 @@ import { getTickets } from "@/app/actions/support";
 import { AdminDashboardClient } from "./client";
 import { CopyButton } from "./CopyButton";
 import { DeleteProductButton } from "./DeleteProductButton";
+import { ProductComments } from "./ProductComments";
 import { SupportTicketStatus } from "./SupportTicketStatus";
 import { Product, SupportTicket } from "@prisma/client";
 
@@ -57,6 +58,7 @@ export default async function AdminPage() {
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Product Name</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Type</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Assigned To</th>
+                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Comments</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60">Token Link</th>
                         <th className="pb-3 font-medium text-[#5B2D7D]/60 text-right">Actions</th>
                       </tr>
@@ -85,6 +87,9 @@ export default async function AdminPage() {
                             ) : (
                                 <span className="text-xs font-bold text-[#A4C538] bg-[#A4C538]/10 px-2 py-1 rounded-lg italic">Unassigned</span>
                             )}
+                          </td>
+                          <td className="py-3 pr-4 min-w-[200px]">
+                            <ProductComments productId={product.id} initialComments={product.comments} />
                           </td>
                           <td className="py-3 pr-4">
                             <div className="flex items-center gap-2">

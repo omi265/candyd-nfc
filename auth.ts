@@ -12,6 +12,7 @@ const loginSchema = z.object({
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  debug: true,
   providers: [
     Credentials({
       credentials: {

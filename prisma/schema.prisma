@@ -40,6 +40,7 @@ model Product {
   currentStreak Int        @default(0)
   longestStreak Int        @default(0)
   allowGuestUploads Boolean  @default(false)
+  comments      String?
   habits        Habit[]
   lifeLists     LifeList[]
   memories      Memory[]

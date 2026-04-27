@@ -147,7 +147,7 @@ export async function getGuestCloudinarySignature(token: string) {
 
         const timestamp = Math.round(new Date().getTime() / 1000);
         const folder = "candyd_guest_memories";
-        const type = "authenticated";
+        const type = "upload";
 
         const signature = cloudinary.utils.api_sign_request(
             {

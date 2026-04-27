@@ -72,23 +72,7 @@ export async function getProductById(productId: string) {
 
     if (!product || product.userId !== session.user.id) return null;
 
-    // Return signed URLs
-    return {
-        ...product,
-        lifeLists: product.lifeLists.map(list => ({
-            ...list,
-            items: list.items.map(item => ({
-                ...item,
-                experience: item.experience ? {
-                    ...item.experience,
-                    media: item.experience.media.map(m => ({
-                        ...m,
-                        url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
-                    }))
-                } : null
-            }))
-        }))
-    };
+    return product;
   } catch (error) {
     console.error("Failed to get product:", error);
     return null;
@@ -225,20 +209,7 @@ export async function getLifeList(productId: string) {
 
     if (!lifeList) return null;
 
-    // Return signed URLs
-    return {
-        ...lifeList,
-        items: lifeList.items.map(item => ({
-            ...item,
-            experience: item.experience ? {
-                ...item.experience,
-                media: item.experience.media.map(m => ({
-                    ...m,
-                    url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
-                }))
-            } : null
-        }))
-    };
+    return lifeList;
   } catch (error) {
     console.error("Failed to get life list:", error);
     return null;
@@ -369,17 +340,7 @@ export async function getListItem(itemId: string) {
 
     if (!item || item.lifeList.userId !== session.user.id) return null;
 
-    // Return signed URLs
-    return {
-        ...item,
-        experience: item.experience ? {
-            ...item.experience,
-            media: item.experience.media.map(m => ({
-                ...m,
-                url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
-            }))
-        } : null
-    };
+    return item;
   } catch (error) {
     console.error("Failed to get list item:", error);
     return null;
@@ -610,14 +571,7 @@ export async function getExperience(id: string) {
       return null;
     }
 
-    // Return signed URLs
-    return {
-        ...experience,
-        media: experience.media.map(m => ({
-            ...m,
-            url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
-        }))
-    };
+    return experience;
   } catch (error) {
     console.error("Failed to get experience:", error);
     return null;

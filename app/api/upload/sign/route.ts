@@ -12,10 +12,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { paramsToSign } = body;
 
-    // Enforce authenticated type for all uploads
+    // Use standard upload type
     const enforcedParams = {
         ...paramsToSign,
-        type: "authenticated",
+        type: "upload",
     };
 
     const signature = cloudinary.utils.api_sign_request(

@@ -273,3 +273,23 @@ export async function deleteProduct(id: string) {
     return { error: "Failed to delete product" };
   }
 }
+
+export async function updateProductComments(productId: string, comments: string) {
+  const session = await auth();
+  if (session?.user?.role !== "ADMIN") {
+    return { error: "Unauthorized" };
+  }
+
+  try {
+    await db.product.update({
+      where: { id: productId },
+      data: { comments },
+    });
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Update comments failed:", error);
+    return { error: "Failed to update comments" };
+  }
+}

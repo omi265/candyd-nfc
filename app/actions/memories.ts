@@ -149,14 +149,7 @@ export async function getMemories(productId?: string) {
       }
     });
 
-    // Return signed URLs for authenticated delivery
-    return memories.map(m => ({
-        ...m,
-        media: m.media.map(med => ({
-            ...med,
-            url: getSignedUrlFromCloudinaryUrl(med.url, med.type)
-        }))
-    }));
+    return memories;
   } catch (error) {
     console.error("Failed to fetch memories:", error);
     return [];
@@ -257,14 +250,7 @@ export async function getMemory(id: string) {
         
         if (!memory || memory.userId !== session.user.id) return null;
         
-        // Return signed URLs for authenticated delivery
-        return {
-            ...memory,
-            media: memory.media.map(m => ({
-                ...m,
-                url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
-            }))
-        };
+        return memory;
     } catch (error) {
         console.error("Failed to fetch memory:", error);
         return null;

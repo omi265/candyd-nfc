@@ -80,24 +80,19 @@ export async function getCloudinaryUsage(): Promise<number> {
 }
 
 /**
- * Generates a signed Cloudinary URL for an authenticated asset.
- * This URL is time-limited and secure.
+ * Generates a Cloudinary URL.
  */
 export function getSignedImageUrl(publicId: string, resourceType: string = "image") {
   return cloudinary.url(publicId, {
-    sign_url: true,
-    type: "authenticated",
+    type: "upload",
     resource_type: resourceType,
     secure: true,
   });
 }
 
 /**
- * Generates a signed Cloudinary URL from an existing Cloudinary URL.
+ * Returns a standard Cloudinary URL from an existing URL.
  */
 export function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string = "image") {
-  if (!url || !url.includes("cloudinary.com")) return url;
-  const publicId = extractPublicId(url);
-  if (!publicId) return url;
-  return getSignedImageUrl(publicId, resourceType);
+  return url; // Just return the URL as is since we are back to public uploads
 }

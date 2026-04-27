@@ -22,12 +22,8 @@ export function extractPublicId(url: string): string | null {
 export function getOptimizedUrl(url: string, type: 'image' | 'video' = 'image', width?: number): string {
     if (!url || !url.includes('cloudinary.com')) return url;
 
-    // Determine the delivery type (upload or authenticated)
-    const isAuth = url.includes('/authenticated/');
-    const typeKey = isAuth ? '/authenticated/' : '/upload/';
-    
-    // Split at the delivery type to insert transformations
-    const parts = url.split(typeKey);
+    // Split at '/upload/' to insert transformations
+    const parts = url.split('/upload/');
     if (parts.length !== 2) return url;
 
     const [base, rest] = parts;
@@ -39,5 +35,5 @@ export function getOptimizedUrl(url: string, type: 'image' | 'video' = 'image', 
         transformations.push('c_limit'); // Scale down only, preserve aspect ratio
     }
     
-    return `${base}${typeKey}${transformations.join(',')}/${rest}`;
+    return `${base}/upload/${transformations.join(',')}/${rest}`;
 }
