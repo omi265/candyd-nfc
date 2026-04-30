@@ -52,12 +52,31 @@ export async function getProductOwnerInfo(token: string) {
       email: isOwner ? product.user.email : maskEmail(product.user.email),
       name: product.user.name,
       setupRequired: product.user.setupRequired,
-      isOwner
+      isOwner,
+      enableGuestUploadButton: product.enableGuestUploadButton
     };
   } catch (error) {
     console.error("Failed to get product owner info:", error);
     return null;
   }
+}
+
+export async function verifyGuestUploadPassword(token: string, password: string) {
+    try {
+        const product = await db.product.findUnique({
+            where: { token },
+            select: { guestUploadPassword: true }
+        });
+
+        if (!product) return { error: "Invalid token" };
+        if (product.guestUploadPassword === password) {
+            return { success: true };
+        }
+        return { error: "Incorrect password" };
+    } catch (error) {
+        console.error("Verify Guest Password Error:", error);
+        return { error: "Verification failed" };
+    }
 }
 
 export async function claimProduct(token: string, userData: { email: string, name: string, password: string }) {
@@ -181,7 +200,7 @@ export async function createGuestMemory(token: string, data: {
     try {
         const product = await db.product.findUnique({
             where: { token },
-            select: { id: true, userId: true, active: true }
+            select: { id: true, userId: true, active: true, autoApproveGuestUploads: true }
         });
 
         if (!product || !product.active || !product.userId) {
@@ -195,6 +214,7 @@ export async function createGuestMemory(token: string, data: {
                 date: new Date(),
                 userId: product.userId,
                 productId: product.id,
+                isLiked: product.autoApproveGuestUploads
             }
         });
 
@@ -225,7 +245,8 @@ export async function getPublicCharmShowcase(token: string) {
                 name: true, 
                 type: true,
                 active: true,
-                userId: true
+                userId: true,
+                enableGuestUploadButton: true
             }
         });
 
@@ -233,7 +254,7 @@ export async function getPublicCharmShowcase(token: string) {
             return null;
         }
 
-        if (product.type === "LIFE") {
+        if (product.type === "LIFE" || product.type === "MEMORY") {
             // 1. Fetch liked experiences for Life Charms
             const experiences = await db.experience.findMany({
                 where: {
@@ -310,8 +331,9 @@ export async function getPublicCharmShowcase(token: string) {
 
             return {
                 name: product.name,
-                type: "LIFE",
-                items: unifiedItems
+                type: product.type,
+                items: unifiedItems,
+                enableGuestUploadButton: product.enableGuestUploadButton
             };
         }
 

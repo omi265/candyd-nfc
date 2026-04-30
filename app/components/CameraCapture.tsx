@@ -24,23 +24,46 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
 
   const startCamera = useCallback(async () => {
     setIsCameraReady(false);
+    
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
     }
 
+    // Check if browser supports mediaDevices (requires HTTPS or localhost)
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error("MediaDevices API not available");
+      toast.error("Camera access requires HTTPS or localhost. If you are using an IP address, please use HTTPS.");
+      return;
+    }
+
     try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode },
-        audio: false,
-      });
+      // Try with preferred facingMode
+      let newStream;
+      try {
+        newStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: facingMode } },
+          audio: false,
+        });
+      } catch (e) {
+        console.warn("Preferred camera failed, trying any video device...");
+        // Fallback to any video device
+        newStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
+
       setStream(newStream);
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
       }
       setIsCameraReady(true);
-    } catch (err) {
-      console.error("Camera access denied:", err);
-      toast.error("Camera access denied. Please check permissions.");
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      const errorMsg = err.name === "NotAllowedError" 
+        ? "Camera permission denied. Please enable it in your browser settings."
+        : `Camera error: ${err.message || "Unknown error"}`;
+      toast.error(errorMsg);
     }
   }, [facingMode]);
 

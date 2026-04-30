@@ -23,7 +23,7 @@
 # misc
 .DS_Store
 *.pem
-reset-password.ts
+/scripts/
 
 # debug
 npm-debug.log*

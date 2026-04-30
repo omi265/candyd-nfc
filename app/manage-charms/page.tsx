@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { getUserProducts, deleteProduct, getCharmStats, updateProductGuestUploads } from "@/app/actions/memories";
+import { updateGuestUploadSettings } from "@/app/actions/life-charm";
 
 // --- Icons ---
 import { 
@@ -19,7 +20,10 @@ import {
     Nfc,
     Users,
     Sparkles,
-    ShieldCheck
+    ShieldCheck,
+    Heart,
+    Upload,
+    Lock
 } from "lucide-react";
 
 
@@ -32,6 +36,7 @@ export default function ManageCharmsPage() {
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteInput, setDeleteInput] = useState("");
+    const [guestPassword, setGuestPassword] = useState("");
 
     // Stats state
     const [stats, setStats] = useState<{ memoryCount: number, totalSizeBytes: number, limit: number } | null>(null);
@@ -64,6 +69,7 @@ export default function ManageCharmsPage() {
 
     useEffect(() => {
         if (!selectedProduct?.id) return;
+        setGuestPassword(selectedProduct.guestUploadPassword || "");
         
         async function loadStats() {
             setIsLoadingStats(true);
@@ -101,6 +107,36 @@ export default function ManageCharmsPage() {
             }
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const handleUpdateSettings = async (settings: any) => {
+        if (!selectedProduct) return;
+        
+        // Optimistic update
+        setSelectedProduct({ ...selectedProduct, ...settings });
+        setProducts(products.map(p => p.id === selectedProduct.id ? { ...p, ...settings } : p));
+
+        try {
+            const result = await updateGuestUploadSettings(selectedProduct.id, settings);
+            if (result.error) {
+                // Revert
+                const revertSettings: any = {};
+                Object.keys(settings).forEach(key => {
+                    revertSettings[key] = selectedProduct[key];
+                });
+                setSelectedProduct({ ...selectedProduct, ...revertSettings });
+                setProducts(products.map(p => p.id === selectedProduct.id ? { ...p, ...revertSettings } : p));
+                console.error(result.error);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handlePasswordBlur = () => {
+        if (guestPassword !== selectedProduct?.guestUploadPassword) {
+            handleUpdateSettings({ guestUploadPassword: guestPassword });
         }
     };
 
@@ -205,6 +241,83 @@ export default function ManageCharmsPage() {
                         <p className="text-[#9A92A6] text-sm mt-3 px-1 leading-relaxed">
                             When enabled, anyone who scans this charm can upload a memory instantly.
                         </p>
+                    </div>
+
+                    <div className="h-px bg-[#EADDDE] w-full" />
+
+                    <div>
+                        <div className="bg-[#FFF9F6] rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <Heart className="w-6 h-6 text-[#5B2D7D]" />
+                                <span className="text-[#3E1C56] text-lg font-medium">Auto-Approve</span>
+                            </div>
+                            <button 
+                                onClick={() => handleUpdateSettings({ autoApproveGuestUploads: !selectedProduct?.autoApproveGuestUploads })}
+                                className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${selectedProduct?.autoApproveGuestUploads ? 'bg-[#D6CDE3]' : 'bg-gray-200'}`}
+                            >
+                                <motion.div 
+                                    className="w-5 h-5 bg-white rounded-full shadow-sm"
+                                    animate={{ x: selectedProduct?.autoApproveGuestUploads ? 20 : 0 }}
+                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                />
+                            </button>
+                        </div>
+                        <p className="text-[#9A92A6] text-sm mt-3 px-1 leading-relaxed">
+                            When enabled, guest uploads are automatically liked and shown in the public showcase.
+                        </p>
+                    </div>
+
+                    <div className="h-px bg-[#EADDDE] w-full" />
+
+                    <div>
+                        <div className="bg-[#FFF9F6] rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <Upload className="w-6 h-6 text-[#5B2D7D]" />
+                                <span className="text-[#3E1C56] text-lg font-medium">Upload Button</span>
+                            </div>
+                            <button 
+                                onClick={() => handleUpdateSettings({ enableGuestUploadButton: !selectedProduct?.enableGuestUploadButton })}
+                                className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${selectedProduct?.enableGuestUploadButton ? 'bg-[#D6CDE3]' : 'bg-gray-200'}`}
+                            >
+                                <motion.div 
+                                    className="w-5 h-5 bg-white rounded-full shadow-sm"
+                                    animate={{ x: selectedProduct?.enableGuestUploadButton ? 20 : 0 }}
+                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                />
+                            </button>
+                        </div>
+                        <p className="text-[#9A92A6] text-sm mt-3 px-1 leading-relaxed">
+                            When enabled, a file upload button appears on the public gallery page.
+                        </p>
+
+                        <AnimatePresence>
+                            {selectedProduct?.enableGuestUploadButton && (
+                                <motion.div 
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="mt-4 overflow-hidden"
+                                >
+                                    <div className="bg-[#FFF9F6] rounded-2xl p-4 shadow-sm border border-[#EADDDE]">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <Lock className="w-4 h-4 text-[#5B2D7D]" />
+                                            <span className="text-sm font-bold text-[#5B2D7D] uppercase tracking-wider">Upload Password</span>
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            value={guestPassword}
+                                            onChange={(e) => setGuestPassword(e.target.value)}
+                                            onBlur={handlePasswordBlur}
+                                            placeholder="Set a password for guests..."
+                                            className="w-full bg-white border border-[#EADDDE] rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all"
+                                        />
+                                        <p className="text-[#9A92A6] text-[10px] mt-2 italic px-1">
+                                            Guests must enter this password to use the upload button.
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     <div className="h-px bg-[#EADDDE] w-full" />

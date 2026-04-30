@@ -1,17 +1,18 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { Zap, Lock, ArrowRight, Loader2, Camera, Heart, MapPin, Calendar, Sparkles, ChevronUp, Image as ImageIcon, X } from "lucide-react";
+import { Zap, Lock, ArrowRight, Loader2, Camera, Heart, MapPin, Calendar, Sparkles, ChevronUp, Image as ImageIcon, X, Upload } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback, useMemo, useRef } from "react";
 import { getProductWithType } from "@/app/actions/life-charm";
-import { getProductOwnerInfo, completeUserSetup, getPublicCharmShowcase, claimProduct } from "@/app/actions/nfc";
+import { getProductOwnerInfo, completeUserSetup, getPublicCharmShowcase, claimProduct, verifyGuestUploadPassword, getGuestCloudinarySignature, createGuestMemory } from "@/app/actions/nfc";
 import CameraCapture from "@/app/components/CameraCapture";
 import { AnimatePresence, motion, useMotionValue, animate, useTransform, MotionValue } from "motion/react";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import { MemoryDrawer } from "@/components/memory-drawer";
 import Image from "next/image";
 import { haptics } from "@/lib/haptics";
+import { toast } from "sonner";
 
 // --- Helpers ---
 
@@ -118,7 +119,7 @@ function PublicGridCard({
   );
 }
 
-function ShowcaseGallery({ publicData, onUnlock, onCamera, token, onItemClick }: any) {
+function ShowcaseGallery({ publicData, onUnlock, onCamera, onUpload, token, onItemClick }: any) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [cellSize, setCellSize] = useState({ width: 0, height: 0 });
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -250,29 +251,25 @@ function ShowcaseGallery({ publicData, onUnlock, onCamera, token, onItemClick }:
                             </div>
                         );
                     })}
+                    {items.length === 0 && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
+                            <div className="w-20 h-20 bg-white/10 backdrop-blur-xl rounded-3xl flex items-center justify-center mb-6">
+                                <Sparkles className="w-10 h-10 text-white/40" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">No Memories Yet</h3>
+                            <p className="text-white/60 text-sm">Be the first to add a memory to this charm!</p>
+                        </div>
+                    )}
                 </motion.div>
             </div>
 
-            {/* --- HAPTIC DEBUG OVERLAY (Temporary for testing) --- */}
-            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[100] flex flex-wrap justify-center gap-2 px-4 pointer-events-none w-full">
-                {[
-                    { label: "Light", action: haptics.light },
-                    { label: "Medium", action: haptics.medium },
-                    { label: "Heavy", action: haptics.heavy },
-                    { label: "Success", action: haptics.success },
-                    { label: "3 Ticks", action: haptics.nfcTap },
-                ].map((btn) => (
-                    <button
-                        key={btn.label}
-                        onClick={(e) => { e.stopPropagation(); btn.action(); }}
-                        className="px-3 py-1.5 bg-[#5B2D7D]/80 backdrop-blur-md border border-white/20 text-white text-[10px] font-black rounded-full pointer-events-auto active:scale-95 transition-all shadow-xl"
-                    >
-                        {btn.label}
-                    </button>
-                ))}
-            </div>
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 z-[60] w-full max-w-[320px] px-6 pointer-events-none">
                 <button onClick={() => { haptics.medium(); onUnlock(); }} className="flex-1 bg-white/80 backdrop-blur-xl text-[#5B2D7D] py-4 rounded-3xl font-black uppercase tracking-tighter text-xs shadow-2xl border border-[#5B2D7D]/10 active:scale-95 transition-all pointer-events-auto">Unlock dashboard</button>
+                {publicData?.enableGuestUploadButton && (
+                    <button onClick={() => { haptics.light(); onUpload(); }} className="w-14 h-14 bg-[#5B2D7D] text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-all shadow-[#5B2D7D]/30 pointer-events-auto">
+                        <Upload className="w-6 h-6" />
+                    </button>
+                )}
                 <button onClick={() => { haptics.light(); onCamera(); }} className="w-14 h-14 bg-[#A4C538] text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-all shadow-[#A4C538]/30 pointer-events-auto"><Camera className="w-6 h-6" /></button>
             </div>
         </div>
@@ -299,6 +296,11 @@ function NFCLoginContent() {
   const [showPublicGallery, setShowPublicGallery] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadPassword, setUploadPassword] = useState("");
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleRedirect = useCallback(async (tokenVal: string) => {
       const p = await getProductWithType(tokenVal);
@@ -319,26 +321,80 @@ function NFCLoginContent() {
       else { setStatus("Success!"); await handleRedirect(t); }
   }, [handleRedirect]);
 
+  const handleVerifyUploadPassword = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!token) return;
+      setIsVerifyingPassword(true);
+      try {
+          const result = await verifyGuestUploadPassword(token, uploadPassword);
+          if (result.success) {
+              setShowUploadModal(false);
+              setUploadPassword("");
+              fileInputRef.current?.click();
+          } else {
+              toast.error(result.error || "Verification failed");
+          }
+      } catch (error) {
+          toast.error("An error occurred during verification");
+      } finally {
+          setIsVerifyingPassword(false);
+      }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !token) return;
+
+      setIsUploading(true);
+      const toastId = toast.loading("Uploading your memory...");
+
+      try {
+          const sig = await getGuestCloudinarySignature(token);
+          if (!sig) throw new Error("Could not get upload signature");
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("api_key", sig.apiKey!);
+          formData.append("timestamp", sig.timestamp.toString());
+          formData.append("signature", sig.signature);
+          formData.append("folder", sig.folder);
+          formData.append("type", sig.type);
+
+          const response = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/auto/upload`, {
+              method: "POST",
+              body: formData,
+          });
+
+          if (!response.ok) throw new Error("Cloudinary upload failed");
+          const data = await response.json();
+
+          const result = await createGuestMemory(token, {
+              title: "Guest Upload",
+              mediaUrl: data.secure_url,
+              mediaType: data.resource_type,
+              mediaSize: data.bytes
+          });
+
+          if (result.error) throw new Error(result.error);
+
+          toast.success("Memory uploaded successfully!", { id: toastId });
+          const pub = await getPublicCharmShowcase(token);
+          if (pub) setPublicData(pub);
+
+      } catch (error: any) {
+          toast.error(error.message || "Upload failed", { id: toastId });
+      } finally {
+          setIsUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+  };
+
   useEffect(() => {
     if (!token) return;
-
-    // --- Bridge Logic for existing https:// links ---
-    // If the user lands here via a standard web link, try to trigger the custom protocol
-    // This will force the PWA to open if it's installed.
-    const hasAttemptedRedirect = sessionStorage.getItem(`pwa_redirect_attempt_${token}`);
-    if (!hasAttemptedRedirect) {
-        sessionStorage.setItem(`pwa_redirect_attempt_${token}`, "true");
-        // We attempt the redirect but don't return early anymore
-        setTimeout(() => {
-            console.log("[PWA] Attempting bridge redirect to custom protocol...");
-            window.location.href = `web+candyd://${token}`;
-        }, 100);
-    }
 
     haptics.nfcTap();
     const init = async () => {
         try {
-            // --- 1. Attempt to load from Cache for instant UI ---
             const cachedPublicData = localStorage.getItem(`cache_public_showcase_${token}`);
             const cachedOwnerInfo = localStorage.getItem(`cache_owner_info_${token}`);
             
@@ -357,24 +413,23 @@ function NFCLoginContent() {
                 setIsLoading(false);
             }
 
-            // --- 2. Perform Login if trusted ---
             if (localStorage.getItem(`trusted_tag_${token}`) === "true") {
                 await performLogin(token);
                 return;
             }
 
-            // --- 3. Background Fetch/Refresh (Slightly delayed to prioritize Cache UI) ---
             setTimeout(async () => {
-                // Fetch Showcase
                 const pub = await getPublicCharmShowcase(token);
-                if (pub?.items?.length) { 
+                if (pub) { 
                     setPublicData(pub); 
-                    setShowPublicGallery(true);
+                    // Show gallery if there are items OR if the upload button is enabled
+                    if (pub.items?.length || pub.enableGuestUploadButton) {
+                        setShowPublicGallery(true);
+                    }
                     localStorage.setItem(`cache_public_showcase_${token}`, JSON.stringify(pub));
                     setIsLoading(false);
                 }
 
-                // Fetch Owner Info
                 const info = await getProductOwnerInfo(token);
                 if (info) {
                     localStorage.setItem(`cache_owner_info_${token}`, JSON.stringify(info));
@@ -391,7 +446,7 @@ function NFCLoginContent() {
                     setStatus("Invalid tag.");
                     setIsLoading(false);
                 }
-            }, cachedPublicData ? 1000 : 0); // 1s delay if cached, instant if not
+            }, cachedPublicData ? 1000 : 0);
         } catch { 
             if (isLoading) setStatus("Error occurred."); 
             setIsLoading(false); 
@@ -439,90 +494,189 @@ function NFCLoginContent() {
       setDrawerOpen(true);
   };
 
-  if (!token) return (
-    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
-      <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><Zap className="w-8 h-8 text-red-500" /></div>
-        <h2 className="text-xl font-bold text-[#5B2D7D] mb-2">Access Denied</h2>
-        <p className="text-[#5B2D7D]/60">No token found.</p>
+  const renderContent = () => {
+    if (!token) return (
+      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
+        <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><Zap className="w-8 h-8 text-red-500" /></div>
+          <h2 className="text-xl font-bold text-[#5B2D7D] mb-2">Access Denied</h2>
+          <p className="text-[#5B2D7D]/60">No token found.</p>
+        </div>
       </div>
-    </div>
-  );
+    );
 
-  if (isLoading && !needsPassword && !isSetupMode && !isUnassigned) return (
-    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
-        <div className="text-center"><Loader2 className="w-10 h-10 text-[#5B2D7D] animate-spin mx-auto mb-4" /><p className="text-[#5B2D7D] font-medium animate-pulse">{status}</p></div>
-    </div>
-  );
+    if (isLoading && !needsPassword && !isSetupMode && !isUnassigned) return (
+      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
+          <div className="text-center"><Loader2 className="w-10 h-10 text-[#5B2D7D] animate-spin mx-auto mb-4" /><p className="text-[#5B2D7D] font-medium animate-pulse">{status}</p></div>
+      </div>
+    );
 
-  if (showPublicGallery && publicData) return (
-    <div className="h-dvh bg-transparent font-[Outfit] relative">
-        <AnimatePresence>{showCamera && token && <CameraCapture token={token} onClose={() => setShowCamera(false)} onSuccess={() => setShowCamera(false)} />}</AnimatePresence>
-        <ShowcaseGallery publicData={publicData} onUnlock={() => setShowPublicGallery(false)} onCamera={() => setShowCamera(true)} token={token} onItemClick={handleItemClick} />
-        <MemoryDrawer memory={selectedItem} open={drawerOpen} onOpenChange={setDrawerOpen} people={[]} readOnly={true} onEdit={() => setShowPublicGallery(false)} />
-    </div>
-  );
+    if (showPublicGallery && publicData) return (
+        <ShowcaseGallery 
+            publicData={publicData} 
+            onUnlock={() => setShowPublicGallery(false)} 
+            onCamera={() => setShowCamera(true)} 
+            onUpload={() => setShowUploadModal(true)}
+            token={token} 
+            onItemClick={handleItemClick} 
+        />
+    );
 
-  if (isUnassigned && ownerInfo) return (
-    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
-        <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
-            <div className="w-16 h-16 bg-[#A4C538]/20 rounded-2xl flex items-center justify-center mx-auto mb-6"><Sparkles className="w-8 h-8 text-[#A4C538]" /></div>
-            <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Claim Your Charm</h2>
-            <p className="text-[#5B2D7D]/60 text-sm mb-8 px-4">This <span className="font-bold text-[#5B2D7D]">{ownerInfo.name}</span> is ready to be yours.</p>
-            <form onSubmit={onClaim} className="space-y-4 text-left">
-                <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Email</label><input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
-                <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Name</label><input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
-                <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required minLength={6} /></div>
-                {error && <p className="text-red-500 text-xs text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>}
-                <button type="submit" disabled={isLoading} className="w-full bg-[#A4C538] hover:bg-[#93b132] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 mt-4 disabled:opacity-50">{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Claim & Start"}<ArrowRight className="w-5 h-5" /></button>
-            </form>
+    if (isUnassigned && ownerInfo) return (
+      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
+          <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
+              <div className="w-16 h-16 bg-[#A4C538]/20 rounded-2xl flex items-center justify-center mx-auto mb-6"><Sparkles className="w-8 h-8 text-[#A4C538]" /></div>
+              <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Claim Your Charm</h2>
+              <p className="text-[#5B2D7D]/60 text-sm mb-8 px-4">This <span className="font-bold text-[#5B2D7D]">{ownerInfo.name}</span> is ready to be yours.</p>
+              <form onSubmit={onClaim} className="space-y-4 text-left">
+                  <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Email</label><input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
+                  <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Name</label><input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
+                  <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required minLength={6} /></div>
+                  {error && <p className="text-red-500 text-xs text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>}
+                  <button type="submit" disabled={isLoading} className="w-full bg-[#A4C538] hover:bg-[#93b132] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 mt-4 disabled:opacity-50">{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Claim & Start"}<ArrowRight className="w-5 h-5" /></button>
+              </form>
+          </div>
+      </div>
+    );
+
+    if (isSetupMode && ownerInfo) return (
+      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
+          <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
+              <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
+              <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6 mt-4"><Zap className="w-6 h-6 text-[#5B2D7D]" /></div>
+              <h2 className="text-xl font-bold text-[#5B2D7D] text-center mb-2">Welcome!</h2>
+              <p className="text-[#5B2D7D]/60 text-center text-sm mb-6">Set up your account for <br/><span className="font-semibold text-[#5B2D7D]">{ownerInfo.email}</span></p>
+              <form onSubmit={onSetup} className="space-y-4 text-left">
+                  <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Name</label><input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] placeholder-[#5B2D7D]/30 focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
+                  <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required minLength={6} /></div>
+                  {error && <p className="text-red-500 text-xs text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>}
+                  <button type="submit" disabled={isLoading} className="w-full bg-[#5B2D7D] hover:bg-[#4A246A] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">{isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Complete Setup"}<ArrowRight className="w-4 h-4" /></button>
+              </form>
+          </div>
+      </div>
+    );
+
+    if (needsPassword && ownerInfo) return (
+      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
+          <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
+              <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
+              <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6 mt-4"><Lock className="w-6 h-6 text-[#5B2D7D]" /></div>
+              <h2 className="text-xl font-bold text-[#5B2D7D] text-center mb-2">First Time Access</h2>
+              <p className="text-[#5B2D7D]/60 text-center text-sm mb-6">Verify ownership for <br/><span className="font-semibold text-[#5B2D7D]">{maskEmail(ownerInfo.email)}</span></p>
+              <form onSubmit={onPasswordLogin} className="space-y-4 text-left">
+                  <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
+                  {error && <p className="text-red-500 text-xs text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>}
+                  <button type="submit" disabled={isLoading} className="w-full bg-[#5B2D7D] hover:bg-[#4A246A] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">{isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & Login"}<ArrowRight className="w-4 h-4" /></button>
+              </form>
+          </div>
+      </div>
+    );
+
+    return (
+      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
+        <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50 relative overflow-hidden">
+          {token && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 mt-4"><Zap className="w-8 h-8 text-red-500" /></div>
+          <h2 className="text-xl font-bold text-[#5B2D7D] mb-2">Access Denied</h2>
+          <p className="text-[#5B2D7D]/60">{status}</p>
         </div>
-    </div>
-  );
-
-  if (isSetupMode && ownerInfo) return (
-    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
-        <AnimatePresence>{showCamera && token && <CameraCapture token={token} onClose={() => setShowCamera(false)} onSuccess={() => setShowCamera(false)} />}</AnimatePresence>
-        <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
-            <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
-            <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6 mt-4"><Zap className="w-6 h-6 text-[#5B2D7D]" /></div>
-            <h2 className="text-xl font-bold text-[#5B2D7D] text-center mb-2">Welcome!</h2>
-            <p className="text-[#5B2D7D]/60 text-center text-sm mb-6">Set up your account for <br/><span className="font-semibold text-[#5B2D7D]">{ownerInfo.email}</span></p>
-            <form onSubmit={onSetup} className="space-y-4 text-left">
-                <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Name</label><input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] placeholder-[#5B2D7D]/30 focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
-                <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required minLength={6} /></div>
-                {error && <p className="text-red-500 text-xs text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>}
-                <button type="submit" disabled={isLoading} className="w-full bg-[#5B2D7D] hover:bg-[#4A246A] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">{isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Complete Setup"}<ArrowRight className="w-4 h-4" /></button>
-            </form>
-        </div>
-    </div>
-  );
-
-  if (needsPassword && ownerInfo) return (
-    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
-        <AnimatePresence>{showCamera && token && <CameraCapture token={token} onClose={() => setShowCamera(false)} onSuccess={() => setShowCamera(false)} />}</AnimatePresence>
-        <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
-            <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
-            <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6 mt-4"><Lock className="w-6 h-6 text-[#5B2D7D]" /></div>
-            <h2 className="text-xl font-bold text-[#5B2D7D] text-center mb-2">First Time Access</h2>
-            <p className="text-[#5B2D7D]/60 text-center text-sm mb-6">Verify ownership for <br/><span className="font-semibold text-[#5B2D7D]">{maskEmail(ownerInfo.email)}</span></p>
-            <form onSubmit={onPasswordLogin} className="space-y-4 text-left">
-                <div className="space-y-2"><label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all" required /></div>
-                {error && <p className="text-red-500 text-xs text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>}
-                <button type="submit" disabled={isLoading} className="w-full bg-[#5B2D7D] hover:bg-[#4A246A] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">{isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & Login"}<ArrowRight className="w-4 h-4" /></button>
-            </form>
-        </div>
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
-    <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
-      <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50 relative overflow-hidden">
-        {token && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 mt-4"><Zap className="w-8 h-8 text-red-500" /></div>
-        <h2 className="text-xl font-bold text-[#5B2D7D] mb-2">Access Denied</h2>
-        <p className="text-[#5B2D7D]/60">{status}</p>
-      </div>
+    <div className="h-dvh bg-transparent font-[Outfit] relative">
+        {renderContent()}
+
+        {/* --- Global Overlays (Rendered outside conditional logic to maintain state) --- */}
+        <AnimatePresence>
+            {showCamera && token && (
+                <div className="fixed inset-0 z-[200]">
+                    <CameraCapture 
+                        token={token} 
+                        onClose={() => setShowCamera(false)} 
+                        onSuccess={() => { 
+                            setShowCamera(false); 
+                            getPublicCharmShowcase(token).then(pub => pub && setPublicData(pub)); 
+                        }} 
+                    />
+                </div>
+            )}
+        </AnimatePresence>
+
+        <MemoryDrawer 
+            memory={selectedItem} 
+            open={drawerOpen} 
+            onOpenChange={setDrawerOpen} 
+            people={[]} 
+            readOnly={true} 
+            onEdit={() => setShowPublicGallery(false)} 
+        />
+
+        {/* Hidden File Input */}
+        <input 
+            type="file" 
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            className="hidden"
+            accept="image/*,video/*"
+        />
+
+        {/* Upload Password Modal */}
+        <AnimatePresence>
+            {showUploadModal && (
+                <>
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.5 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black z-[100]"
+                        onClick={() => setShowUploadModal(false)}
+                    />
+                    <motion.div 
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        exit={{ y: "100%" }}
+                        className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] p-8 z-[101] max-w-md mx-auto shadow-2xl"
+                    >
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mb-6">
+                                <Lock className="w-6 h-6 text-[#5B2D7D]" />
+                            </div>
+                            <h2 className="text-xl font-bold text-[#5B2D7D] mb-2">Upload Protected</h2>
+                            <p className="text-[#5B2D7D]/60 text-sm mb-6 text-center">Please enter the charm password to upload images.</p>
+                            
+                            <form onSubmit={handleVerifyUploadPassword} className="w-full space-y-4">
+                                <input 
+                                    type="password" 
+                                    value={uploadPassword}
+                                    onChange={(e) => setUploadPassword(e.target.value)}
+                                    placeholder="Enter password..."
+                                    className="w-full bg-[#FFF9F6] border border-[#EADDDE] rounded-2xl px-6 py-4 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all text-center text-lg tracking-widest"
+                                    autoFocus
+                                />
+                                <div className="flex gap-3">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowUploadModal(false)}
+                                        className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold uppercase tracking-tighter text-xs"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        type="submit"
+                                        disabled={isVerifyingPassword}
+                                        className="flex-[2] bg-[#5B2D7D] text-white py-4 rounded-2xl font-bold uppercase tracking-tighter text-xs flex items-center justify-center gap-2"
+                                    >
+                                        {isVerifyingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
     </div>
   );
 }

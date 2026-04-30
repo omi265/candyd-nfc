@@ -823,6 +823,40 @@ export async function reopenCharm(productId: string) {
   }
 }
 
+export async function updateGuestUploadSettings(
+    productId: string,
+    settings: {
+        autoApproveGuestUploads?: boolean;
+        enableGuestUploadButton?: boolean;
+        guestUploadPassword?: string;
+    }
+) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const product = await db.product.findUnique({
+            where: { id: productId },
+            select: { userId: true },
+        });
+
+        if (!product || product.userId !== session.user.id) {
+            return { error: "Unauthorized" };
+        }
+
+        await db.product.update({
+            where: { id: productId },
+            data: settings,
+        });
+
+        revalidatePath("/manage-charms");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Update Guest Upload Settings Error:", error);
+        return { error: error.message };
+    }
+}
+
 // ===========================================
 // STATS
 // ===========================================

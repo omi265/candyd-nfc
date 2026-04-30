@@ -40,6 +40,9 @@ model Product {
   currentStreak Int        @default(0)
   longestStreak Int        @default(0)
   allowGuestUploads Boolean  @default(false)
+  autoApproveGuestUploads Boolean @default(false)
+  enableGuestUploadButton Boolean @default(false)
+  guestUploadPassword     String?
   comments      String?
   habits        Habit[]
   lifeLists     LifeList[]
