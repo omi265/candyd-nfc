@@ -3,9 +3,7 @@ import { redirect } from "next/navigation";
 import { getAdminStats, getProducts, getAllUsers } from "@/app/actions/admin";
 import { getTickets } from "@/app/actions/support";
 import { AdminDashboardClient } from "./client";
-import { CopyButton } from "./CopyButton";
-import { DeleteProductButton } from "./DeleteProductButton";
-import { ProductComments } from "./ProductComments";
+import { ProductTableClient } from "./ProductTableClient";
 import { SupportTicketStatus } from "./SupportTicketStatus";
 import { Product, SupportTicket } from "@prisma/client";
 
@@ -51,62 +49,7 @@ export default async function AdminPage() {
           <div className="lg:col-span-2">
             <div className="bg-white/40 backdrop-blur-xl rounded-[32px] shadow-sm p-6 border border-white/50 h-full">
                 <h2 className="text-xl font-bold text-[#5B2D7D] mb-4">Recent Products</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-[#5B2D7D]/10">
-                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Product Name</th>
-                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Type</th>
-                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Assigned To</th>
-                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Comments</th>
-                        <th className="pb-3 font-medium text-[#5B2D7D]/60">Token Link</th>
-                        <th className="pb-3 font-medium text-[#5B2D7D]/60 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {products.map((product: Product & { user: { email: string, name: string | null } | null }) => (
-                        <tr key={product.id} className="group hover:bg-white/50 transition-colors">
-                          <td className="py-3 pr-4 text-[#5B2D7D] font-medium">{product.name}</td>
-                          <td className="py-3 pr-4">
-                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                              product.type === "LIFE"
-                                ? "bg-[#A4C538]/20 text-[#7A9429]"
-                                : product.type === "HABIT"
-                                ? "bg-[#F37B55]/20 text-[#D45A35]"
-                                : "bg-[#5B2D7D]/20 text-[#5B2D7D]"
-                            }`}>
-                              {product.type === "LIFE" ? "Life" : product.type === "HABIT" ? "Habit" : "Memory"}
-                            </span>
-                          </td>
-                          <td className="py-3 pr-4">
-                            {product.user ? (
-                                <>
-                                    <div className="text-sm font-medium text-[#5B2D7D]">{product.user.name}</div>
-                                    <div className="text-xs text-[#5B2D7D]/60">{product.user.email}</div>
-                                </>
-                            ) : (
-                                <span className="text-xs font-bold text-[#A4C538] bg-[#A4C538]/10 px-2 py-1 rounded-lg italic">Unassigned</span>
-                            )}
-                          </td>
-                          <td className="py-3 pr-4 min-w-[200px]">
-                            <ProductComments productId={product.id} initialComments={product.comments} />
-                          </td>
-                          <td className="py-3 pr-4">
-                            <div className="flex items-center gap-2">
-                                <code className="font-mono text-[10px] text-[#5B2D7D]/80 truncate max-w-[150px] bg-white/50 px-2 py-1 rounded border border-[#5B2D7D]/10">
-                                    /nfc/login?token={product.token}
-                                </code>
-                                <CopyButton token={product.token as string} />
-                            </div>
-                          </td>
-                          <td className="py-3 text-right">
-                            <DeleteProductButton productId={product.id} productName={product.name} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <ProductTableClient initialProducts={products} />
             </div>
           </div>
         </div>
