@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { getUserProducts, deleteProduct, getCharmStats, updateProductGuestUploads } from "@/app/actions/memories";
 import { updateGuestUploadSettings } from "@/app/actions/life-charm";
 
+import { ShareButton } from "@/components/ui/ShareButton";
+
 // --- Icons ---
 import { 
     ChevronLeft, 
@@ -23,7 +25,8 @@ import {
     ShieldCheck,
     Heart,
     Upload,
-    Lock
+    Lock,
+    Share2
 } from "lucide-react";
 
 
@@ -168,18 +171,21 @@ export default function ManageCharmsPage() {
                     <p className="text-[#9A92A6] text-xs font-bold uppercase tracking-wider mb-3 ml-1">Your Charms</p>
                     <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1">
                         {products.map((product) => (
-                            <button
-                                key={product.id}
-                                onClick={() => handleCharmSelect(product)}
-                                className={`flex-shrink-0 px-4 py-2 rounded-xl border transition-all flex items-center gap-2 ${
-                                    selectedProduct?.id === product.id
-                                        ? "bg-[#5B2D7D] border-[#5B2D7D] text-white shadow-md shadow-[#5B2D7D]/20"
-                                        : "bg-white border-[#EADDDE] text-[#5B2D7D] hover:border-[#5B2D7D]/30"
-                                }`}
-                            >
-                                <Sparkles className={`w-4 h-4 ${selectedProduct?.id === product.id ? "text-white" : "text-[#5B2D7D]"}`} />
-                                <span className="font-medium text-sm whitespace-nowrap">{product.name}</span>
-                            </button>
+                            <div key={product.id} className="flex-shrink-0 flex items-center gap-1 bg-white border border-[#EADDDE] rounded-xl transition-all hover:border-[#5B2D7D]/30 p-1 pr-2">
+                                <button
+                                    onClick={() => handleCharmSelect(product)}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${
+                                        selectedProduct?.id === product.id
+                                            ? "bg-[#5B2D7D] text-white shadow-md shadow-[#5B2D7D]/20"
+                                            : "bg-transparent text-[#5B2D7D]"
+                                    }`}
+                                >
+                                    <Sparkles className={`w-4 h-4 ${selectedProduct?.id === product.id ? "text-white" : "text-[#5B2D7D]"}`} />
+                                    <span className="font-medium text-sm whitespace-nowrap">{product.name}</span>
+                                </button>
+                                <div className="w-px h-6 bg-[#EADDDE]" />
+                                <ShareButton token={product.token} charmName={product.name} variant="icon" />
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -318,6 +324,25 @@ export default function ManageCharmsPage() {
                                 </motion.div>
                             )}
                         </AnimatePresence>
+                    </div>
+
+                    <div className="h-px bg-[#EADDDE] w-full" />
+
+                    <div>
+                        <div className="bg-[#FFF9F6] rounded-2xl p-4 shadow-sm">
+                            <div className="flex items-center gap-4 mb-4">
+                                <Share2 className="w-6 h-6 text-[#5B2D7D]" />
+                                <span className="text-[#3E1C56] text-lg font-medium">Share Charm</span>
+                            </div>
+                            <ShareButton 
+                                token={selectedProduct?.token} 
+                                charmName={selectedProduct?.name} 
+                                variant="full" 
+                            />
+                        </div>
+                        <p className="text-[#9A92A6] text-sm mt-3 px-1 leading-relaxed">
+                            Share this link with others so they can view your showcase or upload memories.
+                        </p>
                     </div>
 
                     <div className="h-px bg-[#EADDDE] w-full" />
