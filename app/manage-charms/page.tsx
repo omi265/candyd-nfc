@@ -167,11 +167,11 @@ export default function ManageCharmsPage() {
         <div className="min-h-screen bg-transparent font-[Outfit] pb-12 relative">
             <main className="px-6">
                 {/* Charm Selector */}
-                <div className="mb-8">
+                <div className="mb-8 w-full overflow-hidden">
                     <p className="text-[#9A92A6] text-xs font-bold uppercase tracking-wider mb-3 ml-1">Your Charms</p>
-                    <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1">
+                    <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 px-1 snap-x snap-mandatory">
                         {products.map((product) => (
-                            <div key={product.id} className="flex-shrink-0 flex items-center gap-1 bg-white border border-[#EADDDE] rounded-xl transition-all hover:border-[#5B2D7D]/30 p-1 pr-2">
+                            <div key={product.id} className="flex-shrink-0 flex items-center gap-1 bg-white border border-[#EADDDE] rounded-xl transition-all hover:border-[#5B2D7D]/30 p-1 pr-2 snap-start">
                                 <button
                                     onClick={() => handleCharmSelect(product)}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${
