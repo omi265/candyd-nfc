@@ -481,9 +481,9 @@ function NFCLoginContent() {
   const onPasswordLogin = async (e: any) => {
       e.preventDefault(); setIsLoading(true);
       const email = ownerInfo?.email || newEmail;
-      if (!email) return;
+      if (!email && !token) return;
       try {
-          const r = await signIn("credentials", { email, password, redirect: false });
+          const r = await signIn("credentials", { email, password, token, redirect: false });
           if (r?.error) { setError("Incorrect password."); setIsLoading(false); }
           else if (token) { localStorage.setItem(`trusted_tag_${token}`, "true"); await handleRedirect(token); }
       } catch { setError("Login failed."); setIsLoading(false); }

@@ -17,37 +17,37 @@ model User {
   setupRequired Boolean         @default(false)
   contact       String?
   image         String?
+  activityLogs  ActivityLog[]
   habits        Habit[]
   lifeLists     LifeList[]
   memories      Memory[]
   people        Person[]
   products      Product[]
   tickets       SupportTicket[]
-  activityLogs  ActivityLog[]
 }
 
 model Product {
-  id            String     @id @default(cuid())
-  name          String
-  token         String     @unique
-  userId        String?
-  createdAt     DateTime   @default(now())
-  active        Boolean    @default(true)
-  graduatedAt   DateTime?
-  state         CharmState @default(ACTIVE)
-  type          CharmType  @default(MEMORY)
-  lastResetAt   DateTime?
-  currentStreak Int        @default(0)
-  longestStreak Int        @default(0)
-  allowGuestUploads Boolean  @default(false)
-  autoApproveGuestUploads Boolean @default(false)
-  enableGuestUploadButton Boolean @default(false)
+  id                      String     @id @default(cuid())
+  name                    String
+  token                   String     @unique
+  userId                  String?
+  createdAt               DateTime   @default(now())
+  active                  Boolean    @default(true)
+  graduatedAt             DateTime?
+  state                   CharmState @default(ACTIVE)
+  type                    CharmType  @default(MEMORY)
+  lastResetAt             DateTime?
+  currentStreak           Int        @default(0)
+  longestStreak           Int        @default(0)
+  allowGuestUploads       Boolean    @default(false)
+  comments                String?
+  autoApproveGuestUploads Boolean    @default(false)
+  enableGuestUploadButton Boolean    @default(false)
   guestUploadPassword     String?
-  comments      String?
-  habits        Habit[]
-  lifeLists     LifeList[]
-  memories      Memory[]
-  user          User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habits                  Habit[]
+  lifeLists               LifeList[]
+  memories                Memory[]
+  user                    User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -69,7 +69,7 @@ model Memory {
   peopleIds   String[]
   isLiked     Boolean  @default(false)
   media       Media[]
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product     Product? @relation(fields: [productId], references: [id])
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -184,10 +184,10 @@ model Habit {
   level                 Int        @default(1)
   phase                 String     @default("initiation")
   resetAt               DateTime?
-  ritualType            String     @default("OTHER")
   duration              Int?
   orderIndex            Int        @default(0)
   pauseUntil            DateTime?
+  ritualType            String     @default("OTHER")
   product               Product    @relation(fields: [productId], references: [id])
   user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   logs                  HabitLog[]
@@ -200,11 +200,11 @@ model HabitLog {
   id         String       @id @default(cuid())
   date       DateTime
   notes      String?
-  reflection String?
-  imageUrl   String?
   habitId    String
   createdAt  DateTime     @default(now())
   logType    HabitLogType @default(DONE)
+  imageUrl   String?
+  reflection String?
   habit      Habit        @relation(fields: [habitId], references: [id], onDelete: Cascade)
 
   @@index([habitId, date])
@@ -240,7 +240,7 @@ model ActivityLog {
   details   String?
   timestamp DateTime @default(now())
   ip        String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
