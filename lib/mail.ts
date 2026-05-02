@@ -11,7 +11,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 
   try {
     await resend.emails.send({
-      from: "Candyd NFC <onboarding@resend.dev>", // Replace with your verified domain
+      from: "Candyd <auth@nfc.candyd.co>",
       to: email,
       subject: "Reset your password",
       html: `

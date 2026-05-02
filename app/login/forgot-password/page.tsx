@@ -11,7 +11,6 @@ import { ChevronLeft, Loader2, Mail } from "lucide-react";
 export default function ForgotPasswordPage() {
   const [isPending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
-  const [devCode, setDevCode] = useState("");
   const [showContinue, setShowContinue] = useState(false);
   const router = useRouter();
 
@@ -23,16 +22,9 @@ export default function ForgotPasswordPage() {
       const result = await forgotPassword(email);
       if (result.error) {
         toast.error(result.error);
-        setDevCode("");
         setShowContinue(false);
       } else {
-        if (result.devCode) {
-          setDevCode(result.devCode);
-          toast.success(`Dev reset code: ${result.devCode}`, { duration: 10000 });
-        } else {
-          setDevCode("");
-          toast.success("Reset code sent to your email!");
-        }
+        toast.success("Reset code sent to your email!");
         setShowContinue(true);
       }
     });
@@ -62,13 +54,6 @@ export default function ForgotPasswordPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            {devCode && (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Development Reset Code</p>
-                    <p className="mt-2 font-mono text-2xl font-black tracking-[0.35em] text-amber-900">{devCode}</p>
-                </div>
-            )}
-
             <div>
                 <label
                     htmlFor="email"
@@ -103,7 +88,6 @@ export default function ForgotPasswordPage() {
                     type="button"
                     onClick={() => {
                         const params = new URLSearchParams({ email });
-                        if (devCode) params.set("devCode", devCode);
                         router.push(`/login/reset-password?${params.toString()}`);
                     }}
                     className="w-full rounded-2xl border border-primary-purple/15 bg-white px-4 py-3.5 text-sm font-bold text-primary-purple hover:bg-primary-purple/5 transition-all"
