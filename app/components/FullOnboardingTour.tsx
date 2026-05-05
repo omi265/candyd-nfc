@@ -37,6 +37,14 @@ export default function FullOnboardingTour() {
     if (!hasCompleted) {
       setIsVisible(true);
     }
+
+    const handleOpen = () => {
+      setCurrentStep(0);
+      setIsVisible(true);
+    };
+
+    window.addEventListener("open-onboarding", handleOpen);
+    return () => window.removeEventListener("open-onboarding", handleOpen);
   }, []);
 
   const handleComplete = () => {

@@ -258,7 +258,7 @@ function MenuDropdown({
             <button
                 onClick={() => {
                     haptics.light();
-                    logout();
+                    window.dispatchEvent(new CustomEvent("open-onboarding"));
                     onClose();
                 }}
                 className="w-full text-left"
@@ -267,6 +267,27 @@ function MenuDropdown({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.25, delay: 0.1 + menuItems.length * 0.05 }}
+                className="flex items-center gap-3 px-2 py-1"
+              >
+                <StarIcon />
+                <span className="text-[#5B2D7D] font-bold text-xl tracking-wide uppercase">
+                  RESTART TOUR
+                </span>
+              </motion.div>
+            </button>
+
+            <button
+                onClick={() => {
+                    haptics.light();
+                    logout();
+                    onClose();
+                }}
+                className="w-full text-left"
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.25, delay: 0.1 + (menuItems.length + 1) * 0.05 }}
                 className="flex items-center gap-3 px-2 py-1"
               >
                 <StarIcon />
