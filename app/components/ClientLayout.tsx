@@ -8,6 +8,7 @@ import { getUserProducts } from "@/app/actions/memories";
 import { motion, useScroll, useTransform, useSpring } from "motion/react";
 import SplashScreen from "./SplashScreen";
 import { RitualTimerProvider } from "@/lib/ritual-timer-context";
+import FullOnboardingTour from "./FullOnboardingTour";
 
 function GlobalLayout({ 
     children, 
@@ -179,6 +180,7 @@ export default function ClientLayout({
   return (
     <RitualTimerProvider>
       <SplashScreen isLoading={isLoading} />
+      {user && !isAuthPage && <FullOnboardingTour />}
       <GlobalLayout 
           user={user} 
           contextTitle={contextTitle} 
