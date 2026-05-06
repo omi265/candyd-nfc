@@ -186,6 +186,20 @@ export async function forgotPassword(email: string) {
         const token = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(new Date().getTime() + 15 * 60 * 1000); // 15 minutes
 
+        // Delete any existing tokens for this email
+        await db.passwordResetToken.deleteMany({
+            where: { email }
+        });
+
+        // Save new token to DB
+        await db.passwordResetToken.create({
+            data: {
+                email,
+                token,
+                expires
+            }
+        });
+
         // Send email
         await sendPasswordResetEmail(email, token);
 
