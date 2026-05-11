@@ -39,6 +39,7 @@ export default function FullOnboardingTour() {
     }
 
     const handleOpen = () => {
+      localStorage.removeItem("has_completed_full_tour");
       setCurrentStep(0);
       setIsVisible(true);
     };
@@ -334,89 +335,97 @@ export default function FullOnboardingTour() {
     }
   ];
 
-  if (!isVisible) return null;
-
   return (
-    <div className="fixed inset-0 z-[1000] flex flex-col bg-[#5B2D7D]/40 backdrop-blur-md p-4 md:p-8 font-[Outfit]">
-      <div className="flex-1 max-w-lg mx-auto w-full bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative">
-        {/* Mock Screen Container */}
-        <div className="flex-1 relative overflow-hidden bg-gray-50 border-b border-gray-100">
-           <AnimatePresence mode="wait">
-             <motion.div
-               key={currentStep}
-               initial={{ opacity: 0, x: 20 }}
-               animate={{ opacity: 1, x: 0 }}
-               exit={{ opacity: 0, x: -20 }}
-               transition={{ duration: 0.4, ease: "easeOut" }}
-               className="h-full w-full"
-             >
-               {steps[currentStep].mockScreen}
-             </motion.div>
-           </AnimatePresence>
-        </div>
-
-        {/* Content & Navigation */}
-        <div className="p-8 pb-10">
-          {/* Progress Indicator */}
-          <div className="flex gap-1.5 mb-6">
-            {steps.map((_, i) => (
-              <div 
-                key={i} 
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === currentStep ? "w-8 bg-[#A4C538]" : "w-2 bg-gray-200"
-                }`} 
-              />
-            ))}
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="min-h-[160px]"
-            >
-              <h2 className="text-[26px] font-black text-[#5B2D7D] uppercase mb-3 leading-tight tracking-tight">
-                {steps[currentStep].title}
-              </h2>
-              <p className="text-[#5B2D7D]/80 text-[14px] font-bold leading-relaxed">
-                {steps[currentStep].description}
-              </p>
-            </motion.div>
-          </AnimatePresence>
-
-          <div className="flex items-center justify-between mt-8">
-            <button
-              onClick={prevStep}
-              disabled={currentStep === 0}
-              className={`p-4 rounded-2xl flex items-center justify-center transition-all ${
-                currentStep === 0 
-                ? "bg-gray-100 text-gray-300 pointer-events-none" 
-                : "bg-gray-100 text-[#5B2D7D] hover:bg-gray-200 active:scale-95"
-              }`}
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-
-            <button
-              onClick={nextStep}
-              className="flex-1 ml-4 bg-[#5B2D7D] hover:bg-[#4A246A] text-white font-bold py-4 rounded-2xl shadow-lg shadow-[#5B2D7D]/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-            >
-              <span className="text-sm uppercase tracking-widest">{currentStep === steps.length - 1 ? "Start Experience" : "Next Step"}</span>
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <button 
-            onClick={handleComplete}
-            className="w-full text-center mt-6 text-[#A68CAB] text-[10px] font-black uppercase tracking-widest hover:text-[#5B2D7D] transition-colors"
+    <AnimatePresence>
+      {isVisible && (
+        <div className="fixed inset-0 z-[1000] flex flex-col bg-[#5B2D7D]/40 backdrop-blur-md p-4 md:p-8 font-[Outfit]">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="flex-1 max-w-lg mx-auto w-full bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative"
           >
-            Skip Tour
-          </button>
+            {/* Mock Screen Container */}
+            <div className="flex-1 relative overflow-hidden bg-gray-50 border-b border-gray-100">
+               <AnimatePresence mode="wait">
+                 <motion.div
+                   key={currentStep}
+                   initial={{ opacity: 0, x: 20 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   exit={{ opacity: 0, x: -20 }}
+                   transition={{ duration: 0.4, ease: "easeOut" }}
+                   className="h-full w-full"
+                 >
+                   {steps[currentStep].mockScreen}
+                 </motion.div>
+               </AnimatePresence>
+            </div>
+
+            {/* Content & Navigation */}
+            <div className="p-8 pb-10">
+              {/* Progress Indicator */}
+              <div className="flex gap-1.5 mb-6">
+                {steps.map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      i === currentStep ? "w-8 bg-[#A4C538]" : "w-2 bg-gray-200"
+                    }`} 
+                  />
+                ))}
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="min-h-[160px]"
+                >
+                  <h2 className="text-[26px] font-black text-[#5B2D7D] uppercase mb-3 leading-tight tracking-tight">
+                    {steps[currentStep].title}
+                  </h2>
+                  <p className="text-[#5B2D7D]/80 text-[14px] font-bold leading-relaxed">
+                    {steps[currentStep].description}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+
+              <div className="flex items-center justify-between mt-8">
+                <button
+                  onClick={prevStep}
+                  disabled={currentStep === 0}
+                  className={`p-4 rounded-2xl flex items-center justify-center transition-all ${
+                    currentStep === 0 
+                    ? "bg-gray-100 text-gray-300 pointer-events-none" 
+                    : "bg-gray-100 text-[#5B2D7D] hover:bg-gray-200 active:scale-95"
+                  }`}
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                <button
+                  onClick={nextStep}
+                  className="flex-1 ml-4 bg-[#5B2D7D] hover:bg-[#4A246A] text-white font-bold py-4 rounded-2xl shadow-lg shadow-[#5B2D7D]/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                >
+                  <span className="text-sm uppercase tracking-widest">{currentStep === steps.length - 1 ? "Start Experience" : "Next Step"}</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <button 
+                onClick={handleComplete}
+                className="w-full text-center mt-6 text-[#A68CAB] text-[10px] font-black uppercase tracking-widest hover:text-[#5B2D7D] transition-colors"
+              >
+                Skip Tour
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
