@@ -128,6 +128,7 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
                             </th>
                             <th className="pb-3 font-medium text-[#5B2D7D]/60">Comments</th>
                             <th className="pb-3 font-medium text-[#5B2D7D]/60">Token Link</th>
+                            <th className="pb-3 font-medium text-[#5B2D7D]/60">Gifter Link</th>
                             <th className="pb-3 font-medium text-[#5B2D7D]/60 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -174,6 +175,16 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
                                             </code>
                                             <CopyButton token={product.token as string} />
                                         </div>
+                                    </td>
+                                    <td className="py-3 pr-4">
+                                        {product.type !== 'HABIT' && (
+                                            <div className="flex items-center gap-2">
+                                                <code className="font-mono text-[10px] text-[#A4C538] truncate max-w-[150px] bg-white/50 px-2 py-1 rounded border border-[#A4C538]/10">
+                                                    /nfc/gifter-upload?token={product.token}
+                                                </code>
+                                                <CopyButton token={product.token as string} baseUrl="/nfc/gifter-upload?token=" />
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="py-3 text-right">
                                         <DeleteProductButton productId={product.id} productName={product.name} />

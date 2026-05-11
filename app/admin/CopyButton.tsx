@@ -4,10 +4,9 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function CopyButton({ token }: { token: string }) {
+export function CopyButton({ token, baseUrl = "/nfc/login?token=" }: { token: string, baseUrl?: string }) {
   const [copied, setCopied] = useState(false);
 
-  const baseUrl = "/nfc/login?token=";
   const fullUrl = typeof window !== "undefined" ? `${window.location.origin}${baseUrl}${token}` : `${baseUrl}${token}`;
 
   const handleCopy = async () => {

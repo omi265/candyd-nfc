@@ -113,6 +113,12 @@ export async function claimProduct(token: string, userData: { email: string, nam
             data: { userId: user.id }
         });
 
+        // Claim orphaned memories
+        await db.memory.updateMany({
+            where: { productId: product.id, userId: null },
+            data: { userId: user.id }
+        });
+
         return { success: true };
     } catch (error) {
         console.error("Failed to claim product:", error);
@@ -203,7 +209,7 @@ export async function createGuestMemory(token: string, data: {
             select: { id: true, userId: true, active: true, autoApproveGuestUploads: true }
         });
 
-        if (!product || !product.active || !product.userId) {
+        if (!product || !product.active) {
             return { error: "Invalid tag" };
         }
 
@@ -212,7 +218,7 @@ export async function createGuestMemory(token: string, data: {
                 title: data.title || "Quick Capture",
                 description: "Captured via Quick Access",
                 date: new Date(),
-                userId: product.userId,
+                userId: product.userId || null,
                 productId: product.id,
                 isLiked: product.autoApproveGuestUploads
             }
@@ -341,6 +347,110 @@ export async function getPublicCharmShowcase(token: string) {
         return null;
     } catch (error) {
         console.error("Failed to fetch public charm data:", error);
+        return null;
+    }
+}
+
+export async function getGifterProduct(token: string) {
+    try {
+        const product = await db.product.findUnique({
+            where: { token },
+            select: { 
+                id: true, 
+                name: true, 
+                type: true,
+                active: true,
+                userId: true
+            }
+        });
+
+        if (!product || !product.active) {
+            return { error: "Charm not found or inactive." };
+        }
+
+        if (product.type === "HABIT") {
+            return { error: "Gifter uploads are not supported for Habit charms." };
+        }
+
+        return { 
+            id: product.id, 
+            name: product.name, 
+            type: product.type,
+            isAssigned: !!product.userId
+        };
+    } catch (error) {
+        console.error("Failed to get gifter product:", error);
+        return { error: "Something went wrong." };
+    }
+}
+
+export async function createGifterFullMemory(token: string, data: {
+    title: string;
+    description?: string;
+    date: string;
+    media: { url: string; type: string; size: number }[];
+    mood?: string;
+    emotions?: string[];
+}) {
+    try {
+        const product = await db.product.findUnique({
+            where: { token },
+            select: { id: true, userId: true, active: true }
+        });
+
+        if (!product || !product.active) {
+            return { error: "Invalid charm." };
+        }
+
+        const memory = await db.memory.create({
+            data: {
+                title: data.title,
+                description: data.description || "Pre-loaded Memory",
+                date: new Date(data.date),
+                userId: product.userId || null,
+                productId: product.id,
+                mood: data.mood,
+                emotions: data.emotions,
+                isLiked: true, // Gifted memories are auto-liked/visible
+                media: {
+                    create: data.media.map((m, index) => ({
+                        url: m.url,
+                        type: m.type,
+                        size: m.size,
+                        orderIndex: index
+                    }))
+                }
+            }
+        });
+
+        revalidatePath("/");
+        return { success: true, memoryId: memory.id };
+    } catch (error) {
+        console.error("Gifter full memory creation failed:", error);
+        return { error: "Failed to save memory." };
+    }
+}
+
+export async function getGifterMemories(token: string) {
+    try {
+        const product = await db.product.findUnique({
+            where: { token },
+            select: { id: true, active: true }
+        });
+
+        if (!product || !product.active) {
+            return null;
+        }
+
+        const memories = await db.memory.findMany({
+            where: { productId: product.id },
+            include: { media: true },
+            orderBy: { date: 'desc' }
+        });
+
+        return memories;
+    } catch (error) {
+        console.error("Failed to fetch gifter memories:", error);
         return null;
     }
 }
