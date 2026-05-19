@@ -525,6 +525,7 @@ function NFCLoginContent() {
     if (isUnassigned && ownerInfo) return (
       <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
           <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
+              <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
               <div className="w-16 h-16 bg-[#A4C538]/20 rounded-2xl flex items-center justify-center mx-auto mb-6"><Sparkles className="w-8 h-8 text-[#A4C538]" /></div>
               <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Claim Your Charm</h2>
               <p className="text-[#5B2D7D]/60 text-sm mb-8 px-4">This <span className="font-bold text-[#5B2D7D]">{ownerInfo.name}</span> is ready to be yours.</p>

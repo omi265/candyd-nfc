@@ -159,14 +159,15 @@ export async function getGuestCloudinarySignature(token: string) {
     try {
         const product = await db.product.findUnique({
             where: { token },
-            select: { id: true, active: true, allowGuestUploads: true }
+            select: { id: true, active: true, allowGuestUploads: true, userId: true }
         });
 
         if (!product || !product.active) {
             throw new Error("Invalid or inactive tag");
         }
 
-        if (!product.allowGuestUploads) {
+        // Allow guest uploads if explicitly enabled OR if the charm is still unassigned (Gifter flow)
+        if (!product.allowGuestUploads && product.userId) {
             throw new Error("Guest uploads are disabled for this charm");
         }
 
@@ -220,7 +221,10 @@ export async function createGuestMemory(token: string, data: {
                 date: new Date(),
                 userId: product.userId || null,
                 productId: product.id,
-                isLiked: product.autoApproveGuestUploads
+                isLiked: product.autoApproveGuestUploads,
+                emotions: [],
+                events: [],
+                peopleIds: []
             }
         });
 
@@ -256,7 +260,7 @@ export async function getPublicCharmShowcase(token: string) {
             }
         });
 
-        if (!product || !product.active || !product.userId) {
+        if (!product || !product.active) {
             return null;
         }
 
@@ -409,8 +413,10 @@ export async function createGifterFullMemory(token: string, data: {
                 date: new Date(data.date),
                 userId: product.userId || null,
                 productId: product.id,
-                mood: data.mood,
-                emotions: data.emotions,
+                mood: data.mood || null,
+                emotions: data.emotions || [],
+                events: [],
+                peopleIds: [],
                 isLiked: true, // Gifted memories are auto-liked/visible
                 media: {
                     create: data.media.map((m, index) => ({
