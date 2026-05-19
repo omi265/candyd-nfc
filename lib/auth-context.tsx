@@ -22,10 +22,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function AuthContextInner({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession();
+function AuthContextInner({ children, serverSession }: { children: ReactNode, serverSession?: Session | null }) {
+  const { data: clientSession, status } = useSession();
   
-  const isLoading = status === "loading";
+  const session = serverSession || clientSession;
+  const isLoading = status === "loading" && !serverSession;
   
   // Map session user to our interface
   const user = session?.user ? {
@@ -60,7 +61,7 @@ function AuthContextInner({ children }: { children: ReactNode }) {
 export function AuthProvider({ children, session }: { children: ReactNode; session?: Session | null }) {
   return (
     <SessionProvider session={session}>
-      <AuthContextInner>{children}</AuthContextInner>
+      <AuthContextInner serverSession={session}>{children}</AuthContextInner>
     </SessionProvider>
   );
 }
