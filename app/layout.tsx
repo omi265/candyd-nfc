@@ -3,7 +3,6 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import ClientLayout from "./components/ClientLayout";
-import { InstallBanner } from "./components/InstallBanner";
 import { Toaster } from "sonner";
 import { auth } from "@/auth";
 
@@ -62,7 +61,6 @@ export default async function RootLayout({
       <body>
         <AuthProvider session={session}>
             <ClientLayout>{children}</ClientLayout>
-            <InstallBanner />
             <Toaster position="top-center" />
         </AuthProvider>
       </body>

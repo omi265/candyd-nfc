@@ -3,6 +3,8 @@ const { Pool } = require('pg');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { PrismaClient } = require('@prisma/client');
 const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+const path = require('path');
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -38,194 +40,305 @@ function getPublicIdFromUrl(url) {
       afterType.shift();
     }
     
-    const publicIdWithExtension = afterType.join('/');
-    return publicIdWithExtension.replace(/\.[^/.]+$/, "");
+    let publicIdWithExtension = afterType.join('/');
+    publicIdWithExtension = publicIdWithExtension.split('?')[0];
+    publicIdWithExtension = publicIdWithExtension.replace(/\.[a-zA-Z0-9]+$/, "");
+    return publicIdWithExtension;
   } catch (e) {
     return null;
   }
 }
 
-async function migrateAll() {
-  console.log("Starting full database & Cloudinary migration to AUTHENTICATED...");
+async function migrateMediaItem(item, dbTable, urlField = 'url') {
+  const urlValue = item[urlField];
+  if (!urlValue) return { status: 'skipped' };
   
+  if (urlValue.includes('/authenticated/')) {
+    return { status: 'skipped' };
+  }
+  const publicId = getPublicIdFromUrl(urlValue);
+  if (!publicId) {
+    const errorMsg = `Could not extract public ID from: ${urlValue}`;
+    console.warn(`  [Skip/Warn] ${errorMsg}`);
+    return { status: 'failed', error: errorMsg };
+  }
+  const currentType = urlValue.includes('/private/') ? 'private' : 'upload';
+  const resourceType = (item.type === 'video' || item.type === 'audio' || urlValue.includes('/video/')) ? 'video' : 'image';
+
   try {
-    // 1. Fetch all assets
-    const memoriesMedia = await db.media.findMany();
-    const experienceMedia = await db.experienceMedia.findMany();
-    const habitLogs = await db.habitLog.findMany({
-      where: { imageUrl: { not: null } }
+    console.log(`  -> Renaming ${dbTable} ${publicId} (${resourceType}) from ${currentType} to authenticated...`);
+    await cloudinary.uploader.rename(publicId, publicId, {
+      type: currentType,
+      to_type: 'authenticated',
+      resource_type: resourceType,
+      invalidate: true,
+      overwrite: true
     });
 
-    console.log(`Found:`);
-    console.log(`- ${memoriesMedia.length} Memory media items`);
-    console.log(`- ${experienceMedia.length} Experience media items`);
-    console.log(`- ${habitLogs.length} Habit log media items`);
-
-    let success = 0;
-    let failed = 0;
-    let skipped = 0;
-
-    // Migrate Media (Memories)
-    console.log("\n--- Migrating Memory Media ---");
-    for (const item of memoriesMedia) {
-      if (item.url.includes('/authenticated/')) {
-        skipped++;
-        continue;
-      }
-      const publicId = getPublicIdFromUrl(item.url);
-      if (!publicId) {
-        console.warn(`[Skip/Warn] Could not extract public ID from Media URL: ${item.url}`);
-        failed++;
-        continue;
-      }
-      const currentType = item.url.includes('/private/') ? 'private' : 'upload';
-      const resourceType = (item.type === 'video' || item.type === 'audio' || item.url.includes('/video/')) ? 'video' : 'image';
-
+    const newUrl = urlValue.replace(`/${currentType}/`, '/authenticated/');
+    await db[dbTable].update({
+      where: { id: item.id },
+      data: { [urlField]: newUrl }
+    });
+    return { status: 'success' };
+  } catch (err) {
+    const errorStr = err.message || String(err);
+    if (errorStr.includes("Resource not found")) {
       try {
-        console.log(`Renaming Media ${publicId} (${resourceType}) from ${currentType} to authenticated...`);
-        await cloudinary.uploader.rename(publicId, publicId, {
-          type: currentType,
-          to_type: 'authenticated',
-          resource_type: resourceType,
-          invalidate: true,
-          overwrite: true
-        });
-
-        const newUrl = item.url.replace(`/${currentType}/`, '/authenticated/');
-        await db.media.update({
+        await cloudinary.api.resource(publicId, { type: 'authenticated', resource_type: resourceType });
+        console.log(`  -> Asset ${publicId} is already authenticated in Cloudinary. Updating DB URL...`);
+        const newUrl = urlValue.replace(`/${currentType}/`, '/authenticated/');
+        await db[dbTable].update({
           where: { id: item.id },
-          data: { url: newUrl }
+          data: { [urlField]: newUrl }
         });
-        success++;
-      } catch (err) {
-        // If resource is not found, check if it's already authenticated in Cloudinary
-        if (err.message.includes("Resource not found")) {
-          try {
-            await cloudinary.api.resource(publicId, { type: 'authenticated', resource_type: resourceType });
-            console.log(`Media ${publicId} is already authenticated in Cloudinary. Updating DB URL...`);
-            const newUrl = item.url.replace(`/${currentType}/`, '/authenticated/');
-            await db.media.update({
-              where: { id: item.id },
-              data: { url: newUrl }
-            });
-            success++;
-            continue;
-          } catch (e) {}
+        return { status: 'success' };
+      } catch (e) {
+        // Failed checking resource
+      }
+    }
+    console.error(`  -> Failed renaming asset ${publicId}:`, errorStr);
+    return { status: 'failed', error: errorStr };
+  }
+}
+
+async function migrateAll() {
+  console.log("Starting Charm-Specific Database & Cloudinary Migration to AUTHENTICATED...");
+  
+  let totalSuccess = 0;
+  let totalFailed = 0;
+  let totalSkipped = 0;
+  const failedItems = [];
+
+  try {
+    // 1. Fetch all products (Charms)
+    const products = await db.product.findMany({
+      orderBy: { createdAt: 'asc' }
+    });
+
+    console.log(`Found ${products.length} products/charms in the database.\n`);
+
+    for (let index = 0; index < products.length; index++) {
+      const product = products[index];
+      console.log(`\n========================================`);
+      console.log(`[Charm ${index + 1}/${products.length}] "${product.name}"`);
+      console.log(`ID: ${product.id} | Type: ${product.type}`);
+      console.log(`========================================`);
+
+      let pSuccess = 0;
+      let pFailed = 0;
+      let pSkipped = 0;
+
+      const recordFailure = (item, dbTable, urlField, errorMsg) => {
+        failedItems.push({
+          charmId: product.id,
+          charmName: product.name,
+          charmType: product.type,
+          dbTable,
+          itemId: item.id,
+          url: item[urlField],
+          error: errorMsg
+        });
+      };
+
+      if (product.type === 'MEMORY') {
+        // Find memories
+        const memories = await db.memory.findMany({
+          where: { productId: product.id }
+        });
+        console.log(`Found ${memories.length} memories for this charm.`);
+        
+        const memoryIds = memories.map(m => m.id);
+        if (memoryIds.length > 0) {
+          const mediaItems = await db.media.findMany({
+            where: { memoryId: { in: memoryIds } }
+          });
+          console.log(`Found ${mediaItems.length} media items associated with memories.`);
+          
+          for (const media of mediaItems) {
+            const res = await migrateMediaItem(media, 'media');
+            if (res.status === 'success') pSuccess++;
+            else if (res.status === 'skipped') pSkipped++;
+            else {
+              pFailed++;
+              recordFailure(media, 'media', 'url', res.error);
+            }
+          }
         }
-        console.error(`Failed renaming Media ${publicId}:`, err.message);
-        failed++;
+      } 
+      else if (product.type === 'LIFELIST') {
+        // Find life lists
+        const lifeLists = await db.lifeList.findMany({
+          where: { productId: product.id }
+        });
+        console.log(`Found ${lifeLists.length} life lists for this charm.`);
+
+        const listIds = lifeLists.map(l => l.id);
+        if (listIds.length > 0) {
+          const listItems = await db.lifeListItem.findMany({
+            where: { lifeListId: { in: listIds } }
+          });
+          
+          const itemIds = listItems.map(i => i.id);
+          if (itemIds.length > 0) {
+            const experiences = await db.experience.findMany({
+              where: { itemId: { in: itemIds } }
+            });
+
+            const expIds = experiences.map(e => e.id);
+            if (expIds.length > 0) {
+              const expMedia = await db.experienceMedia.findMany({
+                where: { experienceId: { in: expIds } }
+              });
+              console.log(`Found ${expMedia.length} experience media items.`);
+
+              for (const media of expMedia) {
+                const res = await migrateMediaItem(media, 'experienceMedia');
+                if (res.status === 'success') pSuccess++;
+                else if (res.status === 'skipped') pSkipped++;
+                else {
+                  pFailed++;
+                  recordFailure(media, 'experienceMedia', 'url', res.error);
+                }
+              }
+            }
+          }
+        }
+      } 
+      else if (product.type === 'HABIT') {
+        // Find habits
+        const habits = await db.habit.findMany({
+          where: { productId: product.id }
+        });
+        console.log(`Found ${habits.length} habits for this charm.`);
+
+        const habitIds = habits.map(h => h.id);
+        if (habitIds.length > 0) {
+          const logs = await db.habitLog.findMany({
+            where: { habitId: { in: habitIds }, imageUrl: { not: null } }
+          });
+          console.log(`Found ${logs.length} habit logs with images.`);
+
+          for (const log of logs) {
+            const res = await migrateMediaItem(log, 'habitLog', 'imageUrl');
+            if (res.status === 'success') pSuccess++;
+            else if (res.status === 'skipped') pSkipped++;
+            else {
+              pFailed++;
+              recordFailure(log, 'habitLog', 'imageUrl', res.error);
+            }
+          }
+        }
+      }
+
+      console.log(`Charm Summary: Success: ${pSuccess} | Failed: ${pFailed} | Skipped: ${pSkipped}`);
+      totalSuccess += pSuccess;
+      totalFailed += pFailed;
+      totalSkipped += pSkipped;
+    }
+
+    // 2. Orphan/Residual Media Check
+    console.log(`\n========================================`);
+    console.log(`[Phase 2] Orphan/Legacy Media Cleanup`);
+    console.log(`========================================`);
+
+    const recordOrphanFailure = (item, dbTable, urlField, errorMsg) => {
+      failedItems.push({
+        charmId: 'ORPHAN',
+        charmName: 'ORPHAN',
+        charmType: 'ORPHAN',
+        dbTable,
+        itemId: item.id,
+        url: item[urlField],
+        error: errorMsg
+      });
+    };
+    
+    // Memory media leftovers
+    const leftoverMedia = await db.media.findMany({
+      where: {
+        OR: [
+          { url: { contains: '/upload/' } },
+          { url: { contains: '/private/' } }
+        ]
+      }
+    });
+    if (leftoverMedia.length > 0) {
+      console.log(`Found ${leftoverMedia.length} orphaned memory media items to clean up.`);
+      for (const item of leftoverMedia) {
+        const res = await migrateMediaItem(item, 'media');
+        if (res.status === 'success') totalSuccess++;
+        else if (res.status === 'skipped') totalSkipped++;
+        else {
+          totalFailed++;
+          recordOrphanFailure(item, 'media', 'url', res.error);
+        }
       }
     }
 
-    // Migrate ExperienceMedia (Life Charm)
-    console.log("\n--- Migrating Experience Media ---");
-    for (const item of experienceMedia) {
-      if (item.url.includes('/authenticated/')) {
-        skipped++;
-        continue;
+    // Experience media leftovers
+    const leftoverExpMedia = await db.experienceMedia.findMany({
+      where: {
+        OR: [
+          { url: { contains: '/upload/' } },
+          { url: { contains: '/private/' } }
+        ]
       }
-      const publicId = getPublicIdFromUrl(item.url);
-      if (!publicId) {
-        console.warn(`[Skip/Warn] Could not extract public ID from ExperienceMedia URL: ${item.url}`);
-        failed++;
-        continue;
-      }
-      const currentType = item.url.includes('/private/') ? 'private' : 'upload';
-      const resourceType = (item.type === 'video' || item.type === 'audio' || item.url.includes('/video/')) ? 'video' : 'image';
-
-      try {
-        console.log(`Renaming ExperienceMedia ${publicId} (${resourceType}) from ${currentType} to authenticated...`);
-        await cloudinary.uploader.rename(publicId, publicId, {
-          type: currentType,
-          to_type: 'authenticated',
-          resource_type: resourceType,
-          invalidate: true,
-          overwrite: true
-        });
-
-        const newUrl = item.url.replace(`/${currentType}/`, '/authenticated/');
-        await db.experienceMedia.update({
-          where: { id: item.id },
-          data: { url: newUrl }
-        });
-        success++;
-      } catch (err) {
-        if (err.message.includes("Resource not found")) {
-          try {
-            await cloudinary.api.resource(publicId, { type: 'authenticated', resource_type: resourceType });
-            console.log(`ExperienceMedia ${publicId} is already authenticated in Cloudinary. Updating DB URL...`);
-            const newUrl = item.url.replace(`/${currentType}/`, '/authenticated/');
-            await db.experienceMedia.update({
-              where: { id: item.id },
-              data: { url: newUrl }
-            });
-            success++;
-            continue;
-          } catch (e) {}
+    });
+    if (leftoverExpMedia.length > 0) {
+      console.log(`Found ${leftoverExpMedia.length} orphaned experience media items to clean up.`);
+      for (const item of leftoverExpMedia) {
+        const res = await migrateMediaItem(item, 'experienceMedia');
+        if (res.status === 'success') totalSuccess++;
+        else if (res.status === 'skipped') totalSkipped++;
+        else {
+          totalFailed++;
+          recordOrphanFailure(item, 'experienceMedia', 'url', res.error);
         }
-        console.error(`Failed renaming ExperienceMedia ${publicId}:`, err.message);
-        failed++;
       }
     }
 
-    // Migrate Habit Logs
-    console.log("\n--- Migrating Habit Logs ---");
-    for (const item of habitLogs) {
-      if (!item.imageUrl) continue;
-      if (item.imageUrl.includes('/authenticated/')) {
-        skipped++;
-        continue;
+    // Habit log leftovers
+    const leftoverHabitLogs = await db.habitLog.findMany({
+      where: {
+        imageUrl: { not: null },
+        OR: [
+          { imageUrl: { contains: '/upload/' } },
+          { imageUrl: { contains: '/private/' } }
+        ]
       }
-      const publicId = getPublicIdFromUrl(item.imageUrl);
-      if (!publicId) {
-        console.warn(`[Skip/Warn] Could not extract public ID from HabitLog URL: ${item.imageUrl}`);
-        failed++;
-        continue;
-      }
-      const currentType = item.imageUrl.includes('/private/') ? 'private' : 'upload';
-      const resourceType = item.imageUrl.includes('/video/') ? 'video' : 'image';
-
-      try {
-        console.log(`Renaming HabitLog ${publicId} (${resourceType}) from ${currentType} to authenticated...`);
-        await cloudinary.uploader.rename(publicId, publicId, {
-          type: currentType,
-          to_type: 'authenticated',
-          resource_type: resourceType,
-          invalidate: true,
-          overwrite: true
-        });
-
-        const newUrl = item.imageUrl.replace(`/${currentType}/`, '/authenticated/');
-        await db.habitLog.update({
-          where: { id: item.id },
-          data: { imageUrl: newUrl }
-        });
-        success++;
-      } catch (err) {
-        if (err.message.includes("Resource not found")) {
-          try {
-            await cloudinary.api.resource(publicId, { type: 'authenticated', resource_type: resourceType });
-            console.log(`HabitLog ${publicId} is already authenticated in Cloudinary. Updating DB URL...`);
-            const newUrl = item.imageUrl.replace(`/${currentType}/`, '/authenticated/');
-            await db.habitLog.update({
-              where: { id: item.id },
-              data: { imageUrl: newUrl }
-            });
-            success++;
-            continue;
-          } catch (e) {}
+    });
+    if (leftoverHabitLogs.length > 0) {
+      console.log(`Found ${leftoverHabitLogs.length} orphaned habit log images to clean up.`);
+      for (const item of leftoverHabitLogs) {
+        const res = await migrateMediaItem(item, 'habitLog', 'imageUrl');
+        if (res.status === 'success') totalSuccess++;
+        else if (res.status === 'skipped') totalSkipped++;
+        else {
+          totalFailed++;
+          recordOrphanFailure(item, 'habitLog', 'imageUrl', res.error);
         }
-        console.error(`Failed renaming HabitLog ${publicId}:`, err.message);
-        failed++;
       }
     }
 
     console.log(`\n========================================`);
-    console.log(`Migration Complete!`);
-    console.log(`Successfully migrated: ${success}`);
-    console.log(`Failed: ${failed}`);
-    console.log(`Skipped (already authenticated): ${skipped}`);
+    console.log(`Global Migration Summary:`);
+    console.log(`Successfully migrated: ${totalSuccess}`);
+    console.log(`Failed: ${totalFailed}`);
+    console.log(`Skipped (already authenticated): ${totalSkipped}`);
     console.log(`========================================`);
+
+    // Write failed items list to file
+    const failuresFilePath = path.join(__dirname, 'migration-failures.json');
+    if (failedItems.length > 0) {
+      fs.writeFileSync(failuresFilePath, JSON.stringify(failedItems, null, 2));
+      console.log(`\n[WARNING] Saved ${failedItems.length} failed items to: ${failuresFilePath}`);
+    } else {
+      if (fs.existsSync(failuresFilePath)) {
+        fs.unlinkSync(failuresFilePath);
+      }
+      console.log(`\n[Success] No failures. No failure log created/retained.`);
+    }
 
   } catch (error) {
     console.error("Migration fatal error:", error);
