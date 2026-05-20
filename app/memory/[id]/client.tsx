@@ -76,7 +76,7 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                                 <div className="w-full h-full relative">
                                     {item.url.includes("cloudinary.com") ? (
                                         <Image 
-                                            src={getOptimizedUrl(item.url.replace(/\.[^/.]+$/, ".jpg"), 'video', 400)}
+                                            src={getOptimizedUrl((item as any).posterUrl || (item.url.includes('/s--') ? item.url : item.url.replace(/\.[^/.]+$/, ".jpg")), 'video', 400)}
                                             alt="thumbnail"
                                             fill
                                             className="object-cover"
@@ -146,12 +146,12 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                        <div className="relative w-full h-48 bg-black/5">
                             {item.url.includes("cloudinary.com") ? (
                                 <Image 
-                                    src={getOptimizedUrl(item.url.replace(/\.[^/.]+$/, ".jpg"), 'video', 600)}
-                                    alt="video thumbnail"
-                                    fill
-                                    className="object-cover pointer-events-none"
-                                    sizes="(max-width: 768px) 100vw, 50vw"
-                                />
+                                     src={getOptimizedUrl((item as any).posterUrl || (item.url.includes('/s--') ? item.url : item.url.replace(/\.[^/.]+$/, ".jpg")), 'video', 600)}
+                                     alt="video thumbnail"
+                                     fill
+                                     className="object-cover pointer-events-none"
+                                     sizes="(max-width: 768px) 100vw, 50vw"
+                                 />
                             ) : (
                                 <video src={item.url} className="w-full h-full object-cover pointer-events-none" preload="metadata" />
                             )}
@@ -248,6 +248,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         id: string;
         url: string;
         type: string;
+        posterUrl?: string;
         isNew: boolean;
         file?: File;
         size?: number;
@@ -258,6 +259,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
             id: m.id,
             url: m.url,
             type: m.type,
+            posterUrl: m.posterUrl,
             isNew: false,
             status: 'completed',
             cloudData: { url: m.url, type: m.type, size: 0 } // Mock size for existing
@@ -265,8 +267,8 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     });
 
     const uploadPromisesRef = useRef<Map<string, Promise<any>>>(new Map());
-    const completedUploadsRef = useRef<Map<string, { url: string, type: string, size: number }>>(
-        new Map((memory.media || []).map((m: any) => [m.id, { url: m.url, type: m.type, size: 0 }]))
+    const completedUploadsRef = useRef<Map<string, { url: string, type: string, size: number, posterUrl?: string }>>(
+        new Map((memory.media || []).map((m: any) => [m.id, { url: m.url, type: m.type, size: 0, posterUrl: m.posterUrl }]))
     );
 
     // Keep a ref to mediaItems for safe access in async callbacks if needed,
@@ -360,7 +362,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
             setMediaItems(prev => prev.map(i => 
                 i.id === item.id 
-                ? { ...i, status: 'completed', cloudData, url: data.secure_url, type: finalType } 
+                ? { ...i, status: 'completed', cloudData, type: finalType } 
                 : i
             ));
             

@@ -106,4 +106,4 @@ async function finishCharmMigration(productId) {
   }
 }
 
-finishCharmMigration('cmkywmmux0000vmm13r702g4i');
+finishCharmMigration('cmk81dzcz0000wfm1jqccx1uu');

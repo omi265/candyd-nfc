@@ -79,7 +79,13 @@ function PublicGridCard({
       {hasMedia && (firstMedia?.type.includes("image") || firstMedia?.type.includes("video")) ? (
         <div className="absolute inset-0">
           <Image
-            src={getOptimizedUrl(firstMedia.type.includes("video") ? (firstMedia.url.includes('.') ? firstMedia.url.replace(/\.[^/.]+$/, ".jpg") : `${firstMedia.url}.jpg`) : firstMedia.url, "image", 600)}
+            src={getOptimizedUrl(
+              firstMedia.type.includes("video")
+                ? ((firstMedia as any).posterUrl || (firstMedia.url.includes('.') ? firstMedia.url.replace(/\.[^/.]+$/, ".jpg") : `${firstMedia.url}.jpg`))
+                : firstMedia.url,
+              "image",
+              600
+            )}
             alt="" fill className="object-cover" priority={index < 4}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />

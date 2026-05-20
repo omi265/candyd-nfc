@@ -72,7 +72,6 @@ export async function getProductById(productId: string) {
 
     if (!product || product.userId !== session.user.id) return null;
     
-    // Sign URLs
     const signedProduct = {
       ...product,
       lifeLists: product.lifeLists.map(list => ({
@@ -83,7 +82,8 @@ export async function getProductById(productId: string) {
             ...item.experience,
             media: item.experience.media.map(m => ({
               ...m,
-              url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+              url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
+              posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
             }))
           } : null
         }))
@@ -227,7 +227,6 @@ export async function getLifeList(productId: string) {
 
     if (!lifeList) return null;
 
-    // Sign URLs
     return {
       ...lifeList,
       items: lifeList.items.map(item => ({
@@ -236,7 +235,8 @@ export async function getLifeList(productId: string) {
           ...item.experience,
           media: item.experience.media.map(m => ({
             ...m,
-            url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+            url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
+            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
           }))
         } : null
       }))
@@ -371,14 +371,14 @@ export async function getListItem(itemId: string) {
 
     if (!item || item.lifeList.userId !== session.user.id) return null;
 
-    // Sign URLs
     return {
       ...item,
       experience: item.experience ? {
         ...item.experience,
         media: item.experience.media.map(m => ({
           ...m,
-          url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+          url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
+          posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
         }))
       } : null
     };
@@ -613,12 +613,12 @@ export async function getExperience(id: string) {
       return null;
     }
 
-    // Sign URLs
     return {
       ...experience,
       media: experience.media.map(m => ({
         ...m,
-        url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+        url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
+        posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
       }))
     };
   } catch (error) {

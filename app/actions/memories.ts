@@ -149,12 +149,12 @@ export async function getMemories(productId?: string) {
       }
     });
 
-    // Sign URLs for private assets
     const signedMemories = memories.map(memory => ({
         ...memory,
         media: memory.media.map(m => ({
             ...m,
-            url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+            url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
+            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
         }))
     }));
 
@@ -196,7 +196,6 @@ export async function getUserProducts() {
             }
         });
 
-        // Sign URLs for Life List experiences
         const signedProducts = products.map(product => ({
             ...product,
             lifeLists: product.lifeLists.map(list => ({
@@ -207,7 +206,8 @@ export async function getUserProducts() {
                         ...item.experience,
                         media: item.experience.media.map(m => ({
                             ...m,
-                            url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+                            url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
+                            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
                         }))
                     } : null
                 }))
@@ -278,12 +278,12 @@ export async function getMemory(id: string) {
         
         if (!memory || memory.userId !== session.user.id) return null;
         
-        // Sign URLs
         return {
             ...memory,
             media: memory.media.map(m => ({
                 ...m,
-                url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+                url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
+                posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
             }))
         };
     } catch (error) {

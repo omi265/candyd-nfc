@@ -1,9 +1,11 @@
 export function extractPublicId(url: string): string | null {
   try {
-    const regex = /\/v\d+\/(.+?)(\.[a-z]+)?$/;
+    const regex = /\/v\d+\/(.+)$/;
     const match = url.match(regex);
     if (match && match[1]) {
-        return match[1];
+        let path = match[1].split('?')[0];
+        path = path.replace(/\.[a-zA-Z0-9]+$/, '');
+        return path;
     }
     return null;
   } catch (error) {

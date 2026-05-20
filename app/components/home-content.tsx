@@ -382,7 +382,7 @@ export default function HomeContent({ initialMemories, people = [], user, forced
             if (memory.media && memory.media.length > 0) {
                 const firstMedia = memory.media[0];
                 if (firstMedia.type.startsWith('video')) {
-                    const videoAsImage = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
+                    const videoAsImage = firstMedia.posterUrl || (firstMedia.url.includes('/s--') ? firstMedia.url : firstMedia.url.replace(/\.[^/.]+$/, ".jpg"));
                     mediaUrl = getOptimizedUrl(videoAsImage, 'image', 400);
                     mediaType = 'video';
                 } else if (firstMedia.type.startsWith('audio')) {
@@ -666,20 +666,20 @@ export default function HomeContent({ initialMemories, people = [], user, forced
                      let mediaUrl = 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&w=800&q=80';
                      let mediaType: 'image' | 'video' | 'audio' = 'image';
 
-                     if (memory.media && memory.media.length > 0) {
-                         const firstMedia = memory.media[0];
-                         if (firstMedia.type.startsWith('video')) {
-                                 const videoAsImage = firstMedia.url.replace(/\.[^/.]+$/, ".jpg");
-                                 mediaUrl = getOptimizedUrl(videoAsImage, 'image', 400);
-                                 mediaType = 'video';
-                         } else if (firstMedia.type.startsWith('audio')) {
-                                 mediaUrl = firstMedia.url;
-                                 mediaType = 'audio';
-                         } else {
-                                 mediaUrl = getOptimizedUrl(firstMedia.url, 'image', 400);
-                                 mediaType = 'image';
-                         }
-                     }
+                      if (memory.media && memory.media.length > 0) {
+                          const firstMedia = memory.media[0];
+                          if (firstMedia.type.startsWith('video')) {
+                                  const videoAsImage = firstMedia.posterUrl || (firstMedia.url.includes('/s--') ? firstMedia.url : firstMedia.url.replace(/\.[^/.]+$/, ".jpg"));
+                                  mediaUrl = getOptimizedUrl(videoAsImage, 'image', 400);
+                                  mediaType = 'video';
+                          } else if (firstMedia.type.startsWith('audio')) {
+                                  mediaUrl = firstMedia.url;
+                                  mediaType = 'audio';
+                          } else {
+                                  mediaUrl = getOptimizedUrl(firstMedia.url, 'image', 400);
+                                  mediaType = 'image';
+                          }
+                      }
 
                      const item: GridItemType = {
                          type: 'memory',

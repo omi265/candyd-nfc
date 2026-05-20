@@ -222,13 +222,13 @@ function GridCard({
       {hasMedia && (firstMedia?.type.includes("image") || firstMedia?.type.includes("video")) ? (
         <div className="absolute inset-0">
           <Image
-            src={getOptimizedUrl(
-                firstMedia.type.includes("video") 
-                ? (firstMedia.url.includes('.') ? firstMedia.url.replace(/\.[^/.]+$/, ".jpg") : `${firstMedia.url}.jpg`) 
-                : firstMedia.url, 
-                "image", 
-                600
-            )}
+             src={getOptimizedUrl(
+                 firstMedia.type.includes("video") 
+                 ? ((firstMedia as any).posterUrl || (firstMedia.url.includes('.') ? firstMedia.url.replace(/\.[^/.]+$/, ".jpg") : `${firstMedia.url}.jpg`))
+                 : firstMedia.url, 
+                 "image", 
+                 600
+             )}
             alt=""
             fill
             className="object-cover"
@@ -410,7 +410,7 @@ export default function LifeCharmContent({
               title: memory.title,
               description: memory.description,
               date: memory.date,
-              media: memory.media.map(m => ({ url: m.url, type: m.type })),
+              media: memory.media.map(m => ({ url: m.url, type: m.type, posterUrl: (m as any).posterUrl })),
               peopleIds: memory.peopleIds,
               isLiked: mem.isLiked || false,
               originalData: memory

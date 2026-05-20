@@ -105,7 +105,23 @@ export function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string 
   if (url.includes("/private/")) deliveryType = "private";
   else if (url.includes("/authenticated/")) deliveryType = "authenticated";
 
+  if (resourceType === "video-thumbnail") {
+    return cloudinary.url(publicId, {
+      resource_type: "video",
+      format: "jpg",
+      type: deliveryType,
+      secure: true,
+      sign_url: true,
+      transformation: [
+        { fetch_format: "auto", quality: "auto" }
+      ]
+    });
+  }
+
+  // Normalize audio to video for Cloudinary
+  const normalizedType = resourceType === "audio" ? "video" : resourceType;
+
   // If it's still 'upload', we don't strictly NEED to sign it, 
   // but signing it doesn't hurt and prepares it for the migration.
-  return generateSignedUrl(publicId, resourceType, deliveryType);
+  return generateSignedUrl(publicId, normalizedType, deliveryType);
 }

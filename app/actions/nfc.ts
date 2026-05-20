@@ -305,7 +305,8 @@ export async function getPublicCharmShowcase(token: string) {
                     media: e.media.map(m => ({
                         id: m.id,
                         url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
-                        type: m.type
+                        type: m.type,
+                        posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
                     })),
                     isLiked: true
                 })),
@@ -321,7 +322,8 @@ export async function getPublicCharmShowcase(token: string) {
                     media: m.media.map(media => ({
                         id: media.id,
                         url: getSignedUrlFromCloudinaryUrl(media.url, media.type),
-                        type: media.type
+                        type: media.type,
+                        posterUrl: media.type === 'video' ? getSignedUrlFromCloudinaryUrl(media.url, 'video-thumbnail') : undefined
                     })),
                     isLiked: true
                 }))
@@ -447,7 +449,8 @@ export async function getGifterMemories(token: string) {
             ...memory,
             media: memory.media.map(m => ({
                 ...m,
-                url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+                url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
+                posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
             }))
         }));
     } catch (error) {
