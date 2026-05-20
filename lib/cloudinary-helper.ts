@@ -11,6 +11,7 @@ export function isValidCloudinaryUrl(url: string): boolean {
   if (!url || typeof url !== "string") return false;
 
   try {
+    const isProtected = url.includes('/authenticated/') || url.includes('/authenticated/');
     const parsed = new URL(url);
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
@@ -79,20 +80,32 @@ export async function getCloudinaryUsage(): Promise<number> {
   }
 }
 
-/**
- * Generates a Cloudinary URL.
- */
-export function getSignedImageUrl(publicId: string, resourceType: string = "image") {
+export function generateSignedUrl(publicId: string, resourceType: string = "image", deliveryType: string = "authenticated") {
+  if (!publicId) return "";
+  
   return cloudinary.url(publicId, {
-    type: "upload",
     resource_type: resourceType,
+    type: deliveryType,
     secure: true,
+    sign_url: true,
+    transformation: [
+      { fetch_format: "auto", quality: "auto" }
+    ]
   });
 }
 
-/**
- * Returns a standard Cloudinary URL from an existing URL.
- */
 export function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string = "image") {
-  return url; // Just return the URL as is since we are back to public uploads
+  if (!url || !url.includes("cloudinary.com")) return url;
+  
+  const publicId = extractPublicId(url);
+  if (!publicId) return url;
+
+  // Detect delivery type from URL
+  let deliveryType = "upload";
+  if (url.includes("/private/")) deliveryType = "private";
+  else if (url.includes("/authenticated/")) deliveryType = "authenticated";
+
+  // If it's still 'upload', we don't strictly NEED to sign it, 
+  // but signing it doesn't hurt and prepares it for the migration.
+  return generateSignedUrl(publicId, resourceType, deliveryType);
 }

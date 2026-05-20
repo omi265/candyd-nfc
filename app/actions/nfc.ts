@@ -6,6 +6,7 @@ import cloudinary from "@/lib/cloudinary";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { LRUCache } from "lru-cache";
+import { getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
 
 // Simple in-memory rate limiter
 const rateLimiter = new LRUCache<string, number>({
@@ -28,9 +29,6 @@ function maskEmail(email: string): string {
 }
 
 export async function getProductOwnerInfo(token: string) {
-  // Use a generic IP or identifier since we can't easily get client IP in Server Actions without headers
-  // In a real Vercel/Next.js env, we'd use headers() to get x-forwarded-for
-  
   try {
     const product = await db.product.findUnique({
       where: { token },
@@ -90,7 +88,6 @@ export async function claimProduct(token: string, userData: { email: string, nam
             return { error: "Product not found or already claimed." };
         }
 
-        // Check if user exists or create new
         let user = await db.user.findUnique({
             where: { email: userData.email }
         });
@@ -107,13 +104,11 @@ export async function claimProduct(token: string, userData: { email: string, nam
             });
         }
 
-        // Link product to user
         await db.product.update({
             where: { token },
             data: { userId: user.id }
         });
 
-        // Claim orphaned memories
         await db.memory.updateMany({
             where: { productId: product.id, userId: null },
             data: { userId: user.id }
@@ -166,14 +161,13 @@ export async function getGuestCloudinarySignature(token: string) {
             throw new Error("Invalid or inactive tag");
         }
 
-        // Allow guest uploads if explicitly enabled OR if the charm is still unassigned (Gifter flow)
         if (!product.allowGuestUploads && product.userId) {
             throw new Error("Guest uploads are disabled for this charm");
         }
 
         const timestamp = Math.round(new Date().getTime() / 1000);
         const folder = "candyd_guest_memories";
-        const type = "upload";
+        const type = "authenticated";
 
         const signature = cloudinary.utils.api_sign_request(
             {
@@ -265,7 +259,6 @@ export async function getPublicCharmShowcase(token: string) {
         }
 
         if (product.type === "LIFE" || product.type === "MEMORY") {
-            // 1. Fetch liked experiences for Life Charms
             const experiences = await db.experience.findMany({
                 where: {
                     item: {
@@ -286,7 +279,6 @@ export async function getPublicCharmShowcase(token: string) {
                 orderBy: { date: 'desc' }
             });
 
-            // 2. Fetch liked standalone memories linked to this product
             const memories = await db.memory.findMany({
                 where: {
                     productId: product.id,
@@ -300,7 +292,6 @@ export async function getPublicCharmShowcase(token: string) {
                 orderBy: { date: 'desc' }
             });
 
-            // 3. Unify and sort
             const unifiedItems = [
                 ...experiences.map(e => ({
                     id: e.id,
@@ -313,7 +304,7 @@ export async function getPublicCharmShowcase(token: string) {
                     peopleIds: e.peopleIds,
                     media: e.media.map(m => ({
                         id: m.id,
-                        url: m.url,
+                        url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
                         type: m.type
                     })),
                     isLiked: true
@@ -329,14 +320,13 @@ export async function getPublicCharmShowcase(token: string) {
                     peopleIds: m.peopleIds,
                     media: m.media.map(media => ({
                         id: media.id,
-                        url: media.url,
+                        url: getSignedUrlFromCloudinaryUrl(media.url, media.type),
                         type: media.type
                     })),
                     isLiked: true
                 }))
             ];
 
-            // Sort newest first
             unifiedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
             return {
@@ -347,7 +337,6 @@ export async function getPublicCharmShowcase(token: string) {
             };
         }
 
-        // Habit charms don't have a public showcase yet
         return null;
     } catch (error) {
         console.error("Failed to fetch public charm data:", error);
@@ -417,7 +406,7 @@ export async function createGifterFullMemory(token: string, data: {
                 emotions: data.emotions || [],
                 events: [],
                 peopleIds: [],
-                isLiked: true, // Gifted memories are auto-liked/visible
+                isLiked: true,
                 media: {
                     create: data.media.map((m, index) => ({
                         url: m.url,
@@ -454,7 +443,13 @@ export async function getGifterMemories(token: string) {
             orderBy: { date: 'desc' }
         });
 
-        return memories;
+        return memories.map(memory => ({
+            ...memory,
+            media: memory.media.map(m => ({
+                ...m,
+                url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+            }))
+        }));
     } catch (error) {
         console.error("Failed to fetch gifter memories:", error);
         return null;

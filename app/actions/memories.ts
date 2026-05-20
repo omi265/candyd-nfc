@@ -149,7 +149,16 @@ export async function getMemories(productId?: string) {
       }
     });
 
-    return memories;
+    // Sign URLs for private assets
+    const signedMemories = memories.map(memory => ({
+        ...memory,
+        media: memory.media.map(m => ({
+            ...m,
+            url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+        }))
+    }));
+
+    return signedMemories;
   } catch (error) {
     console.error("Failed to fetch memories:", error);
     return [];
@@ -186,7 +195,26 @@ export async function getUserProducts() {
                 createdAt: "desc",
             }
         });
-        return products;
+
+        // Sign URLs for Life List experiences
+        const signedProducts = products.map(product => ({
+            ...product,
+            lifeLists: product.lifeLists.map(list => ({
+                ...list,
+                items: list.items.map(item => ({
+                    ...item,
+                    experience: item.experience ? {
+                        ...item.experience,
+                        media: item.experience.media.map(m => ({
+                            ...m,
+                            url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+                        }))
+                    } : null
+                }))
+            }))
+        }));
+
+        return signedProducts;
     } catch (error) {
         console.error("Failed to fetch user products:", error);
         return [];
@@ -250,7 +278,14 @@ export async function getMemory(id: string) {
         
         if (!memory || memory.userId !== session.user.id) return null;
         
-        return memory;
+        // Sign URLs
+        return {
+            ...memory,
+            media: memory.media.map(m => ({
+                ...m,
+                url: getSignedUrlFromCloudinaryUrl(m.url, m.type)
+            }))
+        };
     } catch (error) {
         console.error("Failed to fetch memory:", error);
         return null;

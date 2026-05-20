@@ -12,7 +12,7 @@ export async function getCloudinarySignature(folder: string = "candyd_memories")
   }
 
   const timestamp = Math.round(new Date().getTime() / 1000);
-  const type = "upload";
+  const type = "authenticated";
 
   const signature = cloudinary.utils.api_sign_request(
     {

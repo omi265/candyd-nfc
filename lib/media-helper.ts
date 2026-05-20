@@ -22,8 +22,16 @@ export function extractPublicId(url: string): string | null {
 export function getOptimizedUrl(url: string, type: 'image' | 'video' = 'image', width?: number): string {
     if (!url || !url.includes('cloudinary.com')) return url;
 
-    // Split at '/upload/' to insert transformations
-    const parts = url.split('/upload/');
+    // If the URL is already signed, do not try to modify it as it will break the signature
+    if (url.includes('/s--')) return url;
+
+    // Check for both 'upload' and 'private' / 'authenticated'
+    let accessType = 'upload';
+    if (url.includes('/private/')) accessType = 'private';
+    else if (url.includes('/authenticated/')) accessType = 'authenticated';
+
+    const splitStr = `/${accessType}/`;
+    const parts = url.split(splitStr);
     if (parts.length !== 2) return url;
 
     const [base, rest] = parts;
@@ -35,5 +43,5 @@ export function getOptimizedUrl(url: string, type: 'image' | 'video' = 'image', 
         transformations.push('c_limit'); // Scale down only, preserve aspect ratio
     }
     
-    return `${base}/upload/${transformations.join(',')}/${rest}`;
+    return `${base}/${accessType}/${transformations.join(',')}/${rest}`;
 }

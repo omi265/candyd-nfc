@@ -138,7 +138,7 @@ export default function MarkAsLivedPage() {
         formData.append("timestamp", signatureData.timestamp.toString());
         formData.append("signature", signatureData.signature);
         formData.append("folder", signatureData.folder);
-        formData.append("type", "upload");
+        formData.append("type", "authenticated");
 
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`,

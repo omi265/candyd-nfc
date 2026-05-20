@@ -266,7 +266,7 @@ function GifterUploadContent() {
                 formData.append("timestamp", timestamp.toString());
                 formData.append("signature", signature);
                 formData.append("folder", folder);
-                formData.append("type", "upload");
+                formData.append("type", "authenticated");
                 const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, { method: "POST", body: formData });
                 if (!res.ok) throw new Error("Upload failed");
                 return res.json();
