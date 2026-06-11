@@ -27,21 +27,16 @@ function GlobalLayout({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="h-dvh bg-[#FDF2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-2xl overflow-hidden isolate">
-      {/* Global Background Decorations — static, GPU-optimised */}
-      <div className="fixed inset-0 pointer-events-none -z-10 bg-[#FDF2EC]" style={{ contain: 'strict' }}>
-          {/* Top Right Green Glow — reduced size & blur, no animation */}
-          <div 
-            className="absolute top-[-15%] right-[-15%] w-[600px] h-[600px] bg-[#A4C538]/50 rounded-full blur-[80px]" 
-          />
-          
-          {/* Bottom Left Purple Glow — reduced size & blur, no animation */}
-          <div 
-            className="absolute bottom-[-15%] left-[-15%] w-[600px] h-[600px] bg-[#5B2D7D]/40 rounded-full blur-[80px]" 
-          />
-
-          {/* Center Connector Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#EADDDE]/40 rounded-full blur-[100px]" />
+    <div className="h-dvh bg-[#FDF2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-lg overflow-hidden isolate">
+      <div
+        className="absolute inset-0 pointer-events-none -z-10 bg-[#FDF2EC]"
+        style={{
+          contain: "strict",
+          background:
+            "radial-gradient(circle at 90% 6%, rgba(164,197,56,0.32), transparent 34%), radial-gradient(circle at 8% 94%, rgba(91,45,125,0.24), transparent 38%), linear-gradient(180deg, #FDF2EC 0%, #F9ECE8 100%)",
+        }}
+      >
+          <div className="absolute inset-0 bg-[#EADDDE]/15" />
       </div>
 
       {!hideHeader && (
@@ -79,6 +74,17 @@ export default function ClientLayout({
   
   const [contextTitle, setContextTitle] = useState<string | undefined>(undefined);
   const [backHref, setBackHref] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
+    document.documentElement.classList.toggle("safari-performance", isIOS || isSafari);
+
+    return () => {
+      document.documentElement.classList.remove("safari-performance");
+    };
+  }, []);
 
   // Define logic for contextual header
   useEffect(() => {

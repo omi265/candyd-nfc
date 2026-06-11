@@ -9,7 +9,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
 
   useEffect(() => {
     if (!isLoading) {
-      const timer = setTimeout(() => setIsVisible(false), 700);
+      const timer = setTimeout(() => setIsVisible(false), 120);
       return () => clearTimeout(timer);
     }
   }, [isLoading]);
@@ -20,16 +20,10 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
         <motion.div
           key="splash"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } }}
+          exit={{ opacity: 0, transition: { duration: 0.22, ease: "easeOut" } }}
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#5B2D7D] overflow-hidden"
         >
-          {/* Ambient Background Pulse */}
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1.5, opacity: 0.1 }}
-            transition={{ duration: 3, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
-            className="absolute w-[800px] h-[800px] bg-white rounded-full blur-[150px] pointer-events-none"
-          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(255,255,255,0.12),transparent_38%)] pointer-events-none" />
 
           {/* The Portrait Stamp */}
           <motion.div
@@ -44,11 +38,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
             }}
             className="relative"
           >
-            {/* Separate loop for breathing so it doesn't fight the entrance spring */}
-            <motion.div
-                animate={{ scale: [1, 1.015, 1], rotate: [0, 0.5, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            >
+            <div>
                 {/* Stamp Body with Serrated Edges */}
                 <div className="relative w-56 h-80 flex items-center justify-center">
                     
@@ -69,8 +59,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
                     <div className="absolute inset-[10px] bg-[#FDF2EC] flex flex-col items-center justify-center overflow-hidden">
                         
                         {/* Replicating the App's Gradient/Glow internally */}
-                        <div className="absolute top-[-10%] right-[-10%] w-full h-full bg-[#A4C538]/20 rounded-full blur-2xl" />
-                        <div className="absolute bottom-[-10%] left-[-10%] w-full h-full bg-[#5B2D7D]/15 rounded-full blur-2xl" />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(164,197,56,0.22),transparent_34%),radial-gradient(circle_at_18%_88%,rgba(91,45,125,0.16),transparent_38%)]" />
 
                         {/* Inner Decorative Borders */}
                         <div className="absolute inset-3 border-2 border-[#5B2D7D]/5 rounded-sm" />
@@ -92,28 +81,11 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
                         </div>
                     </div>
                 </div>
-            </motion.div>
+            </div>
 
             {/* Dynamic Drop Shadow for the "Impact" */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.2 }}
-              animate={{ opacity: 0.25, scale: 1.1 }}
-              transition={{ delay: 0.25, duration: 0.4 }}
-              className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-52 h-10 bg-black rounded-[100%] blur-2xl -z-10"
-            />
+            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-52 h-10 bg-black/25 rounded-[100%] -z-10" />
           </motion.div>
-
-          {/* Impact Feedback (Shockwave) */}
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 3, opacity: 0 }}
-            transition={{
-              duration: 1,
-              delay: 0.2,
-              ease: "easeOut"
-            }}
-            className="absolute w-[180px] h-[180px] rounded-full border-[15px] border-white/30 pointer-events-none"
-          />
 
           {/* Footer Status */}
           <motion.div 
@@ -124,10 +96,8 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
           >
             <div className="flex gap-1.5">
                 {[0, 1, 2].map(i => (
-                    <motion.div 
+                    <div 
                         key={i}
-                        animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
                         className="w-1.5 h-1.5 bg-white rounded-full"
                     />
                 ))}
