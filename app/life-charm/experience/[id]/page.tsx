@@ -24,13 +24,14 @@ export default async function ExperiencePage({ params, searchParams }: PageProps
     redirect("/");
   }
 
-  const experience = await getExperience(itemId);
+  const [experience, people] = await Promise.all([
+    getExperience(itemId),
+    getPeople(),
+  ]);
 
   if (!experience) {
     redirect(`/life-charm/item/${itemId}?charmId=${charmId}`);
   }
-
-  const people = await getPeople();
 
   return (
     <ExperienceClient

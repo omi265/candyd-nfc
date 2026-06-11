@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import cloudinary from "@/lib/cloudinary";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { LRUCache } from "lru-cache";
 import { getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
 
@@ -43,7 +43,7 @@ export async function getProductOwnerInfo(token: string) {
         return { unassigned: true, type: product.type, charmName: product.name };
     }
 
-    const session = await auth();
+    const session = await getSession();
     const isOwner = session?.user?.id === product.user.id;
 
     return {
@@ -304,9 +304,9 @@ export async function getPublicCharmShowcase(token: string) {
                     peopleIds: e.peopleIds,
                     media: e.media.map(m => ({
                         id: m.id,
-                        url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
+                        url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
                         type: m.type,
-                        posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
+                        posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
                     })),
                     isLiked: true
                 })),
@@ -449,8 +449,8 @@ export async function getGifterMemories(token: string) {
             ...memory,
             media: memory.media.map(m => ({
                 ...m,
-                url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
-                posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
+                url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
+                posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
             }))
         }));
     } catch (error) {

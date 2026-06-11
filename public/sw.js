@@ -8,16 +8,6 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-  // Only handle http and https schemes.
-  // Custom protocols like web+candyd should NOT be handled by the service worker fetch event.
-  if (!event.request.url.startsWith('http')) {
-    return;
-  }
-  
-  event.respondWith(fetch(event.request));
-});
-
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {};
   const title = data.title || 'Candyd NFC';

@@ -18,6 +18,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -41,7 +42,11 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
       let newStream;
       try {
         newStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: facingMode } },
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 1280, max: 1920 },
+          },
           audio: false,
         });
       } catch (e) {
@@ -58,11 +63,12 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
         videoRef.current.srcObject = newStream;
       }
       setIsCameraReady(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Camera access error:", err);
-      const errorMsg = err.name === "NotAllowedError" 
+      const error = err instanceof Error ? err : null;
+      const errorMsg = error?.name === "NotAllowedError" 
         ? "Camera permission denied. Please enable it in your browser settings."
-        : `Camera error: ${err.message || "Unknown error"}`;
+        : `Camera error: ${error?.message || "Unknown error"}`;
       toast.error(errorMsg);
     }
   }, [facingMode]);
@@ -76,6 +82,12 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
     };
   }, [startCamera]);
 
+  useEffect(() => {
+    return () => {
+      if (capturedImage) URL.revokeObjectURL(capturedImage);
+    };
+  }, [capturedImage]);
+
   const takePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -85,12 +97,29 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
     // Vibrate on capture
     haptics.medium();
 
-    canvasRef.current.width = videoRef.current.videoWidth;
-    canvasRef.current.height = videoRef.current.videoHeight;
-    context.drawImage(videoRef.current, 0, 0);
+    const sourceWidth = videoRef.current.videoWidth;
+    const sourceHeight = videoRef.current.videoHeight;
+    const maxSide = 1600;
+    const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight));
+    const targetWidth = Math.round(sourceWidth * scale);
+    const targetHeight = Math.round(sourceHeight * scale);
 
-    const dataUrl = canvasRef.current.toDataURL("image/jpeg", 0.8);
-    setCapturedImage(dataUrl);
+    canvasRef.current.width = targetWidth;
+    canvasRef.current.height = targetHeight;
+    context.drawImage(videoRef.current, 0, 0, targetWidth, targetHeight);
+
+    canvasRef.current.toBlob((blob) => {
+      if (!blob) {
+        toast.error("Could not capture photo");
+        return;
+      }
+
+      setCapturedBlob(blob);
+      setCapturedImage(prev => {
+        if (prev) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(blob);
+      });
+    }, "image/jpeg", 0.82);
     
     // Stop stream to save battery
     if (stream) {
@@ -99,12 +128,16 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
   };
 
   const handleRetake = () => {
-    setCapturedImage(null);
+    setCapturedImage(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setCapturedBlob(null);
     startCamera();
   };
 
   const handleUpload = async () => {
-    if (!capturedImage) return;
+    if (!capturedBlob) return;
 
     setIsUploading(true);
     haptics.light();
@@ -116,7 +149,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
 
       // 2. Prepare Form Data for Cloudinary
       const formData = new FormData();
-      formData.append("file", capturedImage);
+      formData.append("file", capturedBlob, "quick-capture.jpg");
       formData.append("api_key", sigData.apiKey!);
       formData.append("timestamp", sigData.timestamp.toString());
       formData.append("signature", sigData.signature);
@@ -148,9 +181,9 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
       haptics.success();
       toast.success("Memory captured!");
       onSuccess(dbResult.memoryId!);
-    } catch (err: any) {
+    } catch (err: unknown) {
       haptics.error();
-      toast.error(err.message || "Something went wrong");
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
       setIsUploading(false);
     }
   };

@@ -57,12 +57,11 @@ function getDateStringFromUTC(dateUTC: number) {
 }
 
 function getLatestLogForDay(logs: HabitLog[], utcDate: number) {
-    return logs
-        .filter(log => {
-            const logDate = new Date(log.date);
-            return Date.UTC(logDate.getUTCFullYear(), logDate.getUTCMonth(), logDate.getUTCDate()) === utcDate;
-        })
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    // Assuming logs are already sorted by date descending from Prisma (which they are)
+    return logs.find(log => {
+        const logDate = new Date(log.date);
+        return Date.UTC(logDate.getUTCFullYear(), logDate.getUTCMonth(), logDate.getUTCDate()) === utcDate;
+    });
 }
 
 function parseDurationToSeconds(duration: string) {
@@ -442,29 +441,29 @@ function MedallionStreak({ habits, product }: { habits: HabitWithLogs[], product
 }
 
 function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: RitualType, habits: HabitWithLogs[], onBegin: () => void, onPause: () => void, onManage: () => void }) {
-    const todayUTC = getVirtualTodayUTC();
-    const todayStatus = getRitualDayStatus(habits, todayUTC);
+    const todayUTC = useMemo(() => getVirtualTodayUTC(), []);
+    const todayStatus = useMemo(() => getRitualDayStatus(habits, todayUTC), [habits, todayUTC]);
     const isDone = todayStatus === "full";
     const isPartial = todayStatus === "partial";
     const isPaused = todayStatus === "paused";
 
     // Calculate actual progress percentage
-    const doneCount = habits.filter(h => {
+    const doneCount = useMemo(() => habits.filter(h => {
         const log = getLatestLogForDay(h.logs, todayUTC);
         return log?.logType === "DONE";
-    }).length;
+    }).length, [habits, todayUTC]);
     const progressPercent = habits.length > 0 ? (doneCount / habits.length) * 100 : 0;
 
     const accentClasses = type === "MORNING"
         ? {
-            surface: isDone ? "bg-orange-500 border-orange-500 text-white" : "bg-white/40 backdrop-blur-xl border-white/50 text-[#5B2D7D]",
-            soft: "bg-orange-50/50 backdrop-blur-sm text-orange-500",
-            badge: "bg-orange-50/50 backdrop-blur-sm text-orange-600 border-orange-100/50"
+            surface: isDone ? "bg-orange-500 border-orange-500 text-white" : "bg-white/90 border-white/50 text-[#5B2D7D]",
+            soft: "bg-orange-50/90 text-orange-500",
+            badge: "bg-orange-50/90 text-orange-600 border-orange-100/50"
         }
         : {
-            surface: isDone ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white/40 backdrop-blur-xl border-white/50 text-[#5B2D7D]",
-            soft: "bg-indigo-50/50 backdrop-blur-sm text-indigo-500",
-            badge: "bg-indigo-50/50 backdrop-blur-sm text-indigo-600 border-indigo-100/50"
+            surface: isDone ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white/90 border-white/50 text-[#5B2D7D]",
+            soft: "bg-indigo-50/90 text-indigo-500",
+            badge: "bg-indigo-50/90 text-indigo-600 border-indigo-100/50"
         };
 
     return (
@@ -2288,23 +2287,26 @@ function ContributionGraph({ logs, startDate, isWeekly, habitTitle, setViewLogDa
         }
 
         // Streak mapping for coloring (Safe UTC comparison)
-        const logMap = new Map();
-        const sortedAllLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        let runningS = 0;
-        let lastDStr: string | null = null;
+        const logMap = useMemo(() => {
+            const map = new Map();
+            const sortedAllLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            let runningS = 0;
+            let lastDStr: string | null = null;
 
-        sortedAllLogs.forEach(l => {
-            const d = new Date(l.date);
-            const s = d.getUTCFullYear() + '-' + (d.getUTCMonth() + 1) + '-' + d.getUTCDate();
-            if (lastDStr) {
-                const parts = lastDStr.split('-').map(Number);
-                const prev = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
-                const diff = Math.round((d.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-                if (diff === 1) runningS++; else if (diff > 1) runningS = 1;
-            } else runningS = 1;
-            logMap.set(s, { log: l, type: l.logType, streak: runningS });
-            lastDStr = s;
-        });
+            sortedAllLogs.forEach(l => {
+                const d = new Date(l.date);
+                const s = d.getUTCFullYear() + '-' + (d.getUTCMonth() + 1) + '-' + d.getUTCDate();
+                if (lastDStr) {
+                    const parts = lastDStr.split('-').map(Number);
+                    const prev = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+                    const diff = Math.round((d.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+                    if (diff === 1) runningS++; else if (diff > 1) runningS = 1;
+                } else runningS = 1;
+                map.set(s, { log: l, type: l.logType, streak: runningS });
+                lastDStr = s;
+            });
+            return map;
+        }, [logs]);
 
         const getColorClass = (date: Date) => {
             const s = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
@@ -2382,23 +2384,26 @@ function ContributionGraph({ logs, startDate, isWeekly, habitTitle, setViewLogDa
         current.setUTCDate(current.getUTCDate() + 1);
     }
 
-    const logMap = new Map();
-    const sortedLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    let runningStreak = 0;
-    let lastDateStr: string | null = null;
+    const logMap = useMemo(() => {
+        const map = new Map();
+        const sortedLogs = [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        let runningStreak = 0;
+        let lastDateStr: string | null = null;
 
-    sortedLogs.forEach(l => {
-        const d = new Date(l.date);
-        const dateStr = d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
-        if (lastDateStr) {
-            const prev = new Date(lastDateStr + 'T00:00:00Z');
-            const curr = new Date(dateStr + 'T00:00:00Z');
-            const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-            if (diff === 1) runningStreak++; else if (diff > 1) runningStreak = 1;
-        } else runningStreak = 1;
-        logMap.set(dateStr, { log: l, type: l.logType, streakAtDate: runningStreak });
-        lastDateStr = dateStr;
-    });
+        sortedLogs.forEach(l => {
+            const d = new Date(l.date);
+            const dateStr = d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+            if (lastDateStr) {
+                const prev = new Date(lastDateStr + 'T00:00:00Z');
+                const curr = new Date(dateStr + 'T00:00:00Z');
+                const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+                if (diff === 1) runningStreak++; else if (diff > 1) runningStreak = 1;
+            } else runningStreak = 1;
+            map.set(dateStr, { log: l, type: l.logType, streakAtDate: runningStreak });
+            lastDateStr = dateStr;
+        });
+        return map;
+    }, [logs]);
 
     const getColor = (data?: { type: HabitLogType, streakAtDate: number, log?: HabitLog }) => {
         if (!data) return 'bg-transparent border border-[#5B2D7D]/5';
@@ -2474,6 +2479,20 @@ function RitualContributionGraph({ habits, startDate, isWeekly, ritualTitle, set
     const todayIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
     const todayUTC = Date.UTC(todayIST.getFullYear(), todayIST.getMonth(), todayIST.getDate());
     const scrollRef = useRef<HTMLDivElement>(null);
+    const logsByHabitAndDate = useMemo(() => {
+        const map = new Map<string, Map<string, HabitLog>>();
+        for (const habit of habits) {
+            const habitMap = new Map<string, HabitLog>();
+            for (const log of habit.logs) {
+                const logDate = new Date(log.date);
+                const utc = Date.UTC(logDate.getUTCFullYear(), logDate.getUTCMonth(), logDate.getUTCDate());
+                const key = getDateStringFromUTC(utc);
+                if (!habitMap.has(key)) habitMap.set(key, log);
+            }
+            map.set(habit.id, habitMap);
+        }
+        return map;
+    }, [habits]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -2481,20 +2500,40 @@ function RitualContributionGraph({ habits, startDate, isWeekly, ritualTitle, set
         }
     }, [habits, isWeekly]);
 
-    const getStatusData = (date: Date) => {
+    const getLogForDay = (habit: HabitWithLogs, utc: number) => {
+        return logsByHabitAndDate.get(habit.id)?.get(getDateStringFromUTC(utc));
+    };
+
+    const getStatusData = (date: Date): RitualDayStatus => {
         const utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-        return getRitualDayStatus(habits, utc);
+        if (habits.length === 0) return "missed";
+
+        const dayLogs = habits.map(habit => getLogForDay(habit, utc));
+        const allDone = dayLogs.every(log => log?.logType === "DONE");
+        const anyDone = dayLogs.some(log => log?.logType === "DONE");
+        const allPausedByLogs = dayLogs.every(log => log && log.logType !== "DONE");
+        const allPausedByDate = habits.every(habit => habit.pauseUntil && habit.pauseUntil.getTime() > utc);
+
+        if (allPausedByLogs || allPausedByDate) return "paused";
+        if (allDone) return "full";
+        if (anyDone) return "partial";
+        return "missed";
     };
 
     const getBreakdownData = (date: Date) => {
         const utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-        return getRitualDayBreakdown(habits, utc);
+        return habits.map(habit => {
+            const log = getLogForDay(habit, utc);
+            if (!log) return "missed" as const;
+            if (log.logType === "DONE") return "done" as const;
+            return "paused" as const;
+        });
     };
 
     const getRitualLogDetails = (date: Date) => {
         const utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
         for (const habit of habits) {
-            const log = getLatestLogForDay(habit.logs, utc);
+            const log = getLogForDay(habit, utc);
             if (log && (log.reflection || log.notes || log.imageUrl)) {
                 return log;
             }

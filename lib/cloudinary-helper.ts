@@ -80,21 +80,27 @@ export async function getCloudinaryUsage(): Promise<number> {
   }
 }
 
-export function generateSignedUrl(publicId: string, resourceType: string = "image", deliveryType: string = "authenticated") {
+export function generateSignedUrl(publicId: string, resourceType: string = "image", deliveryType: string = "authenticated", width?: number) {
   if (!publicId) return "";
+
+  const transformation: Record<string, string | number>[] = [
+    { fetch_format: "auto", quality: "auto" }
+  ];
+
+  if (width) {
+    transformation.push({ width, crop: "limit" });
+  }
   
   return cloudinary.url(publicId, {
     resource_type: resourceType,
     type: deliveryType,
     secure: true,
     sign_url: true,
-    transformation: [
-      { fetch_format: "auto", quality: "auto" }
-    ]
+    transformation
   });
 }
 
-export function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string = "image") {
+export function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string = "image", width?: number) {
   if (!url || !url.includes("cloudinary.com")) return url;
   
   const publicId = extractPublicId(url);
@@ -113,7 +119,8 @@ export function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string 
       secure: true,
       sign_url: true,
       transformation: [
-        { fetch_format: "auto", quality: "auto" }
+        { fetch_format: "auto", quality: "auto" },
+        ...(width ? [{ width, crop: "limit" }] : [])
       ]
     });
   }
@@ -123,5 +130,5 @@ export function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string 
 
   // If it's still 'upload', we don't strictly NEED to sign it, 
   // but signing it doesn't hurt and prepares it for the migration.
-  return generateSignedUrl(publicId, normalizedType, deliveryType);
+  return generateSignedUrl(publicId, normalizedType, deliveryType, width);
 }

@@ -20,6 +20,7 @@ import {
   Sparkles,
   Users,
   Calendar,
+  Play,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { getOptimizedUrl } from "@/lib/media-helper";
@@ -324,11 +325,18 @@ function ListItemCard({
                   className="object-cover"
                 />
               ) : firstMedia.type === "video" ? (
-                <video
-                  src={firstMedia.url}
-                  className="w-full h-full object-cover"
-                  muted
-                />
+                <>
+                  <Image
+                    src={getOptimizedUrl(firstMedia.posterUrl || firstMedia.url, "image", 96)}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/15">
+                    <Play className="w-4 h-4 text-white fill-white" />
+                  </div>
+                </>
               ) : (
                 <div className="w-full h-full bg-[#EADDDE] flex items-center justify-center">
                   <span className="text-lg">🎵</span>

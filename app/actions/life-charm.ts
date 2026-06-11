@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { extractPublicId, deleteFromCloudinary, getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
 import { CharmType, CharmState } from "@prisma/client";
@@ -46,7 +46,7 @@ export async function getProductWithType(token: string) {
 }
 
 export async function getProductById(productId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return null;
 
   try {
@@ -82,8 +82,8 @@ export async function getProductById(productId: string) {
             ...item.experience,
             media: item.experience.media.map(m => ({
               ...m,
-              url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
-              posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
+              url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
+              posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
             }))
           } : null
         }))
@@ -97,8 +97,50 @@ export async function getProductById(productId: string) {
   }
 }
 
+export async function getProductSummaryById(productId: string) {
+  const session = await getSession();
+  if (!session?.user?.id) return null;
+
+  try {
+    const product = await db.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product || product.userId !== session.user.id || !product.active) return null;
+    return product;
+  } catch (error) {
+    console.error("Failed to get product summary:", error);
+    return null;
+  }
+}
+
+export async function getProductHeader(productId: string) {
+  const session = await getSession();
+  if (!session?.user?.id) return null;
+
+  try {
+    const product = await db.product.findFirst({
+      where: {
+        id: productId,
+        userId: session.user.id,
+        active: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+      },
+    });
+
+    return product;
+  } catch (error) {
+    console.error("Failed to get product header:", error);
+    return null;
+  }
+}
+
 export async function updateProduct(productId: string, data: { name: string }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -137,7 +179,7 @@ export async function createLifeList(
     items?: string[]; // Array of item titles from template
   }
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   const validated = createLifeListSchema.safeParse(data);
@@ -202,7 +244,7 @@ export async function createLifeList(
 }
 
 export async function getLifeList(productId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return null;
 
   try {
@@ -235,8 +277,8 @@ export async function getLifeList(productId: string) {
           ...item.experience,
           media: item.experience.media.map(m => ({
             ...m,
-            url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
-            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
+            url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
+            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
           }))
         } : null
       }))
@@ -251,7 +293,7 @@ export async function updateLifeList(
   listId: string,
   data: { name?: string; description?: string }
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   const validated = updateLifeListSchema.safeParse(data);
@@ -296,7 +338,7 @@ export async function addListItem(
     targetDate?: string;
   }
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   const validated = createLifeListItemSchema.safeParse(data);
@@ -353,7 +395,7 @@ export async function addListItem(
 }
 
 export async function getListItem(itemId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return null;
 
   try {
@@ -377,8 +419,8 @@ export async function getListItem(itemId: string) {
         ...item.experience,
         media: item.experience.media.map(m => ({
           ...m,
-          url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
-          posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
+          url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
+          posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
         }))
       } : null
     };
@@ -399,7 +441,7 @@ export async function updateListItem(
     status?: string; // We map string to Zod enum below
   }
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   const validated = updateLifeListItemSchema.safeParse(data);
@@ -440,7 +482,7 @@ export async function updateListItem(
 }
 
 export async function deleteListItem(itemId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -478,7 +520,7 @@ export async function deleteListItem(itemId: string) {
 }
 
 export async function reorderListItems(listId: string, itemIds: string[]) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -525,7 +567,7 @@ export async function markAsLived(
     mediaSizes?: number[];
   }
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   const validated = markAsLivedSchema.safeParse(data);
@@ -591,7 +633,7 @@ export async function markAsLived(
 }
 
 export async function getExperience(id: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return null;
 
   try {
@@ -617,8 +659,8 @@ export async function getExperience(id: string) {
       ...experience,
       media: experience.media.map(m => ({
         ...m,
-        url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
-        posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
+        url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
+        posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
       }))
     };
   } catch (error) {
@@ -635,7 +677,7 @@ export async function updateExperience(
     peopleIds?: string[];
   }
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   const validated = updateExperienceSchema.safeParse(data);
@@ -682,7 +724,7 @@ export async function addExperienceMedia(
   experienceId: string,
   media: { url: string; type: string; size: number }[]
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -727,7 +769,7 @@ export async function addExperienceMedia(
 }
 
 export async function deleteExperienceMedia(mediaId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -765,7 +807,7 @@ export async function deleteExperienceMedia(mediaId: string) {
 }
 
 export async function toggleExperienceLike(experienceId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -801,7 +843,7 @@ export async function toggleExperienceLike(experienceId: string) {
 // ===========================================
 
 export async function graduateCharm(productId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -839,7 +881,7 @@ export async function graduateCharm(productId: string) {
 }
 
 export async function reopenCharm(productId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -880,7 +922,7 @@ export async function updateGuestUploadSettings(
         guestUploadPassword?: string;
     }
 ) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -911,7 +953,7 @@ export async function updateGuestUploadSettings(
 // ===========================================
 
 export async function getLifeCharmStats(productId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return null;
 
   try {

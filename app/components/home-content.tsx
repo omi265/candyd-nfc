@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useDeferredValue } from "react";
 import { motion, useMotionValue, animate, useTransform, MotionValue, AnimatePresence } from "motion/react";
 import { MemoryDrawer } from "@/components/memory-drawer";
 import { getOptimizedUrl } from "@/lib/media-helper";
@@ -321,14 +321,16 @@ export default function HomeContent({ initialMemories, people = [], user, forced
      return Array.from(tags).sort();
   }, [initialMemories]);
 
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
   // Filter Memories
   const filteredMemories = useMemo(() => {
       if (!initialMemories) return [];
 
       return initialMemories.filter(mem => {
           // Search Filter
-          if (searchQuery) {
-              const q = searchQuery.toLowerCase();
+          if (deferredSearchQuery) {
+              const q = deferredSearchQuery.toLowerCase();
               const titleMatch = mem.title?.toLowerCase().includes(q);
               const descMatch = mem.description?.toLowerCase().includes(q);
               if (!titleMatch && !descMatch) return false;
@@ -356,7 +358,7 @@ export default function HomeContent({ initialMemories, people = [], user, forced
 
           return true;
       });
-  }, [initialMemories, searchQuery, selectedFilter]);
+  }, [initialMemories, deferredSearchQuery, selectedFilter]);
 
   // Initialize Grid Data (Derived via useMemo)
   const gridData = useMemo<GridItemType[]>(() => {
@@ -407,32 +409,31 @@ export default function HomeContent({ initialMemories, people = [], user, forced
   }, [filteredMemories]);
 
 
-  // Measure cell size on mount/resize
+  // Measure cell size using ResizeObserver for accurate, jitter-free measurement
   useEffect(() => {
-    const updateSize = () => {
-        if (containerRef.current) {
-            const containerW = containerRef.current.offsetWidth;
-            const containerH = containerRef.current.offsetHeight;
-            // Adjusted multipliers to show side cards more clearly
-            const w = Math.min(containerW * 0.85, 400);
-            const h = Math.min(containerH * 0.80, 650);
+    const el = containerRef.current;
+    if (!el) return;
 
-            setCellSize({ width: w, height: h });
-            setContainerSize({ width: containerW, height: containerH });
-        } else {
-             setCellSize({
-                width: Math.min(window.innerWidth * 0.85, 400),
-                height: Math.min(window.innerHeight * 0.80, 650)
-            });
-        }
+    const measure = (entries: ResizeObserverEntry[]) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width: containerW, height: containerH } = entry.contentRect;
+      const w = Math.min(containerW * 0.85, 400);
+      const h = Math.min(containerH * 0.80, 650);
+      setCellSize({ width: w, height: h });
+      setContainerSize({ width: containerW, height: containerH });
     };
-    setTimeout(updateSize, 0);
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   const VISUAL_Y_OFFSET = 60;
-  const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(filteredMemories.length)));
+  const currentGridSize = useMemo(
+    () => Math.max(3, Math.ceil(Math.sqrt(filteredMemories.length))),
+    [filteredMemories.length]
+  );
 
   // Set Initial Position (Centering)
   useEffect(() => {

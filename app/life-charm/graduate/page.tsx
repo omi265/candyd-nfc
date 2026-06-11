@@ -15,7 +15,7 @@ import {
   getLifeCharmStats,
   graduateCharm,
   reopenCharm,
-  getProductById,
+  getProductSummaryById,
 } from "@/app/actions/life-charm";
 import { toast } from "sonner";
 
@@ -45,7 +45,7 @@ export default function GraduatePage() {
     const fetchData = async () => {
       const [statsData, product] = await Promise.all([
         getLifeCharmStats(charmId),
-        getProductById(charmId),
+        getProductSummaryById(charmId),
       ]);
 
       if (!statsData || !product) {

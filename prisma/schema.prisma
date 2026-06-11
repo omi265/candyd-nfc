@@ -50,6 +50,7 @@ model Product {
   user                    User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([userId, active, createdAt])
 }
 
 model Memory {
@@ -74,6 +75,8 @@ model Memory {
 
   @@index([userId])
   @@index([productId])
+  @@index([userId, createdAt])
+  @@index([productId, userId, createdAt])
 }
 
 model Media {
@@ -194,6 +197,7 @@ model Habit {
 
   @@index([productId])
   @@index([userId])
+  @@index([productId, userId, isActive, orderIndex])
 }
 
 model HabitLog {
@@ -208,6 +212,7 @@ model HabitLog {
   habit      Habit        @relation(fields: [habitId], references: [id], onDelete: Cascade)
 
   @@index([habitId, date])
+  @@index([habitId, date, createdAt])
 }
 
 model SupportTicket {

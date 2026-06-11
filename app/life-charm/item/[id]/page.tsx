@@ -24,13 +24,14 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
     redirect("/");
   }
 
-  const item = await getListItem(itemId);
+  const [item, people] = await Promise.all([
+    getListItem(itemId),
+    getPeople(),
+  ]);
 
   if (!item) {
     redirect(`/life-charm?charmId=${charmId}`);
   }
-
-  const people = await getPeople();
 
   return (
     <ItemDetailClient

@@ -199,6 +199,7 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit, 
                                                     alt="Memory" 
                                                     fill
                                                     className="object-cover" 
+                                                    sizes="(max-width: 768px) 100vw, 600px"
                                                 />
                                             </div>
                                         </div>
@@ -211,6 +212,8 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit, 
                                                     src={getOptimizedUrl(media.url, 'video', 600)} 
                                                     className="w-full h-full object-cover" 
                                                     controls 
+                                                    preload="metadata"
+                                                    poster={media.posterUrl}
                                                 />
                                             </div>
                                         </div>

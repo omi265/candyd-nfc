@@ -9,7 +9,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
 
   useEffect(() => {
     if (!isLoading) {
-      const timer = setTimeout(() => setIsVisible(false), 2000);
+      const timer = setTimeout(() => setIsVisible(false), 700);
       return () => clearTimeout(timer);
     }
   }, [isLoading]);
@@ -76,8 +76,8 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
                         <div className="absolute inset-3 border-2 border-[#5B2D7D]/5 rounded-sm" />
 
                         {/* Paper Texture Overlay */}
-                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-                             style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper-fibers.png")' }} />
+                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                             style={{ backgroundImage: 'url("/textures/paper-fibers.png")' }} />
 
                         {/* Stamp Content */}
                         <div className="relative z-10 flex flex-col items-center">

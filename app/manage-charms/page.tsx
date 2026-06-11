@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { getUserProducts, deleteProduct, getCharmStats, updateProductGuestUploads } from "@/app/actions/memories";
+import { getManageCharmProducts, deleteProduct, getCharmStats, updateProductGuestUploads } from "@/app/actions/memories";
 import { updateGuestUploadSettings } from "@/app/actions/life-charm";
 
 import { ShareButton } from "@/components/ui/ShareButton";
@@ -57,7 +57,7 @@ export default function ManageCharmsPage() {
     useEffect(() => {
         async function loadProducts() {
             if(!user) return;
-            const prods = await getUserProducts();
+            const prods = await getManageCharmProducts();
             setProducts(prods);
             
             if (prods.length > 0) {

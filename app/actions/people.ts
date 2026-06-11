@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 
 // ===========================================
@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 // ===========================================
 
 export async function createPerson(data: { name: string; avatarUrl?: string }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -30,7 +30,7 @@ export async function createPerson(data: { name: string; avatarUrl?: string }) {
 }
 
 export async function getPeople() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return [];
 
   try {
@@ -47,7 +47,7 @@ export async function getPeople() {
 }
 
 export async function getPerson(personId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return null;
 
   try {
@@ -64,7 +64,7 @@ export async function getPerson(personId: string) {
 }
 
 export async function getPersonsByIds(personIds: string[]) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return [];
 
   try {
@@ -87,7 +87,7 @@ export async function updatePerson(
   personId: string,
   data: { name?: string; avatarUrl?: string | null }
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -117,7 +117,7 @@ export async function updatePerson(
 }
 
 export async function deletePerson(personId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {

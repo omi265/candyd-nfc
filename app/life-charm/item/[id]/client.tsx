@@ -14,6 +14,7 @@ import {
   Calendar,
   MapPin,
   ChevronRight,
+  Play,
   Image as ImageIcon,
 } from "lucide-react";
 import { LifeListItem, Person, Experience, ExperienceMedia } from "@prisma/client";
@@ -24,7 +25,7 @@ import Image from "next/image";
 
 type ItemWithExperience = LifeListItem & {
   lifeList: { userId: string; productId: string };
-  experience: (Experience & { media: ExperienceMedia[] }) | null;
+  experience: (Experience & { media: (ExperienceMedia & { posterUrl?: string })[] }) | null;
 };
 
 interface ItemDetailClientProps {
@@ -89,22 +90,25 @@ export default function ItemDetailClient({
           {isLived && heroMedia ? (
             <>
               {heroMedia.type === "image" ? (
-                <Image
-                  src={getOptimizedUrl(heroMedia.url, "image", 800)}
-                  alt=""
-                  fill
-                  className="object-cover"
-                  priority
-                />
+	                <Image
+	                  src={getOptimizedUrl(heroMedia.url, "image", 800)}
+	                  alt=""
+	                  fill
+	                  className="object-cover"
+	                  priority
+	                  sizes="100vw"
+	                />
               ) : heroMedia.type === "video" ? (
                 <video
                   src={heroMedia.url}
                   className="w-full h-full object-cover"
                   muted
-                  autoPlay
-                  loop
-                  playsInline
-                />
+	                  autoPlay
+	                  loop
+	                  playsInline
+	                  preload="metadata"
+	                  poster={heroMedia.posterUrl}
+	                />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-[#A4C538] to-[#7A9B1E]" />
               )}
@@ -317,11 +321,18 @@ export default function ItemDetailClient({
                           className="object-cover"
                         />
                       ) : media.type === "video" ? (
-                        <video
-                          src={media.url}
-                          className="w-full h-full object-cover"
-                          muted
-                        />
+                        <>
+                          <Image
+                            src={getOptimizedUrl(media.posterUrl || media.url, "image", 200)}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 33vw, 200px"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/15">
+                            <Play className="w-5 h-5 text-white fill-white" />
+                          </div>
+                        </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-[#5B2D7D]/10">
                           <span className="text-2xl">🎵</span>

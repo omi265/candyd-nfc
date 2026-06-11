@@ -1,11 +1,11 @@
 "use server";
 
 import cloudinary from "@/lib/cloudinary";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
 
 export async function getCloudinarySignature(folder: string = "candyd_memories") {
-  const session = await auth();
+  const session = await getSession();
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
@@ -34,7 +34,7 @@ export async function getCloudinarySignature(folder: string = "candyd_memories")
 }
 
 export async function deleteUploadedFile(url: string) {
-  const session = await auth();
+  const session = await getSession();
 
     if (!session?.user?.id) {
     throw new Error("Unauthorized");

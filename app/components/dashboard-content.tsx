@@ -210,9 +210,12 @@ export default function DashboardContent({ products }: DashboardContentProps) {
       return [...products, { id: 'add-new', name: 'Add Charm', type: 'ADD' }];
   }, [products]);
 
-  const currentGridSize = Math.max(3, Math.ceil(Math.sqrt(gridItems.length)));
+  const currentGridSize = useMemo(
+    () => Math.max(3, Math.ceil(Math.sqrt(gridItems.length))),
+    [gridItems.length]
+  );
   const totalCells = currentGridSize * currentGridSize;
-  const FILL_ORDER = getCenterOutOrder(currentGridSize);
+  const FILL_ORDER = useMemo(() => getCenterOutOrder(currentGridSize), [currentGridSize]);
 
   // Build grid (Center-Out Compact)
   const gridData = useMemo(() => {
@@ -226,22 +229,24 @@ export default function DashboardContent({ products }: DashboardContentProps) {
     return grid;
   }, [gridItems, totalCells, FILL_ORDER]);
 
-  // Measure cell size
+  // Measure cell size using ResizeObserver for accurate, jitter-free measurement
   useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const containerW = containerRef.current.offsetWidth;
-        const containerH = containerRef.current.offsetHeight;
-        // Adjusted multipliers to show side cards more clearly
-        const w = Math.min(containerW * 0.85, 400);
-        const h = Math.min(containerH * 0.80, 650);
-        setCellSize({ width: w, height: h });
-        setContainerSize({ width: containerW, height: containerH });
-      }
+    const el = containerRef.current;
+    if (!el) return;
+
+    const measure = (entries: ResizeObserverEntry[]) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width: containerW, height: containerH } = entry.contentRect;
+      const w = Math.min(containerW * 0.85, 400);
+      const h = Math.min(containerH * 0.80, 650);
+      setCellSize({ width: w, height: h });
+      setContainerSize({ width: containerW, height: containerH });
     };
-    setTimeout(updateSize, 0);
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   const VISUAL_Y_OFFSET = 40;

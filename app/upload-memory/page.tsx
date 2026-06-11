@@ -506,7 +506,7 @@ function MemoryUploadContent() {
                                             <div className="flex-1 flex items-center gap-3 px-2 min-w-0 overflow-hidden">
                                                 <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden relative bg-[#FDF2EC]">
                                                     {item.file.type.startsWith("video") ? (
-                                                        <video src={item.previewUrl} className="w-full h-full object-cover" muted />
+                                                        <video src={item.previewUrl} className="w-full h-full object-cover" muted preload="metadata" />
                                                     ) : (item.file.type.startsWith("audio") || item.type?.startsWith("audio")) ? (
                                                         <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
                                                             <Mic className="w-8 h-8 text-[#5B2D7D]" />
@@ -567,7 +567,7 @@ function MemoryUploadContent() {
                                             }`}>
                                                {/* Preview */}
                                                 {item.file.type.startsWith("video") ? (
-                                                    <video src={item.previewUrl} className="w-full h-full object-cover" muted />
+                                                    <video src={item.previewUrl} className="w-full h-full object-cover" muted preload="metadata" />
                                                 ) : (item.file.type.startsWith("audio") || item.type?.startsWith("audio")) ? (
                                                     <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
                                                          <AudioPlayer src={item.previewUrl} className="w-full h-full bg-transparent! p-2!" />

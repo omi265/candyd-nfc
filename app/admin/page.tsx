@@ -14,10 +14,13 @@ export default async function AdminPage() {
     redirect("/");
   }
 
-  const stats = await getAdminStats();
-  const products = await getProducts();
-  const users = await getAllUsers();
-  const { tickets } = await getTickets();
+  const [stats, products, users, ticketResult] = await Promise.all([
+    getAdminStats(),
+    getProducts(),
+    getAllUsers(),
+    getTickets(),
+  ]);
+  const { tickets } = ticketResult;
 
   return (
     <div className="min-h-screen bg-transparent p-8 font-[Outfit]">

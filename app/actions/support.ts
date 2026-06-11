@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { SupportStatus } from "@prisma/client";
@@ -13,7 +13,7 @@ const createTicketSchema = z.object({
 });
 
 export async function createTicket(data: z.infer<typeof createTicketSchema>) {
-  const session = await auth();
+  const session = await getSession();
   const validation = createTicketSchema.safeParse(data);
   
   if (!validation.success) {
@@ -37,7 +37,7 @@ export async function createTicket(data: z.infer<typeof createTicketSchema>) {
 }
 
 export async function getTickets() {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
       return { error: "Unauthorized" };
   }
@@ -54,7 +54,7 @@ export async function getTickets() {
 }
 
 export async function updateTicketStatus(id: string, status: SupportStatus) {
-    const session = await auth();
+    const session = await getSession();
     if (session?.user?.role !== "ADMIN") return { error: "Unauthorized" };
     
     try {

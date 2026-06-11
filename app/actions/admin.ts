@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { getCloudinaryUsage } from "@/lib/cloudinary-helper";
 import { hash } from "bcryptjs";
@@ -22,29 +22,35 @@ async function logActivity(action: string, details?: string, userId?: string) {
 }
 
 export async function getAdminStats() {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     throw new Error("Unauthorized");
   }
 
   try {
-    const displayUserCount = await db.user.count();
-    const productCount = await db.product.count();
-    const memoryCount = await db.memory.count();
-    const lifeListCount = await db.lifeList.count();
-    const lifeListItemCount = await db.lifeListItem.count();
-
-    // Count by charm type
-    const charmTypeCounts = await db.product.groupBy({
-      by: ["type"],
-      _count: true,
-    });
+    const [
+      displayUserCount,
+      productCount,
+      memoryCount,
+      lifeListCount,
+      lifeListItemCount,
+      charmTypeCounts,
+      totalStorage,
+    ] = await Promise.all([
+      db.user.count(),
+      db.product.count(),
+      db.memory.count(),
+      db.lifeList.count(),
+      db.lifeListItem.count(),
+      db.product.groupBy({
+        by: ["type"],
+        _count: true,
+      }),
+      getCloudinaryUsage(),
+    ]);
 
     const lifeCharmCount = charmTypeCounts.find((c) => c.type === "LIFE")?._count || 0;
     const habitCharmCount = charmTypeCounts.find((c) => c.type === "HABIT")?._count || 0;
-
-    // Get actual Cloudinary usage
-    const totalStorage = await getCloudinaryUsage();
 
     return {
       userCount: displayUserCount,
@@ -73,7 +79,7 @@ export async function getAdminStats() {
 }
 
 export async function getAllUsers() {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     throw new Error("Unauthorized");
   }
@@ -95,7 +101,7 @@ export async function createProduct(
   productName: string = "New Charm",
   charmType: "LIFE" | "HABIT" = "LIFE"
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return { error: "Unauthorized" };
   }
@@ -139,7 +145,7 @@ export async function generateBatchProducts(
     count: number,
     baseName: string = "Candyd Charm"
 ) {
-    const session = await auth();
+    const session = await getSession();
     if (session?.user?.role !== "ADMIN") {
         return { error: "Unauthorized" };
     }
@@ -172,7 +178,7 @@ export async function createUserAndProduct(
   productName: string = "New Charm",
   charmType: "LIFE" | "HABIT" | "MEMORY" = "LIFE"
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return { error: "Unauthorized" };
   }
@@ -224,7 +230,7 @@ export async function createUserAndProduct(
 }
 
 export async function getProducts() {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     throw new Error("Unauthorized");
   }
@@ -248,7 +254,7 @@ export async function getProducts() {
 }
 
 export async function deleteProduct(id: string) {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return { error: "Unauthorized" };
   }
@@ -275,7 +281,7 @@ export async function deleteProduct(id: string) {
 }
 
 export async function updateProductComments(productId: string, comments: string) {
-  const session = await auth();
+  const session = await getSession();
   if (session?.user?.role !== "ADMIN") {
     return { error: "Unauthorized" };
   }

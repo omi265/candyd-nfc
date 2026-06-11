@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getMemory, getUserProducts } from "@/app/actions/memories";
+import { getDashboardProducts, getMemory } from "@/app/actions/memories";
 import MemoryClientPage from "./client";
 
 export default async function MemoryPage({ params }: { params: Promise<{ id: string }> }) {
@@ -12,13 +12,14 @@ export default async function MemoryPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   if (!id) redirect("/");
 
-  const memory = await getMemory(id);
+  const [memory, products] = await Promise.all([
+    getMemory(id),
+    getDashboardProducts(),
+  ]);
   // Security check: getMemory checks ownership, returns null if not found/owned
   if (!memory) {
       redirect("/");
   }
-
-  const products = await getUserProducts();
 
   return <MemoryClientPage memory={memory} products={products} />;
 }

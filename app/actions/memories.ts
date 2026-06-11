@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import cloudinary from "@/lib/cloudinary";
@@ -25,20 +25,15 @@ const createMemorySchema = z.object({
 });
 
 export async function createMemory(prevState: { error?: string; success?: boolean } | undefined, formData: FormData) {
-  console.log("ACTION: createMemory called");
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) {
-    console.error("ACTION: Unauthorized");
     return { error: "Unauthorized" };
   }
-  console.log("ACTION: User authorized", session.user.id);
 
   const rawData = Object.fromEntries(formData.entries());
-  console.log("ACTION: Raw form data keys", Object.keys(rawData));
   const validatedFields = createMemorySchema.safeParse(rawData);
 
   if (!validatedFields.success) {
-    console.error("ACTION: Validation failed", validatedFields.error);
     return { error: "Invalid fields: " + validatedFields.error.issues.map((i) => i.message).join(", ") };
   }
 
@@ -48,7 +43,6 @@ export async function createMemory(prevState: { error?: string; success?: boolea
   // content-type check for date if needed
   const parsedDate = new Date(date);
   if (isNaN(parsedDate.getTime())) {
-      console.error("ACTION: Invalid Date", date);
       return { error: "Invalid date format" };
   }
 
@@ -123,7 +117,7 @@ export async function createMemory(prevState: { error?: string; success?: boolea
 }
 
 export async function getMemories(productId?: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return [];
 
   try {
@@ -153,8 +147,8 @@ export async function getMemories(productId?: string) {
         ...memory,
         media: memory.media.map(m => ({
             ...m,
-            url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
-            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
+            url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
+            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
         }))
     }));
 
@@ -166,7 +160,7 @@ export async function getMemories(productId?: string) {
 }
 
 export async function getUserProducts() {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return [];
 
     try {
@@ -206,8 +200,8 @@ export async function getUserProducts() {
                         ...item.experience,
                         media: item.experience.media.map(m => ({
                             ...m,
-                            url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
-                            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
+                            url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
+                            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
                         }))
                     } : null
                 }))
@@ -221,8 +215,44 @@ export async function getUserProducts() {
     }
 }
 
+export async function getManageCharmProducts() {
+    const session = await getSession();
+    if (!session?.user?.id) return [];
+
+    try {
+        return await db.product.findMany({
+            where: {
+                userId: session.user.id,
+                active: true,
+            },
+            select: {
+                id: true,
+                name: true,
+                token: true,
+                type: true,
+                state: true,
+                currentStreak: true,
+                longestStreak: true,
+                allowGuestUploads: true,
+                autoApproveGuestUploads: true,
+                enableGuestUploadButton: true,
+                guestUploadPassword: true,
+                comments: true,
+                createdAt: true,
+                graduatedAt: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            }
+        });
+    } catch (error) {
+        console.error("Failed to fetch manage charm products:", error);
+        return [];
+    }
+}
+
 export async function getDashboardProducts() {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return [];
 
     try {
@@ -261,7 +291,7 @@ export async function getProductIdFromToken(token: string) {
 }
 
 export async function getMemory(id: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id || !id) return null;
 
     try {
@@ -282,8 +312,8 @@ export async function getMemory(id: string) {
             ...memory,
             media: memory.media.map(m => ({
                 ...m,
-                url: getSignedUrlFromCloudinaryUrl(m.url, m.type),
-                posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail') : undefined
+                url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
+                posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
             }))
         };
     } catch (error) {
@@ -293,7 +323,7 @@ export async function getMemory(id: string) {
 }
 
 export async function updateMemory(id: string, prevState: any, formData: FormData) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     const rawData = Object.fromEntries(formData.entries());
@@ -412,15 +442,12 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
 
              // 2. Batch update existing items (reordering)
              if (existingItems.length > 0) {
-                 await db.$transaction(async (tx) => {
-                     for (const item of existingItems) {
-                         const index = items.indexOf(item);
-                         await tx.media.update({
-                             where: { id: item.id },
-                             data: { orderIndex: index }
-                         });
-                     }
-                 });
+                 await db.$transaction(
+                     existingItems.map((item) => db.media.update({
+                         where: { id: item.id },
+                         data: { orderIndex: items.indexOf(item) }
+                     }))
+                 );
              }
         }
         // Fallback: Add NEW media if provided via old method (only if orderedMedia not present)
@@ -476,7 +503,7 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
 }
 
 export async function deleteMemory(id: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -508,7 +535,7 @@ export async function deleteMemory(id: string) {
 }
 
 export async function toggleMemoryLike(id: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -536,7 +563,7 @@ export async function toggleMemoryLike(id: string) {
 }
 
 export async function deleteProduct(id: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -641,7 +668,7 @@ export async function deleteProduct(id: string) {
 }
 
 export async function getCharmStats(productId: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -683,7 +710,7 @@ export async function getCharmStats(productId: string) {
 }
 
 export async function updateProductGuestUploads(productId: string, allow: boolean) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {

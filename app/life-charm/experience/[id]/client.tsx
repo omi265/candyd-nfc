@@ -23,7 +23,7 @@ import AudioPlayer from "@/app/components/AudioPlayer";
 import Image from "next/image";
 
 type ExperienceWithRelations = Experience & {
-  media: ExperienceMedia[];
+  media: (ExperienceMedia & { posterUrl?: string })[];
   item: LifeListItem & {
     lifeList: { userId: string; productId: string };
   };
@@ -194,6 +194,7 @@ export default function ExperienceClient({
                         alt=""
                         fill
                         className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 600px"
                       />
                     </div>
                   </button>
@@ -207,6 +208,8 @@ export default function ExperienceClient({
                         className="w-full h-full object-cover"
                         controls
                         playsInline
+                        preload="metadata"
+                        poster={media.posterUrl}
                       />
                     </div>
                   </div>
@@ -285,15 +288,18 @@ export default function ExperienceClient({
                         alt=""
                         fill
                         className="object-contain rounded-2xl"
+                        sizes="100vw"
                       />
                     </div>
                   ) : experience.media[selectedMediaIndex].type === "video" ? (
                     <video
-                      src={experience.media[selectedMediaIndex].url}
-                      className="max-w-full max-h-[80vh] object-contain rounded-2xl"
-                      controls
-                      autoPlay
-                    />
+	                      src={experience.media[selectedMediaIndex].url}
+	                      className="max-w-full max-h-[80vh] object-contain rounded-2xl"
+	                      controls
+	                      playsInline
+	                      preload="metadata"
+	                      poster={experience.media[selectedMediaIndex].posterUrl}
+	                    />
                   ) : (
                     <div className="w-72 h-72 bg-gradient-to-br from-[#5B2D7D] to-[#3d1d54] rounded-3xl flex flex-col items-center justify-center">
                       <span className="text-7xl mb-4">🎵</span>
@@ -324,13 +330,20 @@ export default function ExperienceClient({
                         fill
                         className="object-cover"
                       />
-                    ) : media.type === "video" ? (
-                      <video
-                        src={media.url}
-                        className="w-full h-full object-cover"
-                        muted
-                      />
-                    ) : (
+	                    ) : media.type === "video" ? (
+	                      <>
+	                        <Image
+	                          src={getOptimizedUrl(media.posterUrl || media.url, "image", 100)}
+	                          alt=""
+	                          fill
+	                          className="object-cover"
+	                          sizes="56px"
+	                        />
+	                        <div className="absolute inset-0 flex items-center justify-center bg-black/15">
+	                          <Play className="w-4 h-4 text-white fill-white" />
+	                        </div>
+	                      </>
+	                    ) : (
                       <div className="w-full h-full bg-[#5B2D7D] flex items-center justify-center">
                         <span className="text-lg">🎵</span>
                       </div>

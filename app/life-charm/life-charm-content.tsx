@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useDeferredValue } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, useMotionValue, animate, useTransform, MotionValue } from "motion/react";
 import {
@@ -335,12 +335,12 @@ export default function LifeCharmContent({
   const [cellSize, setCellSize] = useState({ width: 0, height: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(initialView === 'list' ? 'list' : 'grid');
+  const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const dragStartRef = useRef<{ col: number; row: number } | null>(null);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedDrawerData, setSelectedDrawerData] = useState<any>(null);
-
-  const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
 
@@ -419,8 +419,8 @@ export default function LifeCharmContent({
 
       // Filter by searchQuery
       let filtered = unifiedItems;
-      if (searchQuery) {
-          const q = searchQuery.toLowerCase();
+      if (deferredSearchQuery) {
+          const q = deferredSearchQuery.toLowerCase();
           filtered = unifiedItems.filter(item => {
               const titleMatch = item.title.toLowerCase().includes(q);
               const descMatch = item.description?.toLowerCase().includes(q);
@@ -449,7 +449,7 @@ export default function LifeCharmContent({
       filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       return filtered;
-  }, [lifeList.items, memories, searchQuery]);
+  }, [lifeList.items, memories, deferredSearchQuery]);
 
 
   // 2. List Items: All LifeList Items (Pending + Lived)
@@ -457,8 +457,8 @@ export default function LifeCharmContent({
       let items = [...lifeList.items];
 
       // Filter by searchQuery
-      if (searchQuery) {
-          const q = searchQuery.toLowerCase();
+      if (deferredSearchQuery) {
+          const q = deferredSearchQuery.toLowerCase();
           items = items.filter(item => {
               const titleMatch = item.title.toLowerCase().includes(q);
               const descMatch = item.description?.toLowerCase().includes(q);
@@ -475,7 +475,7 @@ export default function LifeCharmContent({
           return a.orderIndex - b.orderIndex;
       });
       return items;
-  }, [lifeList.items, searchQuery]);
+  }, [lifeList.items, deferredSearchQuery]);
 
 
   // --- GRID LAYOUT LOGIC ---

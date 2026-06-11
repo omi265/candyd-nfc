@@ -4,8 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import AppHeader from "./AppHeader";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import { getUserProducts } from "@/app/actions/memories";
-import { motion, useScroll, useTransform, useSpring } from "motion/react";
+import { getProductHeader } from "@/app/actions/life-charm";
 import SplashScreen from "./SplashScreen";
 import { RitualTimerProvider } from "@/lib/ritual-timer-context";
 import FullOnboardingTour from "./FullOnboardingTour";
@@ -26,41 +25,23 @@ function GlobalLayout({
     isLoading?: boolean
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  
-  // Initialize useScroll for parallax
-  const { scrollYProgress } = useScroll({
-    container: scrollRef,
-  });
-
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
-
-  const y1 = useTransform(smoothProgress, [0, 1], [0, -200]);
-  const y2 = useTransform(smoothProgress, [0, 1], [0, 200]);
-  const scale1 = useTransform(smoothProgress, [0, 0.5, 1], [1, 1.2, 1]);
-  const scale2 = useTransform(smoothProgress, [0, 0.5, 1], [1, 0.8, 1]);
 
   return (
     <div className="h-dvh bg-[#FDF2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-2xl overflow-hidden isolate">
-      {/* Global Background Decorations - High intensity & Parallax */}
-      <div className="fixed inset-0 pointer-events-none -z-10 bg-[#FDF2EC]">
-          {/* Top Right Green Glow */}
-          <motion.div 
-            style={{ y: y1, scale: scale1, animationDuration: '6s' }}
-            className="absolute top-[-15%] right-[-15%] w-[800px] h-[800px] bg-[#A4C538]/65 rounded-full blur-[100px] animate-pulse" 
+      {/* Global Background Decorations — static, GPU-optimised */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-[#FDF2EC]" style={{ contain: 'strict' }}>
+          {/* Top Right Green Glow — reduced size & blur, no animation */}
+          <div 
+            className="absolute top-[-15%] right-[-15%] w-[600px] h-[600px] bg-[#A4C538]/50 rounded-full blur-[80px]" 
           />
           
-          {/* Bottom Left Purple Glow */}
-          <motion.div 
-            style={{ y: y2, scale: scale2, animationDuration: '10s' }}
-            className="absolute bottom-[-15%] left-[-15%] w-[800px] h-[800px] bg-[#5B2D7D]/55 rounded-full blur-[100px] animate-pulse" 
+          {/* Bottom Left Purple Glow — reduced size & blur, no animation */}
+          <div 
+            className="absolute bottom-[-15%] left-[-15%] w-[600px] h-[600px] bg-[#5B2D7D]/40 rounded-full blur-[80px]" 
           />
 
           {/* Center Connector Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#EADDDE]/50 rounded-full blur-[120px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#EADDDE]/40 rounded-full blur-[100px]" />
       </div>
 
       {!hideHeader && (
@@ -119,8 +100,7 @@ export default function ClientLayout({
           return;
       }
 
-      getUserProducts().then(products => {
-          const product = products.find(p => p.id === charmId);
+      getProductHeader(charmId).then(product => {
           if (product) {
               setContextTitle(product.name);
               setBackHref(pathname !== '/' ? '/' : undefined);

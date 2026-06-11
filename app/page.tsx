@@ -1,14 +1,8 @@
-import { auth } from "@/auth";
 import { getDashboardProducts } from "@/app/actions/memories";
-import { redirect } from "next/navigation";
 import DashboardContent from "@/app/components/dashboard-content";
 
+// Auth guard is handled by middleware in proxy.ts — no need for auth() here.
 export default async function Dashboard() {
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/login");
-  }
-
   const products = await getDashboardProducts();
 
   return (

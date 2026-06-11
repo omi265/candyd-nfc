@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Outfit } from "next/font/google";
+import { Geist, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import ClientLayout from "./components/ClientLayout";
@@ -8,11 +8,6 @@ import { auth } from "@/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -57,7 +52,7 @@ export default async function RootLayout({
     const session = await auth();
   
   return (
-    <html lang="en" className={`${outfit.variable} ${geistSans.variable} ${geistMono.variable} ${outfit.className} antialiased`}>
+    <html lang="en" className={`${outfit.variable} ${geistSans.variable} ${outfit.className} antialiased`}>
       <body>
         <AuthProvider session={session}>
             <ClientLayout>{children}</ClientLayout>

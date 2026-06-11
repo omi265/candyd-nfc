@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { createHabitSchema, logHabitSchema } from "@/lib/schemas";
 import { HabitLogType, Habit, HabitLog } from "@prisma/client";
@@ -251,7 +251,7 @@ export async function createHabits(
   }[],
   charmName?: string
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
@@ -308,7 +308,7 @@ export async function createHabits(
 }
 
 export async function createHabit(productId: string, data: any) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -328,7 +328,7 @@ export async function createHabit(productId: string, data: any) {
 }
 
 export async function getHabits(productId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return [];
 
   try {
@@ -353,7 +353,7 @@ export async function getHabits(productId: string) {
 }
 
 export async function resetHabitCharm(productId: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -414,7 +414,7 @@ async function checkProgression(habitId: string, currentStreak: number) {
 }
 
 export async function logHabit(habitId: string, notes?: string, logType: HabitLogType = "DONE", imageUrl?: string, dateStr?: string, reflection?: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -480,7 +480,7 @@ export async function logRitual(
     imageUrl?: string, 
     dateStr?: string
 ) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -551,7 +551,7 @@ export async function logRitual(
 }
 
 export async function adjustHabitLogs(habitId: string, dateStr: string, adjustment: number) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -587,7 +587,7 @@ export async function adjustHabitLogs(habitId: string, dateStr: string, adjustme
 }
 
 export async function upgradeHabit(habitId: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
@@ -609,7 +609,7 @@ export async function upgradeHabit(habitId: string) {
 }
 
 export async function updateHabit(habitId: string, data: any) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
     await db.habit.update({ where: { id: habitId }, data });
     revalidatePath(`/habit-charm`);
@@ -622,7 +622,7 @@ export async function pauseRitual(
     logType: HabitLogType,
     dateStr?: string
 ) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
     if (!RITUAL_TYPES.includes(ritualType)) return { error: "Invalid ritual type" };
     if (logType === "DONE") return { error: "Invalid pause type" };
@@ -709,7 +709,7 @@ export async function updateRitualHabits(
         duration?: number | null;
     }[]
 ) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
     if (!RITUAL_TYPES.includes(ritualType)) return { error: "Invalid ritual type" };
 
@@ -786,7 +786,7 @@ export async function updateRitualHabits(
 }
 
 export async function deleteHabit(habitId: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
     await db.habit.delete({ where: { id: habitId } });
     revalidatePath(`/habit-charm`);
@@ -794,7 +794,7 @@ export async function deleteHabit(habitId: string) {
 }
 
 export async function resetHabit(habitId: string) {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
     await db.habit.update({
         where: { id: habitId },

@@ -41,7 +41,7 @@ function StarIcon() {
 // --- Menu Dropdown ---
 
 import { logout } from "@/app/actions/auth";
-import { getUserProducts } from "@/app/actions/memories";
+import { getDashboardProducts } from "@/app/actions/memories";
 import { useSearchParams } from "next/navigation";
 
 function MenuDropdown({
@@ -66,17 +66,17 @@ function MenuDropdown({
 
   // Fetch products on open
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && products.length === 0) {
         const timeoutId = setTimeout(() => {
             setIsLoadingProducts(true);
-            getUserProducts().then((fetchedProducts: any) => {
+            getDashboardProducts().then((fetchedProducts) => {
                 setProducts(fetchedProducts);
                 setIsLoadingProducts(false);
             });
         }, 0);
         return () => clearTimeout(timeoutId);
     }
-  }, [isOpen]);
+  }, [isOpen, products.length]);
 
   const currentProduct = products.find(p => p.id === currentCharmId);
   const displayLabel = currentProduct ? currentProduct.name : "All Charms";

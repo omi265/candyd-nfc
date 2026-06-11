@@ -1,40 +1,20 @@
-import { auth } from "@/auth";
 import { getMemories } from "@/app/actions/memories";
 import { getPeople } from "@/app/actions/people";
-import { redirect } from "next/navigation";
 import HomeContent from "@/app/components/home-content";
 import { Suspense } from "react";
 
+// Auth guard is handled by middleware in proxy.ts — no need for auth() here.
 export default async function MemoriesPage() {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  // Fetch memories and people in parallel
-  let memories: any[] = [];
-  let allPeople: any[] = [];
-
-  try {
-     const [fetchedMemories, fetchedPeople] = await Promise.all([
-        getMemories(),
-        getPeople()
-     ]);
-
-     memories = fetchedMemories;
-     allPeople = fetchedPeople;
-
-  } catch (error) {
-     console.error("Failed to fetch data on server", error);
-  }
+  const [memories, allPeople] = await Promise.all([
+    getMemories(),
+    getPeople(),
+  ]).catch(() => [[], []] as [any[], any[]]);
 
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-transparent text-[#5B2D7D]">Loading...</div>}>
       <HomeContent
         initialMemories={memories}
         people={allPeople}
-        user={session.user}
       />
     </Suspense>
   );
