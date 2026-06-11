@@ -4,12 +4,14 @@ import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
+const MIN_SPLASH_MS = 900;
+
 export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     if (!isLoading) {
-      const timer = setTimeout(() => setIsVisible(false), 120);
+      const timer = setTimeout(() => setIsVisible(false), MIN_SPLASH_MS);
       return () => clearTimeout(timer);
     }
   }, [isLoading]);
@@ -34,7 +36,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
               stiffness: 260,
               damping: 15,
               mass: 1.5,
-              delay: 0.1
+              delay: 0.05
             }}
             className="relative"
           >
@@ -91,7 +93,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 0.5, y: 0 }}
-            transition={{ delay: 1 }}
+            transition={{ delay: 0.42, duration: 0.25 }}
             className="absolute bottom-16 flex flex-col items-center gap-3"
           >
             <div className="flex gap-1.5">
