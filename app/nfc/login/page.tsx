@@ -466,7 +466,12 @@ function NFCLoginContent() {
       try {
           const r = await completeUserSetup(token, newName, password);
           if (r.error) { setError(r.error); setIsLoading(false); }
-          else await onPasswordLogin(e);
+          else {
+              if (!ownerInfo || ownerInfo.type === "MEMORY" || ownerInfo.type === undefined) {
+                  localStorage.removeItem("has_completed_full_tour");
+              }
+              await onPasswordLogin(e);
+          }
       } catch { setError("Setup failed."); setIsLoading(false); }
   };
 
@@ -477,6 +482,9 @@ function NFCLoginContent() {
           if (r.error) { setError(r.error); setIsLoading(false); }
           else {
               localStorage.setItem(`trusted_tag_${token}`, "true");
+              if (!ownerInfo || ownerInfo.type === "MEMORY" || ownerInfo.type === undefined) {
+                  localStorage.removeItem("has_completed_full_tour");
+              }
               const lr = await signIn("credentials", { email: newEmail, password, redirect: false });
               if (lr?.error) { setError("Login failed."); setIsLoading(false); }
               else await handleRedirect(token);

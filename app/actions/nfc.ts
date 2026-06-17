@@ -51,7 +51,8 @@ export async function getProductOwnerInfo(token: string) {
       name: product.user.name,
       setupRequired: product.user.setupRequired,
       isOwner,
-      enableGuestUploadButton: product.enableGuestUploadButton
+      enableGuestUploadButton: product.enableGuestUploadButton,
+      type: product.type
     };
   } catch (error) {
     console.error("Failed to get product owner info:", error);
