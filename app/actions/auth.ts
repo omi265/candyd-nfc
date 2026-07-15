@@ -29,6 +29,7 @@ const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  contact: z.string().optional(),
 });
 
 const updateProfileSchema = z.object({
@@ -67,7 +68,7 @@ export async function registerUser(prevState: { error?: string, success?: boolea
          return { error: "Invalid fields: " + validatedFields.error.issues.map(i => i.message).join(", ") };
      }
 
-     const { email, password, name } = validatedFields.data;
+     const { email, password, name, contact } = validatedFields.data;
 
      // Check if user exists
      const existingUser = await db.user.findUnique({
@@ -85,6 +86,7 @@ export async function registerUser(prevState: { error?: string, success?: boolea
              name,
              email,
              password: hashedPassword,
+             contact,
          },
      });
 

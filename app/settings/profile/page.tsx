@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { ChevronLeft, Menu, UserCircle, Save, Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
-    const { user, isLoading } = useAuth();
+    const { user, isLoading, updateSession } = useAuth();
     const router = useRouter();
     const [name, setName] = useState("");
     const [contact, setContact] = useState("");
@@ -28,6 +28,7 @@ export default function ProfilePage() {
 
     useEffect(() => {
         if (state?.success) {
+            updateSession?.({ user: { name, contact } });
             toast.success("Profile updated successfully");
         } else if (state?.error) {
             toast.error(state.error);

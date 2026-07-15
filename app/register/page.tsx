@@ -83,6 +83,23 @@ export default function RegisterPage() {
 
             <div>
               <label
+                htmlFor="contact"
+                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
+              >
+                Phone number (optional)
+              </label>
+              <input
+                id="contact"
+                name="contact"
+                type="tel"
+                autoComplete="tel"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                placeholder="+1 234 567 8900"
+              />
+            </div>
+
+            <div>
+              <label
                 htmlFor="password"
                 className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
               >

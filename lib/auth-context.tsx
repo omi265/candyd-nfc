@@ -18,12 +18,13 @@ interface AuthContextType {
   login: () => Promise<boolean>; // Deprecated: used server actions
   register: () => Promise<boolean>; // Deprecated: used server actions
   logout: () => void;
+  updateSession: (data: any) => Promise<Session | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function AuthContextInner({ children, serverSession }: { children: ReactNode, serverSession?: Session | null }) {
-  const { data: clientSession, status } = useSession();
+  const { data: clientSession, status, update } = useSession();
   
   const session = serverSession || clientSession;
   const isLoading = status === "loading" && !serverSession;
@@ -34,7 +35,8 @@ function AuthContextInner({ children, serverSession }: { children: ReactNode, se
       email: session.user.email || "",
       image: session.user.image,
       id: session.user.id,
-      role: session.user.role
+      role: (session.user as any).role,
+      contact: (session.user as any).contact
   } : null;
 
   const login = async (): Promise<boolean> => {
@@ -52,7 +54,7 @@ function AuthContextInner({ children, serverSession }: { children: ReactNode, se
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateSession: update }}>
       {children}
     </AuthContext.Provider>
   );

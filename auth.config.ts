@@ -25,11 +25,15 @@ export const authConfig = {
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user && user.id) {
         token.id = user.id;
         token.role = user.role || "USER";
         token.contact = user.contact;
+      }
+      if (trigger === "update" && session?.user) {
+        if (session.user.name) token.name = session.user.name;
+        if (session.user.contact !== undefined) token.contact = session.user.contact;
       }
       return token;
     },
