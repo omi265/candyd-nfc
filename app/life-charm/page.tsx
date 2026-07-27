@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getLifeList, getProductSummaryById } from "@/app/actions/life-charm";
+import { getLifeList, getProductSummaryById, getOrCreateLifeCharm } from "@/app/actions/life-charm";
 import { getPeople } from "@/app/actions/people";
 import { getMemories } from "@/app/actions/memories";
 import LifeCharmContent from "./life-charm-content";
@@ -11,37 +11,31 @@ interface PageProps {
 // Auth guard is handled by middleware in proxy.ts — no need for auth() here.
 export default async function LifeCharmPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
-  const charmId = resolvedParams?.charmId;
+  let charmId = resolvedParams?.charmId;
 
-  if (!charmId) {
-    redirect("/");
-  }
-
-  // Get product to verify it's a Life Charm
-  const product = await getProductSummaryById(charmId);
+  let product = charmId ? await getProductSummaryById(charmId) : null;
 
   if (!product) {
-    redirect("/");
+    product = await getOrCreateLifeCharm();
+    if (!product) {
+      redirect("/");
+    }
+    charmId = product.id;
   }
 
   if (product.type !== "LIFE") {
     if (product.type === "MEMORY") {
-      redirect(`/memories?charmId=${charmId}`);
+      redirect("/");
     }
     redirect("/");
   }
 
   // Fetch data in parallel
   const [lifeList, people, memories] = await Promise.all([
-    getLifeList(charmId),
+    getLifeList(product.id),
     getPeople(),
-    getMemories(charmId)
+    getMemories(product.id)
   ]);
-
-  // If no life list exists, redirect to setup
-  if (!lifeList) {
-    redirect(`/life-charm/setup?charmId=${charmId}`);
-  }
 
   return (
     <LifeCharmContent

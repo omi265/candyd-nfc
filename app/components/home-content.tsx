@@ -7,7 +7,7 @@ import { MemoryDrawer } from "@/components/memory-drawer";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import Image from "next/image";
 
-import { Plus, Search, LayoutGrid, List, Mic, X } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, Mic, X, Heart } from "lucide-react";
 
 // --- Data ---
 
@@ -718,6 +718,14 @@ export default function HomeContent({ initialMemories, people = [], user, forced
        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none z-20">
              {!forcedViewMode && (
                  <div className="flex items-center gap-2 pointer-events-auto bg-[#FDF2EC]/80 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-[#EADDDE]">
+                     <button
+                        onClick={() => router.push('/life-charm')}
+                        title="Bucket List"
+                        className="w-10 h-10 rounded-full flex items-center justify-center bg-[#5B2D7D] text-white hover:bg-[#4A246A] transition-colors shadow-sm"
+                     >
+                        <Heart className="w-5 h-5 fill-white text-white" />
+                     </button>
+                     <div className="w-px h-6 bg-[#EADDDE]" />
                      <button
                         onClick={() => setViewMode('grid')}
                         className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D] hover:bg-[#5B2D7D]/10'}`}

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getProductSummaryById } from "@/app/actions/life-charm";
+import { getProductSummaryById, getOrCreateHabitCharm } from "@/app/actions/life-charm";
 import { getHabits } from "@/app/actions/habit";
 import HabitSetup from "./habit-setup";
 import HabitDashboard from "./habit-dashboard";
@@ -12,19 +12,19 @@ export default async function HabitCharmPage({
 }: {
   searchParams: Promise<{ charmId?: string }>;
 }) {
-  const { charmId } = await searchParams;
+  const resolvedParams = await searchParams;
+  let charmId = resolvedParams?.charmId;
 
-  if (!charmId) {
-    redirect("/");
-  }
+  let product = charmId ? await getProductSummaryById(charmId) : null;
 
-  // 1. Verify Product Ownership & Type
-  const product = await getProductSummaryById(charmId);
-  
   if (!product) {
+    product = await getOrCreateHabitCharm();
+    if (!product) {
       redirect("/");
+    }
+    charmId = product.id;
   }
-  
+
   if (product.type !== "HABIT") {
       if (product.type === "LIFE") {
           redirect(`/life-charm?charmId=${charmId}`);
@@ -33,7 +33,7 @@ export default async function HabitCharmPage({
   }
 
   // 2. Check for existing active habits
-  const habits = await getHabits(charmId);
+  const habits = await getHabits(product.id);
 
   // 3. Render Setup or Dashboard
   if (!habits || habits.length === 0) {

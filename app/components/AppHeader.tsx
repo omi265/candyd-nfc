@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Menu, ChevronDown, Check, Sparkles, LifeBuoy, ChevronLeft } from "lucide-react";
+import { Menu, ChevronDown, Check, Sparkles, LifeBuoy, ChevronLeft, Heart, Zap } from "lucide-react";
 import { haptics } from "@/lib/haptics";
 
 // --- Icons ---
@@ -101,7 +101,9 @@ function MenuDropdown({
           
           let route = '/';
           if (selected.type === 'LIFE') {
-              route = '/life-charm';
+              route = '/';
+          } else if (selected.type === 'MEMORY') {
+              route = '/memories';
           } else if (selected.type === 'HABIT') {
               route = '/habit-charm';
           }
@@ -203,18 +205,28 @@ function MenuDropdown({
                             haptics.light();
                             handleCharmSelect(product.id);
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2 text-[#5B2D7D] hover:bg-[#D8CCE8]/50 rounded-lg transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-2 text-[#5B2D7D] hover:bg-[#D8CCE8]/50 rounded-xl transition-colors"
                       >
-                        <span
-                          className={
-                            currentCharmId === product.id
-                              ? "font-medium"
-                              : "opacity-70"
-                          }
-                        >
-                          {product.name}
-                        </span>
-                        {currentCharmId === product.id && <Check className="w-4 h-4 text-[#5B2D7D]" />}
+                        <div className="flex items-center gap-2 min-w-0">
+                          {product.type === "LIFE" && <Heart className="w-4 h-4 text-[#A4C538] fill-[#A4C538] shrink-0" />}
+                          {product.type === "HABIT" && <Zap className="w-4 h-4 text-[#EA580C] fill-[#EA580C] shrink-0" />}
+                          {product.type === "MEMORY" && <Sparkles className="w-4 h-4 text-[#5B2D7D] shrink-0" />}
+                          <span
+                            className={`truncate ${
+                              currentCharmId === product.id
+                                ? "font-bold text-[#5B2D7D]"
+                                : "opacity-80"
+                            }`}
+                          >
+                            {product.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0 ml-2">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/60 text-[#5B2D7D]/70 uppercase tracking-wider">
+                            {product.type === "LIFE" ? "Bucket List" : product.type === "HABIT" ? "Habit" : "Memory"}
+                          </span>
+                          {currentCharmId === product.id && <Check className="w-4 h-4 text-[#5B2D7D]" />}
+                        </div>
                       </motion.button>
                     ))}
                     

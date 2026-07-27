@@ -309,10 +309,7 @@ function NFCLoginContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleRedirect = useCallback(async (tokenVal: string) => {
-      const p = await getProductWithType(tokenVal);
-      if (p) {
-          router.push(p.type === "LIFE" ? `/life-charm?charmId=${p.id}` : p.type === "HABIT" ? `/habit-charm?charmId=${p.id}` : "/");
-      } else router.push("/");
+      router.push("/");
   }, [router]);
 
   const maskEmail = (e: string) => {

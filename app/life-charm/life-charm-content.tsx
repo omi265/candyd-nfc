@@ -55,7 +55,7 @@ type GridItem = {
 };
 
 interface LifeCharmContentProps {
-  lifeList: LifeListWithItems;
+  lifeList: LifeListWithItems | null;
   product: ProductWithState;
   people: Person[];
   memories: MemoryWithMedia[];
@@ -371,11 +371,12 @@ export default function LifeCharmContent({
 
   // Stats
   const stats = useMemo(() => {
-    const total = lifeList.items.length;
-    const lived = lifeList.items.filter((i) => i.status === "lived").length;
-    const pending = lifeList.items.filter((i) => i.status === "pending").length;
+    const items = lifeList?.items || [];
+    const total = items.length;
+    const lived = items.filter((i) => i.status === "lived").length;
+    const pending = items.filter((i) => i.status === "pending").length;
     return { total, lived, pending };
-  }, [lifeList.items]);
+  }, [lifeList?.items]);
 
   // --- PREPARE DATA ---
 
@@ -384,7 +385,7 @@ export default function LifeCharmContent({
       const unifiedItems: GridItem[] = [];
 
       // Add Lived List Items
-      lifeList.items.forEach(item => {
+      (lifeList?.items || []).forEach(item => {
           if (item.status === 'lived' && item.experience) {
               const exp = item.experience as any; // Cast to access isLiked if not in type yet (it is on db type)
               unifiedItems.push({
@@ -449,12 +450,12 @@ export default function LifeCharmContent({
       filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       return filtered;
-  }, [lifeList.items, memories, deferredSearchQuery]);
+  }, [lifeList?.items, memories, deferredSearchQuery]);
 
 
   // 2. List Items: All LifeList Items (Pending + Lived)
   const listItems = useMemo(() => {
-      let items = [...lifeList.items];
+      let items = [...(lifeList?.items || [])];
 
       // Filter by searchQuery
       if (deferredSearchQuery) {
@@ -475,7 +476,7 @@ export default function LifeCharmContent({
           return a.orderIndex - b.orderIndex;
       });
       return items;
-  }, [lifeList.items, deferredSearchQuery]);
+  }, [lifeList?.items, deferredSearchQuery]);
 
 
   // --- GRID LAYOUT LOGIC ---
@@ -895,7 +896,17 @@ export default function LifeCharmContent({
       <div className="absolute bottom-6 left-0 right-0 z-40 pointer-events-none px-6 flex items-end justify-between gap-4">
         {/* View Toggle - Bottom Center-ish */}
         <div 
-            onClick={() => setViewMode(prev => prev === 'grid' ? 'list' : 'grid')}
+            onClick={() => {
+                if (viewMode === 'grid') {
+                    if (!lifeList || !lifeList.items || lifeList.items.length === 0) {
+                        router.push(`/life-charm/setup?charmId=${product.id}`);
+                        return;
+                    }
+                    setViewMode('list');
+                } else {
+                    setViewMode('grid');
+                }
+            }}
             className="h-12 bg-white/80 backdrop-blur-xl border border-[#EADDDE] shadow-lg rounded-2xl flex items-center p-1.5 cursor-pointer relative pointer-events-auto flex-1 max-w-[240px]"
         >
             <motion.div 

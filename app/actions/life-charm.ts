@@ -139,6 +139,68 @@ export async function getProductHeader(productId: string) {
   }
 }
 
+export async function getOrCreateLifeCharm() {
+  const session = await getSession();
+  if (!session?.user?.id) return null;
+
+  try {
+    let product = await db.product.findFirst({
+      where: {
+        userId: session.user.id,
+        type: "LIFE",
+        active: true,
+      },
+    });
+
+    if (!product) {
+      product = await db.product.create({
+        data: {
+          name: "My Bucket List",
+          token: crypto.randomUUID(),
+          type: "LIFE",
+          userId: session.user.id,
+        },
+      });
+    }
+
+    return product;
+  } catch (error) {
+    console.error("Failed to get or create life charm:", error);
+    return null;
+  }
+}
+
+export async function getOrCreateHabitCharm() {
+  const session = await getSession();
+  if (!session?.user?.id) return null;
+
+  try {
+    let product = await db.product.findFirst({
+      where: {
+        userId: session.user.id,
+        type: "HABIT",
+        active: true,
+      },
+    });
+
+    if (!product) {
+      product = await db.product.create({
+        data: {
+          name: "My Habit Tracker",
+          token: crypto.randomUUID(),
+          type: "HABIT",
+          userId: session.user.id,
+        },
+      });
+    }
+
+    return product;
+  } catch (error) {
+    console.error("Failed to get or create habit charm:", error);
+    return null;
+  }
+}
+
 export async function updateProduct(productId: string, data: { name: string }) {
   const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };

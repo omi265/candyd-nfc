@@ -569,9 +569,9 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                     toast.success("Memory saved successfully!");
                     
                     if (selectedProductId) {
-                        router.push(`/life-charm?charmId=${selectedProductId}&view=grid&focusId=${memory.id}`);
+                        router.replace(`/life-charm?charmId=${selectedProductId}&view=grid&focusId=${memory.id}`);
                     } else {
-                        router.push("/memories");
+                        router.replace("/");
                     }
                     router.refresh(); 
                 } else {
@@ -601,7 +601,11 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         if (result.success) {
             toast.dismiss(toastId);
             toast.success("Memory deleted successfully");
-            router.push("/memories");
+            if (selectedProductId) {
+                router.replace(`/life-charm?charmId=${selectedProductId}&view=grid`);
+            } else {
+                router.replace("/");
+            }
         } else {
             toast.dismiss(toastId);
             toast.error(result.error || "Failed to delete memory");
