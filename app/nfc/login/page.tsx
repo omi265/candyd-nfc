@@ -276,7 +276,9 @@ function ShowcaseGallery({ publicData, onUnlock, onCamera, onUpload, token, onIt
                         <Upload className="w-6 h-6" />
                     </button>
                 )}
-                <button onClick={() => { haptics.light(); onCamera(); }} className="w-14 h-14 bg-[#A4C538] text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-all shadow-[#A4C538]/30 pointer-events-auto"><Camera className="w-6 h-6" /></button>
+                {publicData?.allowGuestUploads && (
+                    <button onClick={() => { haptics.light(); onCamera(); }} className="w-14 h-14 bg-[#A4C538] text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-all shadow-[#A4C538]/30 pointer-events-auto"><Camera className="w-6 h-6" /></button>
+                )}
             </div>
         </div>
     );
@@ -536,7 +538,7 @@ function NFCLoginContent() {
     if (isUnassigned && ownerInfo) return (
       <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
           <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
-              <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
+              {ownerInfo.canGuestUpload && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
               <div className="w-16 h-16 bg-[#A4C538]/20 rounded-2xl flex items-center justify-center mx-auto mb-6"><Sparkles className="w-8 h-8 text-[#A4C538]" /></div>
               <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">Claim Your Charm</h2>
               <p className="text-[#5B2D7D]/60 text-sm mb-8 px-4">This <span className="font-bold text-[#5B2D7D]">{ownerInfo.name}</span> is ready to be yours.</p>
@@ -554,7 +556,7 @@ function NFCLoginContent() {
     if (isSetupMode && ownerInfo) return (
       <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
           <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
-              <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
+              {ownerInfo.canGuestUpload && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
               <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6 mt-4"><Zap className="w-6 h-6 text-[#5B2D7D]" /></div>
               <h2 className="text-xl font-bold text-[#5B2D7D] text-center mb-2">Welcome!</h2>
               <p className="text-[#5B2D7D]/60 text-center text-sm mb-6">Set up your account for <br/><span className="font-semibold text-[#5B2D7D]">{ownerInfo.email}</span></p>
@@ -571,7 +573,7 @@ function NFCLoginContent() {
     if (needsPassword && ownerInfo) return (
       <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
           <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
-              <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>
+              {ownerInfo.canGuestUpload && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
               <div className="w-12 h-12 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-6 mt-4"><Lock className="w-6 h-6 text-[#5B2D7D]" /></div>
               <h2 className="text-xl font-bold text-[#5B2D7D] text-center mb-2">First Time Access</h2>
               <p className="text-[#5B2D7D]/60 text-center text-sm mb-6">Verify ownership for <br/><span className="font-semibold text-[#5B2D7D]">{maskEmail(ownerInfo.email)}</span></p>
@@ -587,7 +589,6 @@ function NFCLoginContent() {
     return (
       <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
         <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50 relative overflow-hidden">
-          {token && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#A4C538] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#93b132] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 mt-4"><Zap className="w-8 h-8 text-red-500" /></div>
           <h2 className="text-xl font-bold text-[#5B2D7D] mb-2">Access Denied</h2>
           <p className="text-[#5B2D7D]/60">{status}</p>

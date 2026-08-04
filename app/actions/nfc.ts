@@ -40,7 +40,7 @@ export async function getProductOwnerInfo(token: string) {
     }
 
     if (!product.userId || !product.user) {
-        return { unassigned: true, type: product.type, charmName: product.name };
+        return { unassigned: true, type: product.type, charmName: product.name, canGuestUpload: true };
     }
 
     const session = await getSession();
@@ -52,6 +52,7 @@ export async function getProductOwnerInfo(token: string) {
       setupRequired: product.user.setupRequired,
       isOwner,
       enableGuestUploadButton: product.enableGuestUploadButton,
+      canGuestUpload: product.allowGuestUploads,
       type: product.type
     };
   } catch (error) {
@@ -153,6 +154,7 @@ export async function completeUserSetup(token: string, name: string, password: s
 
 export async function getGuestCloudinarySignature(token: string) {
     try {
+        const session = await getSession();
         const product = await db.product.findUnique({
             where: { token },
             select: { id: true, active: true, allowGuestUploads: true, userId: true }
@@ -162,7 +164,9 @@ export async function getGuestCloudinarySignature(token: string) {
             throw new Error("Invalid or inactive tag");
         }
 
-        if (!product.allowGuestUploads && product.userId) {
+        const isOwner = !!product.userId && session?.user?.id === product.userId;
+        const isUnassignedCharm = !product.userId;
+        if (!isOwner && !isUnassignedCharm && !product.allowGuestUploads) {
             throw new Error("Guest uploads are disabled for this charm");
         }
 
@@ -200,13 +204,26 @@ export async function createGuestMemory(token: string, data: {
     mediaSize: number;
 }) {
     try {
+        const session = await getSession();
         const product = await db.product.findUnique({
             where: { token },
-            select: { id: true, userId: true, active: true, autoApproveGuestUploads: true }
+            select: {
+                id: true,
+                userId: true,
+                active: true,
+                allowGuestUploads: true,
+                autoApproveGuestUploads: true
+            }
         });
 
         if (!product || !product.active) {
             return { error: "Invalid tag" };
+        }
+
+        const isOwner = !!product.userId && session?.user?.id === product.userId;
+        const isUnassignedCharm = !product.userId;
+        if (!isOwner && !isUnassignedCharm && !product.allowGuestUploads) {
+            return { error: "Guest uploads are disabled for this charm" };
         }
 
         const memory = await db.memory.create({
@@ -251,6 +268,7 @@ export async function getPublicCharmShowcase(token: string) {
                 type: true,
                 active: true,
                 userId: true,
+                allowGuestUploads: true,
                 enableGuestUploadButton: true
             }
         });
@@ -336,7 +354,8 @@ export async function getPublicCharmShowcase(token: string) {
                 name: product.name,
                 type: product.type,
                 items: unifiedItems,
-                enableGuestUploadButton: product.enableGuestUploadButton
+                allowGuestUploads: !product.userId || product.allowGuestUploads,
+                enableGuestUploadButton: product.enableGuestUploadButton && (!product.userId || product.allowGuestUploads)
             };
         }
 
@@ -349,6 +368,7 @@ export async function getPublicCharmShowcase(token: string) {
 
 export async function getGifterProduct(token: string) {
     try {
+        const session = await getSession();
         const product = await db.product.findUnique({
             where: { token },
             select: { 
@@ -356,7 +376,8 @@ export async function getGifterProduct(token: string) {
                 name: true, 
                 type: true,
                 active: true,
-                userId: true
+                userId: true,
+                allowGuestUploads: true
             }
         });
 
@@ -366,6 +387,11 @@ export async function getGifterProduct(token: string) {
 
         if (product.type === "HABIT") {
             return { error: "Gifter uploads are not supported for Habit charms." };
+        }
+
+        const isOwner = !!product.userId && session?.user?.id === product.userId;
+        if (product.userId && !isOwner && !product.allowGuestUploads) {
+            return { error: "Guest uploads are disabled for this charm." };
         }
 
         return { 
@@ -389,13 +415,20 @@ export async function createGifterFullMemory(token: string, data: {
     emotions?: string[];
 }) {
     try {
+        const session = await getSession();
         const product = await db.product.findUnique({
             where: { token },
-            select: { id: true, userId: true, active: true }
+            select: { id: true, userId: true, active: true, allowGuestUploads: true }
         });
 
         if (!product || !product.active) {
             return { error: "Invalid charm." };
+        }
+
+        const isOwner = !!product.userId && session?.user?.id === product.userId;
+        const isUnassignedCharm = !product.userId;
+        if (!isOwner && !isUnassignedCharm && !product.allowGuestUploads) {
+            return { error: "Guest uploads are disabled for this charm." };
         }
 
         const memory = await db.memory.create({
