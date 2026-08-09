@@ -14,8 +14,8 @@ function Logo() {
   return (
     <div className="w-8 h-8 flex items-center justify-center relative">
       <Image
-        src="/Candyd_logo.svg"
-        alt="Candyd Logo"
+        src="/beige png.png"
+        alt="OUR DVE Logo"
         fill
         className="object-contain"
         priority
