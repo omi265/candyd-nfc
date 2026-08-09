@@ -18,7 +18,22 @@ export async function uploadMedia(file: File) {
       return { secure_url: publicUrl, resource_type: resourceType, bytes: file.size };
     }
   } catch (s3Err) {
-    console.warn("S3 Railway storage upload unavailable, falling back to Cloudinary...", s3Err);
+    console.warn("Direct S3 PUT blocked by browser CORS, using server upload route...", s3Err);
+  }
+
+  // 2. Server-side S3 upload route (bypasses browser CORS completely)
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/upload/s3", {
+      method: "POST",
+      body: formData,
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (serverErr) {
+    console.warn("Server S3 upload route error, attempting Cloudinary fallback...", serverErr);
   }
 
   // 2. Fallback to Cloudinary upload

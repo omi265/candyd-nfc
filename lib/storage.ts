@@ -42,6 +42,28 @@ export async function getRailwayPresignedUploadUrl(filename: string, contentType
 }
 
 /**
+ * Direct server-side upload to Railway Object Storage
+ */
+export async function uploadDirectToRailwayStorage(filename: string, contentType: string, body: Buffer) {
+  if (!s3Client) {
+    throw new Error("Railway Storage credentials not configured in environment");
+  }
+
+  const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+  const fileKey = `uploads/${Date.now()}-${sanitizedFilename}`;
+
+  const command = new PutObjectCommand({
+    Bucket: process.env.RAILWAY_STORAGE_BUCKET_NAME,
+    Key: fileKey,
+    ContentType: contentType,
+    Body: body,
+  });
+
+  await s3Client.send(command);
+  return `${process.env.RAILWAY_STORAGE_PUBLIC_URL}/${fileKey}`;
+}
+
+/**
  * Deletes an object from Railway Object Storage
  */
 export async function deleteFromRailwayStorage(fileKey: string) {
