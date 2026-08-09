@@ -1,6 +1,7 @@
 "use client";
 
 import { getGifterProduct, createGifterFullMemory, getGuestCloudinarySignature, getGifterMemories } from "@/app/actions/nfc";
+import { uploadMedia } from "@/lib/upload-client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useRef, Suspense, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, animate, useTransform, MotionValue } from "framer-motion";
@@ -262,21 +263,7 @@ function GifterUploadContent() {
 
     const uploadFile = async (item: any) => {
         try {
-            const uploadPromise = (async () => {
-                const signatureData = await getGuestCloudinarySignature(token!);
-                if (!signatureData) throw new Error("Signature failed");
-                const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
-                const formData = new FormData();
-                formData.append("file", item.file);
-                formData.append("api_key", apiKey!);
-                formData.append("timestamp", timestamp.toString());
-                formData.append("signature", signature);
-                formData.append("folder", folder);
-                formData.append("type", "authenticated");
-                const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, { method: "POST", body: formData });
-                if (!res.ok) throw new Error("Upload failed");
-                return res.json();
-            })();
+            const uploadPromise = uploadMedia(item.file);
             uploadPromisesRef.current.set(item.id, uploadPromise);
             const data = await uploadPromise;
             completedUploadsRef.current.set(item.id, { 

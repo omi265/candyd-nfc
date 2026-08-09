@@ -18,6 +18,7 @@ import {
 import { getListItem, markAsLived } from "@/app/actions/life-charm";
 import { getPeople, createPerson } from "@/app/actions/people";
 import { getCloudinarySignature } from "@/app/actions/upload";
+import { uploadMedia } from "@/lib/upload-client";
 import { Person, LifeListItem } from "@prisma/client";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -127,29 +128,7 @@ export default function MarkAsLivedPage() {
 
       try {
         // Get signature with specific folder
-        const signatureData = await getCloudinarySignature("candyd/experiences");
-        if (!signatureData || !signatureData.apiKey || !signatureData.cloudName) {
-          throw new Error("Failed to get upload signature");
-        }
-
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("api_key", signatureData.apiKey!);
-        formData.append("timestamp", signatureData.timestamp.toString());
-        formData.append("signature", signatureData.signature);
-        formData.append("folder", signatureData.folder);
-        formData.append("type", "authenticated");
-
-        const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`,
-
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-
-        const data = await response.json();
+        const data = await uploadMedia(file);
 
         if (data.secure_url) {
           setMedia((prev) =>

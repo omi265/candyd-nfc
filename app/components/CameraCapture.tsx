@@ -5,6 +5,7 @@ import { Camera, RefreshCw, X, Check, Loader2, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { getGuestCloudinarySignature, createGuestMemory } from "@/app/actions/nfc";
+import { uploadMedia } from "@/lib/upload-client";
 import { haptics } from "@/lib/haptics";
 
 interface CameraCaptureProps {
@@ -143,32 +144,10 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
     haptics.light();
 
     try {
-      // 1. Get Guest Signature
-      const sigData = await getGuestCloudinarySignature(token);
-      if (!sigData) throw new Error("Could not get upload signature");
+      const file = new File([capturedBlob], "quick-capture.jpg", { type: "image/jpeg" });
+      const uploadResult = await uploadMedia(file);
 
-      // 2. Prepare Form Data for Cloudinary
-      const formData = new FormData();
-      formData.append("file", capturedBlob, "quick-capture.jpg");
-      formData.append("api_key", sigData.apiKey!);
-      formData.append("timestamp", sigData.timestamp.toString());
-      formData.append("signature", sigData.signature);
-      formData.append("folder", sigData.folder);
-      formData.append("type", sigData.type!);
-
-      // 3. Upload to Cloudinary
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const uploadResult = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadResult.error?.message || "Upload failed");
-
-      // 4. Create Guest Memory in Database
+      // Create Guest Memory in Database
       const dbResult = await createGuestMemory(token, {
         title: "Quick Capture",
         mediaUrl: uploadResult.secure_url,

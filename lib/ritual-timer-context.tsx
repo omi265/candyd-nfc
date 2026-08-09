@@ -94,27 +94,8 @@ function RitualTimerOverlay() {
           setIsUploading(true);
           
           try {
-              const { getCloudinarySignature } = await import("@/app/actions/upload");
-              const signatureData = await getCloudinarySignature();
-              const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
-
-              const formData = new FormData();
-              formData.append("file", file);
-              formData.append("api_key", apiKey!);
-              formData.append("timestamp", timestamp.toString());
-              formData.append("signature", signature);
-              formData.append("folder", folder);
-              formData.append("type", "authenticated");
-
-              const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-
-                  method: "POST",
-                  body: formData,
-              });
-
-              if (!response.ok) throw new Error("Upload failed");
-
-              const data = await response.json();
+              const { uploadMedia } = await import("@/lib/upload-client");
+              const data = await uploadMedia(file);
               setImageUrl(data.secure_url);
               toast.success("Image uploaded!");
           } catch (error) {

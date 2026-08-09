@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback, useMemo, useRef } from "react";
 import { getProductWithType } from "@/app/actions/life-charm";
 import { getProductOwnerInfo, completeUserSetup, getPublicCharmShowcase, claimProduct, verifyGuestUploadPassword, getGuestCloudinarySignature, createGuestMemory } from "@/app/actions/nfc";
+import { uploadMedia } from "@/lib/upload-client";
 import CameraCapture from "@/app/components/CameraCapture";
 import { AnimatePresence, motion, useMotionValue, animate, useTransform, MotionValue } from "motion/react";
 import { getOptimizedUrl } from "@/lib/media-helper";
@@ -356,22 +357,7 @@ function NFCLoginContent() {
       try {
           const sig = await getGuestCloudinarySignature(token);
           if (!sig) throw new Error("Could not get upload signature");
-
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("api_key", sig.apiKey!);
-          formData.append("timestamp", sig.timestamp.toString());
-          formData.append("signature", sig.signature);
-          formData.append("folder", sig.folder);
-          formData.append("type", sig.type);
-
-          const response = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/auto/upload`, {
-              method: "POST",
-              body: formData,
-          });
-
-          if (!response.ok) throw new Error("Cloudinary upload failed");
-          const data = await response.json();
+          const data = await uploadMedia(file);
 
           const result = await createGuestMemory(token, {
               title: "Guest Upload",
