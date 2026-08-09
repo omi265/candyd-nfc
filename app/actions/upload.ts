@@ -33,11 +33,29 @@ export async function getCloudinarySignature(folder: string = "candyd_memories")
   };
 }
 
+import { getRailwayPresignedUploadUrl, deleteFromRailwayStorage } from "@/lib/storage";
+
+export async function getStorageUploadPresignedUrl(filename: string, contentType: string) {
+  const session = await getSession();
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  return getRailwayPresignedUploadUrl(filename, contentType);
+}
+
 export async function deleteUploadedFile(url: string) {
   const session = await getSession();
 
-    if (!session?.user?.id) {
+  if (!session?.user?.id) {
     throw new Error("Unauthorized");
+  }
+
+  if (process.env.RAILWAY_STORAGE_PUBLIC_URL && url.startsWith(process.env.RAILWAY_STORAGE_PUBLIC_URL)) {
+    const fileKey = url.replace(`${process.env.RAILWAY_STORAGE_PUBLIC_URL}/`, "");
+    await deleteFromRailwayStorage(fileKey);
+    return;
   }
 
   const publicId = extractPublicId(url);
