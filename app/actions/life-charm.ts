@@ -74,20 +74,28 @@ export async function getProductById(productId: string) {
     
     const signedProduct = {
       ...product,
-      lifeLists: product.lifeLists.map(list => ({
-        ...list,
-        items: list.items.map(item => ({
-          ...item,
-          experience: item.experience ? {
-            ...item.experience,
-            media: item.experience.media.map(m => ({
-              ...m,
-              url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
-              posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
+      lifeLists: await Promise.all(
+        product.lifeLists.map(async (list) => ({
+          ...list,
+          items: await Promise.all(
+            list.items.map(async (item) => ({
+              ...item,
+              experience: item.experience
+                ? {
+                    ...item.experience,
+                    media: await Promise.all(
+                      item.experience.media.map(async (m) => ({
+                        ...m,
+                        url: await getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith("image") ? 1080 : undefined),
+                        posterUrl: m.type === "video" ? await getSignedUrlFromCloudinaryUrl(m.url, "video-thumbnail", 600) : undefined,
+                      }))
+                    ),
+                  }
+                : null,
             }))
-          } : null
+          ),
         }))
-      }))
+      ),
     };
 
     return signedProduct;
@@ -333,17 +341,23 @@ export async function getLifeList(productId: string) {
 
     return {
       ...lifeList,
-      items: lifeList.items.map(item => ({
-        ...item,
-        experience: item.experience ? {
-          ...item.experience,
-          media: item.experience.media.map(m => ({
-            ...m,
-            url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
-            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
-          }))
-        } : null
-      }))
+      items: await Promise.all(
+        lifeList.items.map(async (item) => ({
+          ...item,
+          experience: item.experience
+            ? {
+                ...item.experience,
+                media: await Promise.all(
+                  item.experience.media.map(async (m) => ({
+                    ...m,
+                    url: await getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith("image") ? 1080 : undefined),
+                    posterUrl: m.type === "video" ? await getSignedUrlFromCloudinaryUrl(m.url, "video-thumbnail", 600) : undefined,
+                  }))
+                ),
+              }
+            : null,
+        }))
+      ),
     };
   } catch (error) {
     console.error("Failed to get life list:", error);
@@ -477,14 +491,18 @@ export async function getListItem(itemId: string) {
 
     return {
       ...item,
-      experience: item.experience ? {
-        ...item.experience,
-        media: item.experience.media.map(m => ({
-          ...m,
-          url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
-          posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
-        }))
-      } : null
+      experience: item.experience
+        ? {
+            ...item.experience,
+            media: await Promise.all(
+              item.experience.media.map(async (m) => ({
+                ...m,
+                url: await getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith("image") ? 1080 : undefined),
+                posterUrl: m.type === "video" ? await getSignedUrlFromCloudinaryUrl(m.url, "video-thumbnail", 600) : undefined,
+              }))
+            ),
+          }
+        : null
     };
   } catch (error) {
     console.error("Failed to get list item:", error);
@@ -719,11 +737,13 @@ export async function getExperience(id: string) {
 
     return {
       ...experience,
-      media: experience.media.map(m => ({
-        ...m,
-        url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
-        posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
-      }))
+      media: await Promise.all(
+        experience.media.map(async (m) => ({
+          ...m,
+          url: await getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith("image") ? 1080 : undefined),
+          posterUrl: m.type === "video" ? await getSignedUrlFromCloudinaryUrl(m.url, "video-thumbnail", 600) : undefined,
+        }))
+      ),
     };
   } catch (error) {
     console.error("Failed to get experience:", error);

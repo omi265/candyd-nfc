@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getS3ObjectStream } from "@/lib/storage";
 import { getSession } from "@/lib/session";
+import { db } from "@/lib/db";
 
 export async function GET(
   req: NextRequest,
@@ -14,6 +15,22 @@ export async function GET(
 
     const { path } = await params;
     const fileKey = path.join("/");
+
+    // Strict Ownership Verification (if media record exists in DB)
+    if (session.user.role !== "ADMIN") {
+      const media = await db.media.findFirst({
+        where: {
+          url: { contains: fileKey },
+        },
+        include: {
+          memory: { select: { userId: true } },
+        },
+      });
+
+      if (media && media.memory?.userId && media.memory.userId !== session.user.id) {
+        return NextResponse.json({ error: "Forbidden: You do not own this media asset" }, { status: 403 });
+      }
+    }
 
     const { stream, contentType, contentLength } = await getS3ObjectStream(fileKey);
 

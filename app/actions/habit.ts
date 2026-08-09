@@ -338,17 +338,21 @@ export async function getHabits(productId: string) {
       orderBy: { createdAt: 'asc' }
     });
 
-    return habits.map(h => {
+    return await Promise.all(
+      habits.map(async (h) => {
         const resetTime = h.resetAt ? new Date(h.resetAt).getTime() : 0;
-        const filteredLogs = h.logs
-            .filter(l => new Date(l.createdAt).getTime() > resetTime)
-            .map(l => ({
-                ...l,
-                imageUrl: l.imageUrl ? getSignedUrlFromCloudinaryUrl(l.imageUrl) : null
-            }));
-            
+        const filteredLogs = await Promise.all(
+          h.logs
+            .filter((l) => new Date(l.createdAt).getTime() > resetTime)
+            .map(async (l) => ({
+              ...l,
+              imageUrl: l.imageUrl ? await getSignedUrlFromCloudinaryUrl(l.imageUrl) : null,
+            }))
+        );
+
         return { ...h, logs: filteredLogs };
-    });
+      })
+    );
   } catch (error) { return []; }
 }
 

@@ -64,6 +64,25 @@ export async function uploadDirectToRailwayStorage(filename: string, contentType
 }
 
 /**
+ * Generates an S3 presigned GET URL with cryptographic signature and expiration
+ */
+export async function getS3PresignedReadUrl(fileKey: string, expiresInSeconds: number = 3600) {
+  if (!s3Client) return fileKey;
+
+  try {
+    const cleanKey = fileKey.includes("uploads/") ? fileKey.slice(fileKey.indexOf("uploads/")) : fileKey;
+    const command = new GetObjectCommand({
+      Bucket: process.env.RAILWAY_STORAGE_BUCKET_NAME,
+      Key: cleanKey,
+    });
+    return await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
+  } catch (error) {
+    console.error("Error generating S3 presigned read URL:", error);
+    return fileKey;
+  }
+}
+
+/**
  * Fetches object stream from Railway Object Storage for Next.js media proxy
  */
 export async function getS3ObjectStream(fileKey: string) {

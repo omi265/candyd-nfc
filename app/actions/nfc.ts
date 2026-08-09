@@ -312,7 +312,8 @@ export async function getPublicCharmShowcase(token: string) {
             });
 
             const unifiedItems = [
-                ...experiences.map(e => ({
+                ...(await Promise.all(
+                  experiences.map(async (e) => ({
                     id: e.id,
                     type: 'life_item',
                     title: e.item.title,
@@ -321,15 +322,18 @@ export async function getPublicCharmShowcase(token: string) {
                     location: e.location,
                     events: [e.item.title],
                     peopleIds: e.peopleIds,
-                    media: e.media.map(m => ({
+                    media: await Promise.all(
+                      e.media.map(async (m) => ({
                         id: m.id,
-                        url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
+                        url: await getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith("image") ? 1080 : undefined),
                         type: m.type,
-                        posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
-                    })),
+                        posterUrl: m.type === "video" ? await getSignedUrlFromCloudinaryUrl(m.url, "video-thumbnail", 600) : undefined,
+                      }))
+                    ),
                     isLiked: true
-                })),
-                ...memories.map(m => ({
+                })))),
+                ...(await Promise.all(
+                  memories.map(async (m) => ({
                     id: m.id,
                     type: 'memory',
                     title: m.title,
@@ -338,14 +342,16 @@ export async function getPublicCharmShowcase(token: string) {
                     location: m.location,
                     events: m.events,
                     peopleIds: m.peopleIds,
-                    media: m.media.map(media => ({
+                    media: await Promise.all(
+                      m.media.map(async (media) => ({
                         id: media.id,
-                        url: getSignedUrlFromCloudinaryUrl(media.url, media.type),
+                        url: await getSignedUrlFromCloudinaryUrl(media.url, media.type),
                         type: media.type,
-                        posterUrl: media.type === 'video' ? getSignedUrlFromCloudinaryUrl(media.url, 'video-thumbnail') : undefined
-                    })),
+                        posterUrl: media.type === "video" ? await getSignedUrlFromCloudinaryUrl(media.url, "video-thumbnail") : undefined,
+                      }))
+                    ),
                     isLiked: true
-                }))
+                }))))
             ];
 
             unifiedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -479,14 +485,18 @@ export async function getGifterMemories(token: string) {
             orderBy: { date: 'desc' }
         });
 
-        return memories.map(memory => ({
+        return await Promise.all(
+          memories.map(async (memory) => ({
             ...memory,
-            media: memory.media.map(m => ({
+            media: await Promise.all(
+              memory.media.map(async (m) => ({
                 ...m,
-                url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
-                posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
-            }))
-        }));
+                url: await getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith("image") ? 1080 : undefined),
+                posterUrl: m.type === "video" ? await getSignedUrlFromCloudinaryUrl(m.url, "video-thumbnail", 600) : undefined,
+              }))
+            ),
+          }))
+        );
     } catch (error) {
         console.error("Failed to fetch gifter memories:", error);
         return null;

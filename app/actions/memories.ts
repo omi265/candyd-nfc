@@ -143,14 +143,18 @@ export async function getMemories(productId?: string) {
       }
     });
 
-    const signedMemories = memories.map(memory => ({
+    const signedMemories = await Promise.all(
+      memories.map(async (memory) => ({
         ...memory,
-        media: memory.media.map(m => ({
+        media: await Promise.all(
+          memory.media.map(async (m) => ({
             ...m,
-            url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
-            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
-        }))
-    }));
+            url: await getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith("image") ? 1080 : undefined),
+            posterUrl: m.type === "video" ? await getSignedUrlFromCloudinaryUrl(m.url, "video-thumbnail", 600) : undefined,
+          }))
+        ),
+      }))
+    );
 
     return signedMemories;
   } catch (error) {
@@ -190,23 +194,33 @@ export async function getUserProducts() {
             }
         });
 
-        const signedProducts = products.map(product => ({
+        const signedProducts = await Promise.all(
+          products.map(async (product) => ({
             ...product,
-            lifeLists: product.lifeLists.map(list => ({
+            lifeLists: await Promise.all(
+              product.lifeLists.map(async (list) => ({
                 ...list,
-                items: list.items.map(item => ({
+                items: await Promise.all(
+                  list.items.map(async (item) => ({
                     ...item,
-                    experience: item.experience ? {
-                        ...item.experience,
-                        media: item.experience.media.map(m => ({
-                            ...m,
-                            url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
-                            posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
-                        }))
-                    } : null
-                }))
-            }))
-        }));
+                    experience: item.experience
+                      ? {
+                          ...item.experience,
+                          media: await Promise.all(
+                            item.experience.media.map(async (m) => ({
+                              ...m,
+                              url: await getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith("image") ? 1080 : undefined),
+                              posterUrl: m.type === "video" ? await getSignedUrlFromCloudinaryUrl(m.url, "video-thumbnail", 600) : undefined,
+                            }))
+                          ),
+                        }
+                      : null,
+                  }))
+                ),
+              }))
+            ),
+          }))
+        );
 
         return signedProducts;
     } catch (error) {
@@ -310,11 +324,13 @@ export async function getMemory(id: string) {
         
         return {
             ...memory,
-            media: memory.media.map(m => ({
+            media: await Promise.all(
+              memory.media.map(async (m) => ({
                 ...m,
-                url: getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith('image') ? 1080 : undefined),
-                posterUrl: m.type === 'video' ? getSignedUrlFromCloudinaryUrl(m.url, 'video-thumbnail', 600) : undefined
-            }))
+                url: await getSignedUrlFromCloudinaryUrl(m.url, m.type, m.type.startsWith("image") ? 1080 : undefined),
+                posterUrl: m.type === "video" ? await getSignedUrlFromCloudinaryUrl(m.url, "video-thumbnail", 600) : undefined,
+              }))
+            ),
         };
     } catch (error) {
         console.error("Failed to fetch memory:", error);

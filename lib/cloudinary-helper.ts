@@ -77,8 +77,18 @@ export function generateSignedUrl(publicId: string, resourceType: string = "imag
   });
 }
 
-export function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string = "image", width?: number) {
-  if (!url || !url.includes("cloudinary.com")) return url;
+import { getS3PresignedReadUrl } from "./storage";
+
+export async function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string = "image", width?: number) {
+  if (!url) return "";
+
+  // 1. If URL is an S3 / Railway Object Storage URL, generate S3 Presigned Signed GET URL
+  if (url.includes("uploads/") || url.includes("storageapi.dev") || url.includes("/api/media/")) {
+    const fileKey = url.includes("uploads/") ? url.slice(url.indexOf("uploads/")) : url;
+    return await getS3PresignedReadUrl(fileKey, 3600); // Expires in 1 hour
+  }
+
+  if (!url.includes("cloudinary.com")) return url;
   
   const publicId = extractPublicId(url);
   if (!publicId) return url;
@@ -105,7 +115,5 @@ export function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string 
   // Normalize audio to video for Cloudinary
   const normalizedType = resourceType === "audio" ? "video" : resourceType;
 
-  // If it's still 'upload', we don't strictly NEED to sign it, 
-  // but signing it doesn't hurt and prepares it for the migration.
   return generateSignedUrl(publicId, normalizedType, deliveryType, width);
 }
