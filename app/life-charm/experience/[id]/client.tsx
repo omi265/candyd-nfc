@@ -216,14 +216,14 @@ export default function ExperienceClient({
                 )}
 
                 {media.type === "audio" && (
-                  <div className="bg-[#FFF5F0] p-4 rounded-[24px] shadow-sm border border-[#E6DED1]">
+                  <div className="bg-[#F6F2EC] p-4 rounded-[24px] shadow-sm border border-[#E6DED1]">
                     <AudioPlayer src={media.url} />
                   </div>
                 )}
               </motion.div>
             ))
           ) : (
-            <div className="w-full aspect-square rounded-[32px] bg-[#FFF5F0] border-2 border-dashed border-[#E6DED1] flex flex-col items-center justify-center text-[#A68CAB] gap-2">
+            <div className="w-full aspect-square rounded-[32px] bg-[#F6F2EC] border-2 border-dashed border-[#E6DED1] flex flex-col items-center justify-center text-[#A69D93] gap-2">
               <ImageIcon className="w-8 h-8" />
               <span className="text-sm font-medium">No media added yet</span>
             </div>

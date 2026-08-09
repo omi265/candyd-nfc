@@ -131,7 +131,7 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit, 
                                         className={`w-12 h-12 rounded-full border flex items-center justify-center transition-colors ${
                                             isLiked 
                                             ? "bg-[#F37B55] border-[#F37B55]" 
-                                            : "bg-[#FFF5F0] border-[#E6DED1]"
+                                            : "bg-[#F6F2EC] border-[#E6DED1]"
                                         } ${readOnly ? "opacity-50 grayscale cursor-default" : ""}`}
                                     >
                                         <Heart className={`w-6 h-6 ${isLiked ? "text-white fill-white" : "text-[#F37B55]"}`} />
@@ -220,14 +220,14 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit, 
                                     )}
 
                                     {media.type.startsWith('audio') && (
-                                        <div className="bg-[#FFF5F0] p-4 rounded-[24px] shadow-sm border border-[#E6DED1]">
+                                        <div className="bg-[#F6F2EC] p-4 rounded-[24px] shadow-sm border border-[#E6DED1]">
                                              <AudioPlayer src={media.url} className="w-full p-0! shadow-none bg-transparent!" />
                                         </div>
                                     )}
                                 </div>
                             ))
                         ) : (
-                            <div className="w-full aspect-square rounded-[32px] bg-[#FFF5F0] border-2 border-dashed border-[#E6DED1] flex flex-col items-center justify-center text-[#A68CAB] gap-2">
+                            <div className="w-full aspect-square rounded-[32px] bg-[#F6F2EC] border-2 border-dashed border-[#E6DED1] flex flex-col items-center justify-center text-[#A69D93] gap-2">
                                 <ImageIcon className="w-6 h-6" />
                                 <span className="text-xs font-medium">No media added yet</span>
                             </div>

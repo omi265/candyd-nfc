@@ -395,7 +395,7 @@ function MemoryUploadContent() {
                              </div>
                             <div>
                                 <h1 className="text-[28px] font-black text-[#556B5A] uppercase leading-[0.9] tracking-tight">PRESERVE YOUR<br/> MEMORY</h1>
-                                <p className="text-[#A68CAB] text-[11px] mt-2 leading-relaxed max-w-[280px]">
+                                <p className="text-[#A69D93] text-[11px] mt-2 leading-relaxed max-w-[280px]">
                                     Add the memories your jewellery carries. Each one brings it to life.
                                 </p>
                             </div>
@@ -411,9 +411,9 @@ function MemoryUploadContent() {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value.slice(0, 15))}
                                 placeholder="Name Your Memory"
-                                className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
+                                className="w-full bg-[#F6F2EC] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
                             />
-                            <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 15 Characters</p>
+                            <p className="text-[#A69D93] text-[10px] mt-1.5 ml-1">Character Limit : 15 Characters</p>
                         </div>
 
                         {/* Description */}
@@ -424,9 +424,9 @@ function MemoryUploadContent() {
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Describe the moment"
                                 rows={2}
-                                className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none"
+                                className="w-full bg-[#F6F2EC] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none"
                             />
-                             <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 2 lines</p>
+                             <p className="text-[#A69D93] text-[10px] mt-1.5 ml-1">Character Limit : 2 lines</p>
                         </div>
 
                         {/* Media */}
@@ -455,17 +455,17 @@ function MemoryUploadContent() {
                                     </button>
                                 )}
                             </div>
-                            <p className="text-[#A68CAB] text-[10px] mb-3 ml-1">You can add and edit the media later</p>
+                            <p className="text-[#A69D93] text-[10px] mb-3 ml-1">You can add and edit the media later</p>
                             
                             {!hasMedia ? (
-                                <div className="border border-dashed border-[#556B5A]/20 bg-[#FFF5F0] rounded-[32px] p-6 flex flex-col items-center justify-center text-center min-h-[250px] gap-4">
+                                <div className="border border-dashed border-[#556B5A]/20 bg-[#F6F2EC] rounded-[32px] p-6 flex flex-col items-center justify-center text-center min-h-[250px] gap-4">
                                     <div>
                                         <button type="button" className="w-14 h-14 bg-[#F37B55] rounded-2xl flex items-center justify-center mb-3 shadow-[0_4px_10px_rgba(243,123,85,0.3)] mx-auto relative z-10 transition-transform active:scale-95">
                                         <Upload className="w-8 h-8 text-white" />
                                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
                                         </button>
                                         <p className="text-[#556B5A] font-semibold text-[15px] mb-1">Upload your file or drag</p>
-                                        <p className="text-[#A68CAB] text-[10px]">Supported Format: SVG, JPG, PNG.....</p>
+                                        <p className="text-[#A69D93] text-[10px]">Supported Format: SVG, JPG, PNG.....</p>
                                     </div>
                                     
                                     <div className="flex justify-center gap-3 w-full">
@@ -508,7 +508,7 @@ function MemoryUploadContent() {
                                                     {item.file.type.startsWith("video") ? (
                                                         <video src={item.previewUrl} className="w-full h-full object-cover" muted preload="metadata" />
                                                     ) : (item.file.type.startsWith("audio") || item.type?.startsWith("audio")) ? (
-                                                        <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
+                                                        <div className="w-full h-full flex items-center justify-center bg-[#F6F2EC]">
                                                             <Mic className="w-8 h-8 text-[#556B5A]" />
                                                         </div>
                                                     ) : (
@@ -519,7 +519,7 @@ function MemoryUploadContent() {
                                                     <p className="text-[13px] font-bold text-[#556B5A] capitalize truncate">
                                                         {item.file.type.split('/')[0] || "Media"}
                                                     </p>
-                                                    <p className="text-[10px] text-[#A68CAB] truncate">
+                                                    <p className="text-[10px] text-[#A69D93] truncate">
                                                         {index === 0 ? "Cover Media" : `Item ${index + 1}`}
                                                     </p>
                                                 </div>
@@ -559,7 +559,7 @@ function MemoryUploadContent() {
                                     </button>
                                 </div>
                             ) : (
-                                 <div className="bg-[#FFF5F0] rounded-2xl p-3 relative space-y-2 border border-[#E8D1E0]">
+                                 <div className="bg-[#F6F2EC] rounded-2xl p-3 relative space-y-2 border border-[#E8D1E0]">
                                     <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
                                         {mediaItems.map((item, i) => (
                                             <div key={item.id} className={`shrink-0 rounded-xl bg-gray-200 overflow-hidden relative border border-[#E8D1E0] group ${
@@ -569,7 +569,7 @@ function MemoryUploadContent() {
                                                 {item.file.type.startsWith("video") ? (
                                                     <video src={item.previewUrl} className="w-full h-full object-cover" muted preload="metadata" />
                                                 ) : (item.file.type.startsWith("audio") || item.type?.startsWith("audio")) ? (
-                                                    <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
+                                                    <div className="w-full h-full flex items-center justify-center bg-[#F6F2EC]">
                                                          <AudioPlayer src={item.previewUrl} className="w-full h-full bg-transparent! p-2!" />
                                                     </div>
                                                 ) : (
@@ -614,7 +614,7 @@ function MemoryUploadContent() {
                                         </label>
                                     </div>
                                     <div className="flex justify-between items-center px-1">
-                                        <span className="text-[11px] text-[#A68CAB] font-medium">
+                                        <span className="text-[11px] text-[#A69D93] font-medium">
                                             {mediaItems.length} file{mediaItems.length > 1 ? 's' : ''} selected
                                             {mediaItems.some(i => i.status === 'uploading') && <span className="text-[#C27A59] ml-2 animate-pulse">Uploading...</span>}
                                         </span>
@@ -641,7 +641,7 @@ function MemoryUploadContent() {
                                     type="date"
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
-                                    className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 pl-12 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
+                                    className="w-full bg-[#F6F2EC] border border-[#E6DED1] rounded-xl p-4 pl-12 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                                 />
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Calendar className="w-5 h-5 text-[#556B5A]" />
@@ -657,7 +657,7 @@ function MemoryUploadContent() {
                                     type="time"
                                     value={time}
                                     onChange={(e) => setTime(e.target.value)}
-                                    className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 pl-12 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
+                                    className="w-full bg-[#F6F2EC] border border-[#E6DED1] rounded-xl p-4 pl-12 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                                 />
                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <Clock className="w-5 h-5 text-[#556B5A]" />
@@ -674,7 +674,7 @@ function MemoryUploadContent() {
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)}
                                     placeholder="Pick a location"
-                                    className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 pl-12 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
+                                    className="w-full bg-[#F6F2EC] border border-[#E6DED1] rounded-xl p-4 pl-12 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                                 />
                                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
                                     <MapPin className="w-5 h-5 text-[#556B5A]" />
@@ -685,12 +685,12 @@ function MemoryUploadContent() {
                         {/* People */}
                         <div className="mb-6">
                             <label className="block text-[#556B5A] text-[13px] font-bold mb-1">People</label>
-                            <p className="text-[#A68CAB] text-[10px] mb-3">Who was there with you?</p>
+                            <p className="text-[#A69D93] text-[10px] mb-3">Who was there with you?</p>
 
                             <button
                                 type="button"
                                 onClick={() => setShowPeopleSelector(!showPeopleSelector)}
-                                className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-left flex items-center justify-between"
+                                className="w-full bg-[#F6F2EC] border border-[#E6DED1] rounded-xl p-4 text-left flex items-center justify-between"
                             >
                                 <div className="flex items-center gap-2">
                                     <Users className="w-5 h-5 text-[#556B5A]/40" />
@@ -782,7 +782,7 @@ function MemoryUploadContent() {
                                     {/* Emotions */}
                                     <div>
                                         <label className="block text-[#556B5A] text-[13px] font-bold mb-1">How did you feel in the moment ?</label>
-                                        <p className="text-[#A68CAB] text-[10px] mb-3">What did you feel in that moment? Choose all that apply.</p>
+                                        <p className="text-[#A69D93] text-[10px] mb-3">What did you feel in that moment? Choose all that apply.</p>
                                         <div className="flex flex-wrap gap-2">
                                             {EMOTIONS.map(emotion => (
                                                 <button
@@ -792,7 +792,7 @@ function MemoryUploadContent() {
                                                     className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                         selectedEmotions.includes(emotion)
                                                         ? 'bg-[#556B5A] text-white border-[#556B5A]'
-                                                        : 'bg-[#FFF5F0] text-[#556B5A] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                                        : 'bg-[#F6F2EC] text-[#556B5A] border-[#E6DED1] hover:bg-[#F2E6DE]'
                                                     }`}
                                                 >
                                                     {emotion}
@@ -820,13 +820,13 @@ function MemoryUploadContent() {
                                                     onBlur={addCustomEmotion}
                                                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEmotion())}
                                                     placeholder="Type..."
-                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#556B5A] border border-[#C27A59] outline-none min-w-[80px]"
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#F6F2EC] text-[#556B5A] border border-[#C27A59] outline-none min-w-[80px]"
                                                 />
                                             ) : (
                                                 <button 
                                                     type="button"
                                                     onClick={() => setShowCustomEmotion(true)}
-                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#F6F2EC] text-[#A69D93] border border-[#E6DED1] flex items-center gap-1 hover:bg-[#F2E6DE]"
                                                 >
                                                     Other <Plus className="w-3 h-3" />
                                                 </button>
@@ -837,7 +837,7 @@ function MemoryUploadContent() {
                                     {/* Mood */}
                                     <div>
                                         <label className="block text-[#556B5A] text-[13px] font-bold mb-1">Select a vibe that captures your memory</label>
-                                        <p className="text-[#A68CAB] text-[10px] mb-3">Pick a mood that fits the vibe of the memory best.</p>
+                                        <p className="text-[#A69D93] text-[10px] mb-3">Pick a mood that fits the vibe of the memory best.</p>
                                         <div className="flex flex-wrap gap-2">
                                             {MOODS.map(mood => (
                                                 <button
@@ -847,7 +847,7 @@ function MemoryUploadContent() {
                                                     className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                         selectedMood === mood
                                                         ? 'bg-[#556B5A] text-white border-[#556B5A]'
-                                                        : 'bg-[#FFF5F0] text-[#556B5A] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                                        : 'bg-[#F6F2EC] text-[#556B5A] border-[#E6DED1] hover:bg-[#F2E6DE]'
                                                     }`}
                                                 >
                                                     {mood}
@@ -874,14 +874,14 @@ function MemoryUploadContent() {
                                                     onBlur={addCustomMood}
                                                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomMood())}
                                                     placeholder="Type mood..."
-                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#556B5A] border border-[#C27A59] outline-none min-w-[100px]"
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#F6F2EC] text-[#556B5A] border border-[#C27A59] outline-none min-w-[100px]"
                                                 />
                                             ) : (
                                                 !selectedMood || MOODS.includes(selectedMood) ? (
                                                     <button 
                                                         type="button" 
                                                         onClick={() => setShowCustomMood(true)}
-                                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                                        className="px-5 py-2.5 rounded-xl text-[13px] bg-[#F6F2EC] text-[#A69D93] border border-[#E6DED1] flex items-center gap-1 hover:bg-[#F2E6DE]"
                                                     >
                                                         Other <Plus className="w-3 h-3" />
                                                     </button>

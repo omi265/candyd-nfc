@@ -25,7 +25,7 @@ export default function LoginPage() {
             <div className="w-20 h-20 mb-4 relative flex items-center justify-center">
                 <Image src="/logo.png" alt="Candyd Logo" fill className="object-contain" />
             </div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary-purple">
+          <h1 className="text-3xl font-bold tracking-tight text-primary-green-dark">
             Welcome back
           </h1>
           <p className="mt-2 text-sm text-text-gray">
@@ -44,7 +44,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
+                className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5"
               >
                 Email address
               </label>
@@ -54,7 +54,7 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm"
                 placeholder="you@example.com"
               />
             </div>
@@ -62,7 +62,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
+                className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5"
               >
                 Password
               </label>
@@ -72,13 +72,13 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm"
                 placeholder="••••••••"
               />
               <div className="flex justify-end mt-2 px-2">
                 <Link 
                   href="/login/forgot-password"
-                  className="text-xs font-semibold text-primary-purple/60 hover:text-primary-purple hover:underline"
+                  className="text-xs font-semibold text-primary-green-dark/60 hover:text-primary-green-dark hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -92,7 +92,7 @@ export default function LoginPage() {
             Don&apos;t have an account?{" "}
             <Link
               href="/register"
-              className="font-bold text-primary-purple hover:underline"
+              className="font-bold text-primary-green-dark hover:underline"
             >
               Sign up
             </Link>
@@ -110,7 +110,7 @@ function LoginButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-2xl bg-primary-purple px-4 py-3.5 text-sm font-bold text-white hover:bg-primary-purple/90 focus:outline-none focus:ring-4 focus:ring-primary-purple/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary-purple/20 active:scale-[0.98]"
+      className="w-full rounded-2xl bg-primary-green-dark px-4 py-3.5 text-sm font-bold text-white hover:bg-primary-green-dark/90 focus:outline-none focus:ring-4 focus:ring-primary-green-dark/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary-green-dark/20 active:scale-[0.98]"
     >
       {pending ? "Signing in..." : "Sign in"}
     </button>

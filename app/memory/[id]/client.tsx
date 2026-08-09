@@ -90,7 +90,7 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                                     </div>
                                 </div>
                             ) : item.type === 'audio' ? (
-                                <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
+                                <div className="w-full h-full flex items-center justify-center bg-[#F6F2EC]">
                                     <Mic className="w-8 h-8 text-[#556B5A]" />
                                 </div>
                             ) : (
@@ -109,7 +109,7 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                             <p className="text-[13px] font-bold text-[#556B5A] capitalize truncate">
                                 {item.type?.split('/')[0] || "Media"}
                             </p>
-                            <p className="text-[10px] text-[#A68CAB] truncate">
+                            <p className="text-[10px] text-[#A69D93] truncate">
                                 {index === 0 ? "Cover Media" : `Item ${index + 1}`}
                             </p>
                             {item.isNew && (
@@ -162,7 +162,7 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                             </div>
                        </div>
                   ) : item.type === 'audio' ? (
-                        <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0] p-2 pointer-events-none">
+                        <div className="w-full h-full flex items-center justify-center bg-[#F6F2EC] p-2 pointer-events-none">
                             <div className="w-full pointer-events-auto" onPointerDown={(e) => e.stopPropagation()}>
                                 <AudioPlayer src={item.url} className="w-full bg-transparent! p-0! shadow-none" />
                             </div>
@@ -624,7 +624,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                           <ChevronLeft className="w-6 h-6 text-[#556B5A]" />
                       </button>
                       <div className="text-center">
-                          <span className="block text-[#A68CAB] text-[10px] uppercase tracking-wider font-bold">Edit Memory</span>
+                          <span className="block text-[#A69D93] text-[10px] uppercase tracking-wider font-bold">Edit Memory</span>
                           <h1 className="text-[#556B5A] text-2xl font-black uppercase leading-none">{title || "Untitled"}</h1>
                           <div className="bg-[#D4C3D8]/40 px-3 py-1 rounded-full inline-block mt-2">
                               <span className="text-[#556B5A] text-[10px] font-bold block">{new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
@@ -642,9 +642,9 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value.slice(0, 15))}
-                            className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
+                            className="w-full bg-[#F6F2EC] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
                         />
-                        <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 15 Characters</p>
+                        <p className="text-[#A69D93] text-[10px] mt-1.5 ml-1">Character Limit : 15 Characters</p>
                       </div>
 
                       {/* Description */}
@@ -655,9 +655,9 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Describe the moment"
                             rows={3}
-                            className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none leading-relaxed"
+                            className="w-full bg-[#F6F2EC] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none leading-relaxed"
                         />
-                         <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 2 lines</p>
+                         <p className="text-[#A69D93] text-[10px] mt-1.5 ml-1">Character Limit : 2 lines</p>
                       </div>
 
                       {/* Media Section */}
@@ -686,7 +686,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                     </button>
                                 )}
                           </div>
-                          <p className="text-[#A68CAB] text-[10px] mb-3 ml-1">You can add and edit media later.</p>
+                          <p className="text-[#A69D93] text-[10px] mb-3 ml-1">You can add and edit media later.</p>
 
 
                         
@@ -719,7 +719,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                       <div>
                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Date<span className="text-[#C27A59]">*</span></label>
                            <div className="relative">
-                                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#556B5A] font-medium appearance-none" />
+                                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#F6F2EC] border-none rounded-xl p-4 pl-12 text-[#556B5A] font-medium appearance-none" />
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#556B5A]"><Calendar className="w-5 h-5" /></div>
                            </div>
                       </div>
@@ -728,7 +728,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                        <div>
                            <label className="block text-[#556B5A] text-[13px] font-bold mb-2">Time</label>
                            <div className="relative">
-                                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#556B5A] font-medium appearance-none" />
+                                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-[#F6F2EC] border-none rounded-xl p-4 pl-12 text-[#556B5A] font-medium appearance-none" />
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#556B5A]"><Clock className="w-5 h-5" /></div>
                            </div>
                       </div>
@@ -737,7 +737,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                       <div>
                            <label className="block text-[#556B5A] text-[13px] font-bold mb-2">Location</label>
                            <div className="relative">
-                                <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#556B5A] font-medium" placeholder="Select location" />
+                                <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-[#F6F2EC] border-none rounded-xl p-4 pl-12 text-[#556B5A] font-medium" placeholder="Select location" />
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#556B5A]"><MapPin className="w-5 h-5" /></div>
                            </div>
                       </div>
@@ -745,12 +745,12 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                         {/* People */}
                         <div className="mb-6">
                             <label className="block text-[#556B5A] text-[13px] font-bold mb-1">People</label>
-                            <p className="text-[#A68CAB] text-[10px] mb-3">Who was there with you?</p>
+                            <p className="text-[#A69D93] text-[10px] mb-3">Who was there with you?</p>
 
                             <button
                                 type="button"
                                 onClick={() => setShowPeopleSelector(!showPeopleSelector)}
-                                className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-left flex items-center justify-between"
+                                className="w-full bg-[#F6F2EC] border border-[#E6DED1] rounded-xl p-4 text-left flex items-center justify-between"
                             >
                                 <div className="flex items-center gap-2">
                                     <Users className="w-5 h-5 text-[#556B5A]/40" />
@@ -842,7 +842,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                 {/* Emotions */}
                                 <div>
                                     <label className="block text-[#556B5A] text-[13px] font-bold mb-1">How did you feel in the moment ?</label>
-                                    <p className="text-[#A68CAB] text-[10px] mb-3">What did you feel in that moment? Choose all that apply.</p>
+                                    <p className="text-[#A69D93] text-[10px] mb-3">What did you feel in that moment? Choose all that apply.</p>
                                     <div className="flex flex-wrap gap-2">
                                         {EMOTIONS.map(emotion => (
                                             <button
@@ -852,7 +852,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                     selectedEmotions.includes(emotion)
                                                     ? 'bg-[#556B5A] text-white border-[#556B5A]'
-                                                    : 'bg-[#FFF5F0] text-[#556B5A] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                                    : 'bg-[#F6F2EC] text-[#556B5A] border-[#E6DED1] hover:bg-[#F2E6DE]'
                                                 }`}
                                             >
                                                 {emotion}
@@ -881,13 +881,13 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 onBlur={addCustomEmotion}
                                                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEmotion())}
                                                 placeholder="Type..."
-                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#556B5A] border border-[#C27A59] outline-none min-w-[80px]"
+                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#F6F2EC] text-[#556B5A] border border-[#C27A59] outline-none min-w-[80px]"
                                             />
                                         ) : (
                                             <button 
                                                 type="button"
                                                 onClick={() => setShowCustomEmotion(true)}
-                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#F6F2EC] text-[#A69D93] border border-[#E6DED1] flex items-center gap-1 hover:bg-[#F2E6DE]"
                                             >
                                                 Other <Plus className="w-3 h-3" />
                                             </button>
@@ -898,7 +898,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                 {/* Mood */}
                                 <div>
                                     <label className="block text-[#556B5A] text-[13px] font-bold mb-1">Select a vibe that captures your memory</label>
-                                    <p className="text-[#A68CAB] text-[10px] mb-3">Pick a mood that fits the vibe of the memory best.</p>
+                                    <p className="text-[#A69D93] text-[10px] mb-3">Pick a mood that fits the vibe of the memory best.</p>
                                     <div className="flex flex-wrap gap-2">
                                         {MOODS.map(mood => (
                                             <button
@@ -908,7 +908,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                     selectedMood === mood
                                                     ? 'bg-[#556B5A] text-white border-[#556B5A]'
-                                                    : 'bg-[#FFF5F0] text-[#556B5A] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                                    : 'bg-[#F6F2EC] text-[#556B5A] border-[#E6DED1] hover:bg-[#F2E6DE]'
                                                 }`}
                                             >
                                                 {mood}
@@ -936,14 +936,14 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 onBlur={addCustomMood}
                                                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomMood())}
                                                 placeholder="Type mood..."
-                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#556B5A] border border-[#C27A59] outline-none min-w-[100px]"
+                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#F6F2EC] text-[#556B5A] border border-[#C27A59] outline-none min-w-[100px]"
                                             />
                                         ) : (
                                             !selectedMood || MOODS.includes(selectedMood) ? (
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setShowCustomMood(true)}
-                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#A68CAB] border border-[#FBE0D6] flex items-center gap-1 hover:bg-[#F8E9F0]"
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#F6F2EC] text-[#A69D93] border border-[#E6DED1] flex items-center gap-1 hover:bg-[#F2E6DE]"
                                                 >
                                                     Other <Plus className="w-3 h-3" />
                                                 </button>
@@ -973,10 +973,10 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                              </div>
                              
                              <div className="flex gap-4">
-                                  <button onClick={handleDelete} className="flex-1 bg-[#FBE0D6] rounded-xl py-3 flex items-center justify-center gap-2 text-[#C27A59] font-bold text-[11px]">
+                                  <button onClick={handleDelete} className="flex-1 bg-[#E6DED1] rounded-xl py-3 flex items-center justify-center gap-2 text-[#C27A59] font-bold text-[11px]">
                                       <Trash2 className="w-5 h-5" /> Delete memory
                                   </button>
-                                  <button className="flex-1 bg-[#FFF5F0] rounded-xl py-3 flex items-center justify-center gap-2 text-[#556B5A] font-bold text-[11px]">
+                                  <button className="flex-1 bg-[#F6F2EC] rounded-xl py-3 flex items-center justify-center gap-2 text-[#556B5A] font-bold text-[11px]">
                                       <Archive className="w-5 h-5" /> Archive memory
                                   </button>
                              </div>
@@ -1004,11 +1004,11 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                  className="bg-white rounded-[32px] p-8 w-full max-w-sm shadow-2xl pointer-events-auto"
                              >
                                  <div className="flex flex-col items-center text-center">
-                                     <div className="w-20 h-20 rounded-full bg-[#FBE0D6] flex items-center justify-center mb-6">
+                                     <div className="w-20 h-20 rounded-full bg-[#E6DED1] flex items-center justify-center mb-6">
                                          <Trash2 className="w-10 h-10 text-[#C27A59]" />
                                      </div>
                                      <h3 className="text-[#556B5A] text-2xl font-black uppercase mb-2">Delete this memory?</h3>
-                                     <p className="text-[#A68CAB] text-sm leading-relaxed mb-8">
+                                     <p className="text-[#A69D93] text-sm leading-relaxed mb-8">
                                          This action is permanent and will remove this memory from your collection.
                                      </p>
 

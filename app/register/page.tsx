@@ -29,7 +29,7 @@ export default function RegisterPage() {
             <div className="w-20 h-20 mb-4 relative flex items-center justify-center">
                 <Image src="/logo.png" alt="Candyd Logo" fill className="object-contain" />
             </div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary-purple">
+          <h1 className="text-3xl font-bold tracking-tight text-primary-green-dark">
             Create an account
           </h1>
           <p className="mt-2 text-sm text-text-gray">
@@ -48,7 +48,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
+                className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5"
               >
                 Full name
               </label>
@@ -58,7 +58,7 @@ export default function RegisterPage() {
                 type="text"
                 autoComplete="name"
                 required
-                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm"
                 placeholder="John Doe"
               />
             </div>
@@ -66,7 +66,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
+                className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5"
               >
                 Email address
               </label>
@@ -76,7 +76,7 @@ export default function RegisterPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm"
                 placeholder="you@example.com"
               />
             </div>
@@ -84,7 +84,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="contact"
-                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
+                className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5"
               >
                 Phone number (optional)
               </label>
@@ -93,7 +93,7 @@ export default function RegisterPage() {
                 name="contact"
                 type="tel"
                 autoComplete="tel"
-                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm"
                 placeholder="+1 234 567 8900"
               />
             </div>
@@ -101,7 +101,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-primary-purple ml-3 mb-1.5"
+                className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5"
               >
                 Password
               </label>
@@ -112,7 +112,7 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 required
                 minLength={6}
-                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 text-foreground placeholder-text-gray/40 focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm"
                 placeholder="••••••••"
               />
             </div>
@@ -124,7 +124,7 @@ export default function RegisterPage() {
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-bold text-primary-purple hover:underline"
+              className="font-bold text-primary-green-dark hover:underline"
             >
               Sign in
             </Link>
@@ -142,7 +142,7 @@ function RegisterButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-2xl bg-primary-purple px-4 py-3.5 text-sm font-bold text-white hover:bg-primary-purple/90 focus:outline-none focus:ring-4 focus:ring-primary-purple/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary-purple/20 active:scale-[0.98]"
+      className="w-full rounded-2xl bg-primary-green-dark px-4 py-3.5 text-sm font-bold text-white hover:bg-primary-green-dark/90 focus:outline-none focus:ring-4 focus:ring-primary-green-dark/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary-green-dark/20 active:scale-[0.98]"
     >
       {pending ? "Creating account..." : "Create account"}
     </button>

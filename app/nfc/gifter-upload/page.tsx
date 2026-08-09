@@ -355,7 +355,7 @@ function GifterUploadContent() {
                                     <Gift className="w-7 h-7 text-[#7C9A86] mt-1" />
                                     <div>
                                         <h1 className="text-2xl font-black text-[#556B5A] uppercase leading-none">PRE-LOAD GIFT</h1>
-                                        <p className="text-[#A68CAB] text-[10px] font-bold uppercase mt-1">For {product.name}</p>
+                                        <p className="text-[#A69D93] text-[10px] font-bold uppercase mt-1">For {product.name}</p>
                                     </div>
                                 </div>
                                 <button onClick={() => setViewMode('gallery')} className="p-2 bg-white rounded-full shadow-sm text-[#556B5A]"><LayoutGrid className="w-5 h-5" /></button>

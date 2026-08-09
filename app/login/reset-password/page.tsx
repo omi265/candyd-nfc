@@ -64,7 +64,7 @@ function ResetPasswordContent() {
             <div className="w-20 h-20 mb-4 relative flex items-center justify-center">
                 <Image src="/logo.png" alt="Candyd Logo" fill className="object-contain" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary-purple">
+            <h1 className="text-3xl font-bold tracking-tight text-primary-green-dark">
                 {isSuccess ? "Password updated" : "Reset password"}
             </h1>
             <p className="mt-2 text-sm text-text-gray">
@@ -84,59 +84,59 @@ function ResetPasswordContent() {
                 )}
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-primary-purple ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
+                        <label className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
                             Email Address
                         </label>
                         <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-purple/20" />
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-green-dark/20" />
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm"
                                 placeholder="you@example.com"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-primary-purple ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
+                        <label className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
                             6-Digit Code
                         </label>
                         <div className="relative">
-                            <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-purple/20" />
+                            <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-green-dark/20" />
                             <input
                                 type="text"
                                 value={otp}
                                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                                 required
                                 maxLength={6}
-                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm tracking-[0.5em] font-mono text-lg"
+                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm tracking-[0.5em] font-mono text-lg"
                                 placeholder="000000"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-primary-purple ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
+                        <label className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
                             New Password
                         </label>
                         <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-purple/20" />
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-green-dark/20" />
                             <input
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 minLength={6}
-                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm"
                                 placeholder="••••••••"
                             />
                             <button 
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-primary-purple/40"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-primary-green-dark/40"
                             >
                                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
@@ -144,17 +144,17 @@ function ResetPasswordContent() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-primary-purple ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
+                        <label className="block text-sm font-medium text-primary-green-dark ml-3 mb-1.5 uppercase tracking-wider text-[10px]">
                             Confirm Password
                         </label>
                         <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-purple/20" />
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-green-dark/20" />
                             <input
                                 type={showPassword ? "text" : "password"}
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
-                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-purple/20 transition-all outline-none shadow-sm"
+                                className="block w-full rounded-2xl border-none bg-white px-5 py-3.5 pl-12 text-foreground focus:ring-2 focus:ring-primary-green-dark/20 transition-all outline-none shadow-sm"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -164,7 +164,7 @@ function ResetPasswordContent() {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full rounded-2xl bg-primary-purple px-4 py-3.5 text-sm font-bold text-white hover:bg-primary-purple/90 transition-all shadow-lg flex items-center justify-center gap-2"
+                    className="w-full rounded-2xl bg-primary-green-dark px-4 py-3.5 text-sm font-bold text-white hover:bg-primary-green-dark/90 transition-all shadow-lg flex items-center justify-center gap-2"
                 >
                     {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Reset Password"}
                 </button>
@@ -180,7 +180,7 @@ function ResetPasswordContent() {
                 <div className="pt-4">
                     <Link
                         href="/login"
-                        className="w-full inline-block rounded-2xl bg-primary-purple px-4 py-3.5 text-sm font-bold text-white"
+                        className="w-full inline-block rounded-2xl bg-primary-green-dark px-4 py-3.5 text-sm font-bold text-white"
                     >
                         Login Now
                     </Link>
@@ -194,7 +194,7 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-transparent px-4 font-[family-name:var(--font-outfit)]">
-        <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin text-primary-purple" />}>
+        <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin text-primary-green-dark" />}>
             <ResetPasswordContent />
         </Suspense>
     </div>

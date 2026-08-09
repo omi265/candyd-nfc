@@ -317,7 +317,7 @@ export default function FullOnboardingTour() {
                       <toggle.icon className="w-5 h-5 text-[#556B5A]" />
                       <div>
                          <p className="text-sm font-bold text-[#556B5A]">{toggle.label}</p>
-                         <p className="text-[10px] text-[#A68CAB]">{toggle.desc}</p>
+                         <p className="text-[10px] text-[#A69D93]">{toggle.desc}</p>
                       </div>
                    </div>
                    <div className={`w-10 h-6 rounded-full p-1 transition-colors ${toggle.active ? 'bg-[#7C9A86]' : 'bg-gray-200'} flex items-center ${toggle.active ? 'justify-end' : 'justify-start'}`}>
@@ -326,8 +326,8 @@ export default function FullOnboardingTour() {
                 </div>
               ))}
               <div className="flex items-center justify-center pt-4">
-                 <Lock className="w-4 h-4 text-[#A68CAB] mr-2" />
-                 <span className="text-[10px] font-bold text-[#A68CAB] uppercase">Your Privacy is Priority</span>
+                 <Lock className="w-4 h-4 text-[#A69D93] mr-2" />
+                 <span className="text-[10px] font-bold text-[#A69D93] uppercase">Your Privacy is Priority</span>
               </div>
            </div>
         </div>
@@ -418,7 +418,7 @@ export default function FullOnboardingTour() {
               
               <button 
                 onClick={handleComplete}
-                className="w-full text-center mt-6 text-[#A68CAB] text-[10px] font-black uppercase tracking-widest hover:text-[#556B5A] transition-colors"
+                className="w-full text-center mt-6 text-[#A69D93] text-[10px] font-black uppercase tracking-widest hover:text-[#556B5A] transition-colors"
               >
                 Skip Tour
               </button>

@@ -72,7 +72,7 @@ export default function AudioPlayer({ src, className = "" }: AudioPlayerProps) {
 
   return (
     <div 
-        className={`bg-[#FFF5F0] rounded-2xl p-4 flex items-center gap-4 cursor-pointer ${className}`}
+        className={`bg-[#F6F2EC] rounded-2xl p-4 flex items-center gap-4 cursor-pointer ${className}`}
         onClick={togglePlay}
     >
       <audio ref={audioRef} src={src} preload="metadata" className="hidden" />
@@ -114,7 +114,7 @@ export default function AudioPlayer({ src, className = "" }: AudioPlayerProps) {
       </div>
 
        {/* Time Indicator (Optional, if space allows or desired) */}
-       {/* <div className="text-[10px] text-[#A68CAB] font-medium shrink-0 w-8 text-right">
+       {/* <div className="text-[10px] text-[#A69D93] font-medium shrink-0 w-8 text-right">
            {formatTime(currentTime)}
        </div> */}
        

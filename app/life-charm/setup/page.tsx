@@ -71,7 +71,7 @@ const Card = ({ card, isFront, onSwipe, direction }: { card: CardData, isFront: 
         onDragEnd={handleDragEnd}
         className={`w-full h-full bg-white rounded-[40px] shadow-2xl border-2 border-[#556B5A]/5 flex flex-col items-center justify-center p-6 origin-bottom ${isFront ? 'touch-none cursor-grab active:cursor-grabbing pointer-events-auto' : ''}`}
       >
-         <motion.div style={{ opacity: skipOpacity, willChange: "opacity" }} className="absolute top-6 left-6 text-[#A68CAB] font-black text-xl border-4 border-[#A68CAB] rounded-xl px-3 py-1.5 rotate-[-15deg] z-10 pointer-events-none bg-white">
+         <motion.div style={{ opacity: skipOpacity, willChange: "opacity" }} className="absolute top-6 left-6 text-[#A69D93] font-black text-xl border-4 border-[#A69D93] rounded-xl px-3 py-1.5 rotate-[-15deg] z-10 pointer-events-none bg-white">
            PASS
          </motion.div>
          <motion.div style={{ opacity: addOpacity, willChange: "opacity" }} className="absolute top-6 right-6 text-[#7C9A86] font-black text-xl border-4 border-[#7C9A86] rounded-xl px-3 py-1.5 rotate-[15deg] z-10 pointer-events-none bg-white">
@@ -202,7 +202,7 @@ export default function LifeCharmSetupPage() {
              </div>
 
              <div className="flex items-center justify-center gap-6 w-full max-w-sm mb-2 z-10 shrink-0">
-                <button onClick={() => handleSwipe("left")} disabled={cards.length === 0} className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all text-[#A68CAB] disabled:opacity-50 border border-[#E6DED1]">
+                <button onClick={() => handleSwipe("left")} disabled={cards.length === 0} className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all text-[#A69D93] disabled:opacity-50 border border-[#E6DED1]">
                    <X className="w-7 h-7" />
                 </button>
                 <button onClick={() => setPhase("review")} className="w-14 h-14 bg-[#556B5A]/10 rounded-full flex items-center justify-center text-[#556B5A] text-[10px] font-black uppercase tracking-widest hover:scale-110 active:scale-95 transition-all shadow-sm">

@@ -502,7 +502,7 @@ function RitualCard({ type, habits, onBegin, onPause, onManage }: { type: Ritual
                     className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-0"
                     viewBox="0 0 100 100"
                 >
-                    <circle cx="50" cy="50" r="46" fill="none" stroke={isDone ? "rgba(255,255,255,0.2)" : "rgba(91, 45, 125, 0.05)"} strokeWidth="6" />
+                    <circle cx="50" cy="50" r="46" fill="none" stroke={isDone ? "rgba(255,255,255,0.2)" : "rgba(85, 107, 90, 0.05)"} strokeWidth="6" />
                     {!isDone && isPartial && (
                         <motion.circle
                             cx="50" cy="50" r="46" fill="none"
@@ -1752,7 +1752,7 @@ function HabitCard({ habit, router }: { habit: HabitWithLogs, router: any }) {
                         className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-0"
                         viewBox="0 0 100 100"
                     >
-                        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(91, 45, 125, 0.05)" strokeWidth="6" />
+                        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(85, 107, 90, 0.05)" strokeWidth="6" />
                         <motion.circle
                             cx="50" cy="50" r="46" fill="none"
                             stroke={isLogged ? (todayLog?.logType === 'DONE' ? "#7C9A86" : "#EAB308") : "#556B5A"}
