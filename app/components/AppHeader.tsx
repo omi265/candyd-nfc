@@ -12,7 +12,7 @@ import { haptics } from "@/lib/haptics";
 
 function Logo() {
   return (
-    <div className="w-10 h-10 flex items-center justify-center relative">
+    <div className="w-20 h-20 flex items-center justify-center relative">
       <Image
         src="/green_logo.png"
         alt="OUR DVE Logo"

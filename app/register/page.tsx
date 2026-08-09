@@ -26,7 +26,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-transparent px-4 font-[family-name:var(--font-outfit)]">
       <div className="w-full max-w-md space-y-8 bg-white/40 backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-white/50">
         <div className="flex flex-col items-center text-center">
-            <div className="w-32 h-32 mb-2 relative flex items-center justify-center">
+            <div className="w-64 h-64 -mb-4 relative flex items-center justify-center">
                 <Image src="/green_logo.png" alt="OUR DVE Logo" fill className="object-contain" priority />
             </div>
           <h1 className="text-3xl font-bold tracking-tight text-[#556B5A]">
