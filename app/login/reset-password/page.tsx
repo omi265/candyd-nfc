@@ -62,7 +62,7 @@ function ResetPasswordContent() {
     <div className="w-full max-w-md space-y-8 bg-white/40 backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-white/50">
         <div className="flex flex-col items-center text-center">
             <div className="w-20 h-20 mb-4 relative flex items-center justify-center">
-                <Image src="/logo.png" alt="Candyd Logo" fill className="object-contain" />
+                <Image src="/green_logo.png" alt="Candyd Logo" fill className="object-contain" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-primary-green-dark">
                 {isSuccess ? "Password updated" : "Reset password"}

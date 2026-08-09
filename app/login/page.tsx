@@ -23,7 +23,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8 bg-white/40 backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-white/50">
         <div className="flex flex-col items-center text-center">
             <div className="w-32 h-32 mb-2 relative flex items-center justify-center">
-                <Image src="/logo.png" alt="OUR DVE Logo" fill className="object-contain" priority />
+                <Image src="/green_logo.png" alt="OUR DVE Logo" fill className="object-contain" priority />
             </div>
           <h1 className="text-3xl font-bold tracking-tight text-[#556B5A]">
             Welcome back
