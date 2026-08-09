@@ -23,7 +23,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
           key="splash"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.22, ease: "easeOut" } }}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#5B2D7D] overflow-hidden"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#556B5A] overflow-hidden"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(255,255,255,0.12),transparent_38%)] pointer-events-none" />
 
@@ -58,13 +58,13 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
                     />
 
                     {/* 2. The Solid Inner Body with App Gradient Background */}
-                    <div className="absolute inset-[10px] bg-[#FDF2EC] flex flex-col items-center justify-center overflow-hidden">
+                    <div className="absolute inset-[10px] bg-[#F6F2EC] flex flex-col items-center justify-center overflow-hidden">
                         
                         {/* Replicating the App's Gradient/Glow internally */}
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(164,197,56,0.22),transparent_34%),radial-gradient(circle_at_18%_88%,rgba(91,45,125,0.16),transparent_38%)]" />
 
                         {/* Inner Decorative Borders */}
-                        <div className="absolute inset-3 border-2 border-[#5B2D7D]/5 rounded-sm" />
+                        <div className="absolute inset-3 border-2 border-[#556B5A]/5 rounded-sm" />
 
                         {/* Paper Texture Overlay */}
                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"

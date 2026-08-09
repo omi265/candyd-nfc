@@ -100,7 +100,7 @@ export function LifeCharmDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] font-[Outfit]">
+      <DrawerContent className="bg-[#F6F2EC]/45 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] font-[Outfit]">
         <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
           <DrawerHeader className="p-0">
             <DrawerTitle className="sr-only">
@@ -115,27 +115,27 @@ export function LifeCharmDrawer({
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 pr-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-[#5B2D7D]/10 flex items-center justify-center">
-                      <GraduationCap className="w-4 h-4 text-[#5B2D7D]" />
+                    <div className="w-8 h-8 rounded-full bg-[#556B5A]/10 flex items-center justify-center">
+                      <GraduationCap className="w-4 h-4 text-[#556B5A]" />
                     </div>
-                    <span className="text-xs font-medium text-[#5B2D7D]/60 uppercase tracking-wide">
+                    <span className="text-xs font-medium text-[#556B5A]/60 uppercase tracking-wide">
                       Life Charm
                     </span>
                   </div>
-                  <h1 className="text-[#5B2D7D] text-3xl font-bold leading-tight">
+                  <h1 className="text-[#556B5A] text-3xl font-bold leading-tight">
                     {lifeList?.name || lifeCharm.name || "My List"}
                   </h1>
                   {lifeList?.description && (
-                    <p className="text-[#5B2D7D]/70 text-sm mt-2 line-clamp-2">
+                    <p className="text-[#556B5A]/70 text-sm mt-2 line-clamp-2">
                       {lifeList.description}
                     </p>
                   )}
                 </div>
 
                 {isGraduated && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#A4C538]/20 rounded-full shrink-0">
-                    <GraduationCap className="w-4 h-4 text-[#A4C538]" />
-                    <span className="text-sm font-medium text-[#5B2D7D]">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#7C9A86]/20 rounded-full shrink-0">
+                    <GraduationCap className="w-4 h-4 text-[#7C9A86]" />
+                    <span className="text-sm font-medium text-[#556B5A]">
                       Graduated
                     </span>
                   </div>
@@ -145,28 +145,28 @@ export function LifeCharmDrawer({
               {/* Stats Row */}
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-black text-[#A4C538]">
+                  <span className="text-4xl font-black text-[#7C9A86]">
                     {stats.lived}
                   </span>
-                  <span className="text-lg text-[#5B2D7D]/60 pb-1">
+                  <span className="text-lg text-[#556B5A]/60 pb-1">
                     / {stats.total}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-[#5B2D7D]/60 uppercase tracking-wide">
+                  <span className="text-xs text-[#556B5A]/60 uppercase tracking-wide">
                     Experiences
                   </span>
-                  <span className="text-xs text-[#5B2D7D]/60">Lived</span>
+                  <span className="text-xs text-[#556B5A]/60">Lived</span>
                 </div>
-                <div className="ml-auto text-2xl font-bold text-[#5B2D7D]">
+                <div className="ml-auto text-2xl font-bold text-[#556B5A]">
                   {stats.percentage}%
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full h-5 bg-[#EADDDE] rounded-full overflow-hidden">
+              <div className="w-full h-5 bg-[#E6DED1] rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-[#A4C538] rounded-full"
+                  className="h-full bg-[#7C9A86] rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${stats.percentage}%` }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
@@ -179,8 +179,8 @@ export function LifeCharmDrawer({
           <div className="px-6 mt-4 space-y-3">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Sparkles className="w-12 h-12 text-[#5B2D7D]/20 mb-4" />
-                <p className="text-[#5B2D7D]/60 text-sm">
+                <Sparkles className="w-12 h-12 text-[#556B5A]/20 mb-4" />
+                <p className="text-[#556B5A]/60 text-sm">
                   Your list is empty. Start adding experiences!
                 </p>
               </div>
@@ -204,7 +204,7 @@ export function LifeCharmDrawer({
                 {!isGraduated && (
                   <button
                     onClick={handleAddItem}
-                    className="w-full bg-[#A4C538] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
+                    className="w-full bg-[#7C9A86] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#95b330] transition-colors"
                   >
                     <Plus className="w-5 h-5" />
                     Add to list
@@ -213,7 +213,7 @@ export function LifeCharmDrawer({
 
                 <button
                   onClick={handleViewFullList}
-                  className="w-full bg-[#5B2D7D] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#4a2466] transition-colors"
+                  className="w-full bg-[#556B5A] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#4a2466] transition-colors"
                 >
                   View full list
                   <ArrowRight className="w-5 h-5" />
@@ -222,7 +222,7 @@ export function LifeCharmDrawer({
             ) : (
               <button
                 onClick={() => onOpenChange(false)}
-                className="w-full bg-[#5B2D7D] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#4a2466] transition-colors"
+                className="w-full bg-[#556B5A] py-4 rounded-full flex items-center justify-center gap-2 text-white font-bold text-sm shadow-lg hover:bg-[#4a2466] transition-colors"
               >
                 Close
               </button>
@@ -257,20 +257,20 @@ function ListItemCard({
         {/* Status Icon */}
         <div
           className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
-            isLived ? "bg-[#A4C538]" : "border-2 border-[#5B2D7D]/30"
+            isLived ? "bg-[#7C9A86]" : "border-2 border-[#556B5A]/30"
           }`}
         >
           {isLived ? (
             <Check className="w-4 h-4 text-white" />
           ) : (
-            <Circle className="w-3 h-3 text-[#5B2D7D]/30" />
+            <Circle className="w-3 h-3 text-[#556B5A]/30" />
           )}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <h3
-            className={`font-semibold text-[#5B2D7D] text-sm ${
+            className={`font-semibold text-[#556B5A] text-sm ${
               isLived ? "line-through opacity-60" : ""
             }`}
           >
@@ -281,7 +281,7 @@ function ListItemCard({
           <div className="flex flex-wrap gap-1.5 mt-2">
             {/* Show experience people for lived items, otherwise item people */}
             {isLived && item.experience?.peopleIds && item.experience.peopleIds.length > 0 ? (
-              <div className="flex items-center gap-1 text-[10px] text-white font-medium bg-[#5B2D7D] px-2 py-0.5 rounded-full">
+              <div className="flex items-center gap-1 text-[10px] text-white font-medium bg-[#556B5A] px-2 py-0.5 rounded-full">
                 <Users className="w-3 h-3" />
                 <span>
                   {item.experience.peopleIds
@@ -292,7 +292,7 @@ function ListItemCard({
                 </span>
               </div>
             ) : item.peopleIds && item.peopleIds.length > 0 ? (
-              <div className="flex items-center gap-1 text-[10px] text-[#5B2D7D] bg-[#5B2D7D]/10 px-2 py-0.5 rounded-full">
+              <div className="flex items-center gap-1 text-[10px] text-[#556B5A] bg-[#556B5A]/10 px-2 py-0.5 rounded-full">
                 <Users className="w-3 h-3" />
                 <span>
                   {item.peopleIds
@@ -305,7 +305,7 @@ function ListItemCard({
             ) : null}
 
             {isLived && item.livedAt && (
-              <div className="flex items-center gap-1 text-[10px] text-[#A4C538] font-medium bg-[#A4C538]/10 px-2 py-0.5 rounded-full">
+              <div className="flex items-center gap-1 text-[10px] text-[#7C9A86] font-medium bg-[#7C9A86]/10 px-2 py-0.5 rounded-full">
                 <Calendar className="w-3 h-3" />
                 {new Date(item.livedAt).toLocaleDateString()}
               </div>
@@ -338,13 +338,13 @@ function ListItemCard({
                   </div>
                 </>
               ) : (
-                <div className="w-full h-full bg-[#EADDDE] flex items-center justify-center">
+                <div className="w-full h-full bg-[#E6DED1] flex items-center justify-center">
                   <span className="text-lg">🎵</span>
                 </div>
               )}
             </div>
           ) : (
-            <ChevronRight className="w-5 h-5 text-[#5B2D7D]/30" />
+            <ChevronRight className="w-5 h-5 text-[#556B5A]/30" />
           )}
         </div>
       </div>

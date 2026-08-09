@@ -93,7 +93,7 @@ export default function GraduatePage() {
   if (!charmId || !stats) {
     return (
       <div className="min-h-dvh bg-transparent flex items-center justify-center">
-        <div className="animate-pulse text-[#5B2D7D]">Loading...</div>
+        <div className="animate-pulse text-[#556B5A]">Loading...</div>
       </div>
     );
   }
@@ -101,14 +101,14 @@ export default function GraduatePage() {
   return (
     <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
       {/* Header */}
-      <header className="flex items-center gap-4 px-6 py-4 border-b border-[#5B2D7D]/10">
+      <header className="flex items-center gap-4 px-6 py-4 border-b border-[#556B5A]/10">
         <button
           onClick={() => router.back()}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
         >
-          <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
+          <ArrowLeft className="w-5 h-5 text-[#556B5A]" />
         </button>
-        <h1 className="text-xl font-bold text-[#5B2D7D]">
+        <h1 className="text-xl font-bold text-[#556B5A]">
           {isGraduated ? "Chapter Complete" : "Close Chapter"}
         </h1>
       </header>
@@ -120,13 +120,13 @@ export default function GraduatePage() {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
-            isGraduated ? "bg-[#A4C538]" : "bg-[#E8DCF0]"
+            isGraduated ? "bg-[#7C9A86]" : "bg-[#F2E6DE]"
           }`}
         >
           {isGraduated ? (
             <Trophy className="w-12 h-12 text-white" />
           ) : (
-            <GraduationCap className="w-12 h-12 text-[#5B2D7D]" />
+            <GraduationCap className="w-12 h-12 text-[#556B5A]" />
           )}
         </motion.div>
 
@@ -136,12 +136,12 @@ export default function GraduatePage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h2 className="text-2xl font-bold text-[#5B2D7D] mb-2">
+          <h2 className="text-2xl font-bold text-[#556B5A] mb-2">
             {isGraduated
               ? "This chapter is complete!"
               : "Ready to close this chapter?"}
           </h2>
-          <p className="text-[#5B2D7D]/60">
+          <p className="text-[#556B5A]/60">
             {isGraduated
               ? `"${productName}" has been graduated`
               : "Graduation marks the end of a beautiful season"}
@@ -155,41 +155,41 @@ export default function GraduatePage() {
           transition={{ delay: 0.1 }}
           className="bg-white rounded-2xl p-6 shadow-sm mb-6"
         >
-          <h3 className="text-sm font-medium text-[#5B2D7D]/60 mb-4">
+          <h3 className="text-sm font-medium text-[#556B5A]/60 mb-4">
             Your Journey
           </h3>
 
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#A4C538]">
+              <div className="text-3xl font-bold text-[#7C9A86]">
                 {stats.lived}
               </div>
-              <div className="text-xs text-[#5B2D7D]/60">Lived</div>
+              <div className="text-xs text-[#556B5A]/60">Lived</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#5B2D7D]/40">
+              <div className="text-3xl font-bold text-[#556B5A]/40">
                 {stats.pending}
               </div>
-              <div className="text-xs text-[#5B2D7D]/60">Pending</div>
+              <div className="text-xs text-[#556B5A]/60">Pending</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#5B2D7D]">
+              <div className="text-3xl font-bold text-[#556B5A]">
                 {stats.total}
               </div>
-              <div className="text-xs text-[#5B2D7D]/60">Total</div>
+              <div className="text-xs text-[#556B5A]/60">Total</div>
             </div>
           </div>
 
           {/* Progress bar */}
-          <div className="w-full h-3 bg-[#EADDDE] rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-[#E6DED1] rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-[#A4C538] rounded-full"
+              className="h-full bg-[#7C9A86] rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${stats.percentComplete}%` }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </div>
-          <p className="text-center text-sm text-[#5B2D7D]/60 mt-2">
+          <p className="text-center text-sm text-[#556B5A]/60 mt-2">
             {stats.percentComplete}% complete
           </p>
         </motion.div>
@@ -204,8 +204,8 @@ export default function GraduatePage() {
           >
             <div className="flex gap-3">
               <Sparkles className="w-5 h-5 text-[#F37B55] shrink-0 mt-0.5" />
-              <div className="text-sm text-[#5B2D7D]/70">
-                <p className="font-medium text-[#5B2D7D] mb-1">
+              <div className="text-sm text-[#556B5A]/70">
+                <p className="font-medium text-[#556B5A] mb-1">
                   What happens when you graduate?
                 </p>
                 <ul className="space-y-1">
@@ -225,14 +225,14 @@ export default function GraduatePage() {
           <button
             onClick={handleReopen}
             disabled={isPending}
-            className="w-full py-4 bg-white border-2 border-[#5B2D7D]/20 text-[#5B2D7D] rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 hover:border-[#5B2D7D]/40 transition-colors disabled:opacity-50"
+            className="w-full py-4 bg-white border-2 border-[#556B5A]/20 text-[#556B5A] rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 hover:border-[#556B5A]/40 transition-colors disabled:opacity-50"
           >
             {isPending ? "Reopening..." : "Reopen this chapter"}
           </button>
         ) : (
           <button
             onClick={() => setShowConfirm(true)}
-            className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#93B132] transition-colors"
+            className="w-full py-4 bg-[#7C9A86] text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#556B5A] transition-colors"
           >
             <GraduationCap className="w-5 h-5" />
             Graduate
@@ -241,7 +241,7 @@ export default function GraduatePage() {
 
         <button
           onClick={() => router.back()}
-          className="w-full py-3 text-[#5B2D7D]/60 font-medium"
+          className="w-full py-3 text-[#556B5A]/60 font-medium"
         >
           Back to list
         </button>
@@ -255,13 +255,13 @@ export default function GraduatePage() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-2xl p-6 max-w-sm w-full"
           >
-            <div className="w-16 h-16 bg-[#E8DCF0] rounded-full flex items-center justify-center mx-auto mb-4">
-              <GraduationCap className="w-8 h-8 text-[#5B2D7D]" />
+            <div className="w-16 h-16 bg-[#F2E6DE] rounded-full flex items-center justify-center mx-auto mb-4">
+              <GraduationCap className="w-8 h-8 text-[#556B5A]" />
             </div>
-            <h3 className="text-lg font-bold text-[#5B2D7D] text-center mb-2">
+            <h3 className="text-lg font-bold text-[#556B5A] text-center mb-2">
               Close this chapter?
             </h3>
-            <p className="text-[#5B2D7D]/60 text-center mb-6">
+            <p className="text-[#556B5A]/60 text-center mb-6">
               {stats.pending > 0
                 ? `You still have ${stats.pending} pending items. You can always reopen later.`
                 : "You've lived all your experiences! Time to celebrate."}
@@ -269,14 +269,14 @@ export default function GraduatePage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 py-3 bg-[#EADDDE] text-[#5B2D7D] rounded-xl font-medium"
+                className="flex-1 py-3 bg-[#E6DED1] text-[#556B5A] rounded-xl font-medium"
               >
                 Not yet
               </button>
               <button
                 onClick={handleGraduate}
                 disabled={isPending}
-                className="flex-1 py-3 bg-[#A4C538] text-white rounded-xl font-medium disabled:opacity-50"
+                className="flex-1 py-3 bg-[#7C9A86] text-white rounded-xl font-medium disabled:opacity-50"
               >
                 {isPending ? "..." : "Graduate"}
               </button>

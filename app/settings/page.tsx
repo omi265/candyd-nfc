@@ -17,7 +17,7 @@ function MenuItem({ icon, label, onClick, isLink = false, href = "#", showToggle
         <div className="flex items-center justify-between py-4 cursor-pointer" onClick={!isLink && !showToggle ? onClick : undefined}>
             <div className="flex items-center gap-4">
                 {icon}
-                <span className="text-[#5B2D7D] font-medium text-base">{label}</span>
+                <span className="text-[#556B5A] font-medium text-base">{label}</span>
             </div>
             {showToggle ? (
                  <div 
@@ -34,7 +34,7 @@ function MenuItem({ icon, label, onClick, isLink = false, href = "#", showToggle
                      />
                  </div>
             ) : (
-                <ChevronRight className="w-5 h-5 text-[#5B2D7D]" />
+                <ChevronRight className="w-5 h-5 text-[#556B5A]" />
             )}
         </div>
     );
@@ -59,16 +59,16 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-transparent font-[Outfit]">
             <main className="px-6 pb-12">
-                <h1 className="text-[#3E1C56] text-3xl font-bold mb-8">Settings</h1>
+                <h1 className="text-[#3A4B3E] text-3xl font-bold mb-8">Settings</h1>
 
                 {/* Profile Card */}
                 <div className="bg-[#FFF9F6] rounded-3xl p-4 flex items-center gap-4 mb-8 shadow-sm">
-                    <div className="w-16 h-16 rounded-full bg-[#EADDDE] flex items-center justify-center text-2xl font-bold text-[#5B2D7D] overflow-hidden">
+                    <div className="w-16 h-16 rounded-full bg-[#E6DED1] flex items-center justify-center text-2xl font-bold text-[#556B5A] overflow-hidden">
                         {/* Avatar Placeholder */}
                          <User className="w-8 h-8 text-[#9A92A6]" />
                     </div>
                     <div className="flex-1">
-                        <h2 className="text-[#3E1C56] font-semibold text-lg">{user?.name || "User"}</h2>
+                        <h2 className="text-[#3A4B3E] font-semibold text-lg">{user?.name || "User"}</h2>
                         <Link href="/settings/profile" className="text-[#9A92A6] text-sm flex items-center gap-1">
                             Edit Profile <ChevronRight className="w-4 h-4" />
                         </Link>
@@ -77,10 +77,10 @@ export default function SettingsPage() {
 
                 {/* Manage Section */}
                 <div className="mb-8">
-                    <h3 className="text-[#3E1C56] font-semibold text-lg mb-4">Manage</h3>
+                    <h3 className="text-[#3A4B3E] font-semibold text-lg mb-4">Manage</h3>
                     <div className="bg-[#FFF9F6] rounded-3xl px-6 py-2 shadow-sm">
                         <MenuItem 
-                            icon={<Sliders className="w-6 h-6 text-[#5B2D7D]" />} 
+                            icon={<Sliders className="w-6 h-6 text-[#556B5A]" />} 
                             label="Account Settings" 
                             isLink 
                             href="/settings/account" 
@@ -90,17 +90,17 @@ export default function SettingsPage() {
 
                 {/* Help & Support Section */}
                 <div className="mb-8">
-                    <h3 className="text-[#3E1C56] font-semibold text-lg mb-4">Help & Support</h3>
+                    <h3 className="text-[#3A4B3E] font-semibold text-lg mb-4">Help & Support</h3>
                     <div className="bg-[#FFF9F6] rounded-3xl px-6 py-2 shadow-sm space-y-0">
                         <MenuItem 
-                            icon={<Lock className="w-6 h-6 text-[#5B2D7D]" />} 
+                            icon={<Lock className="w-6 h-6 text-[#556B5A]" />} 
                             label="Privacy policy" 
                             isLink
                             href="/help/privacy"
                         />
-                         <div className="h-px bg-[#EADDDE] w-full" />
+                         <div className="h-px bg-[#E6DED1] w-full" />
                         <MenuItem 
-                            icon={<FileText className="w-6 h-6 text-[#5B2D7D]" />} 
+                            icon={<FileText className="w-6 h-6 text-[#556B5A]" />} 
                             label="Terms and conditions" 
                             isLink
                             href="/help/terms"

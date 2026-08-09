@@ -79,22 +79,22 @@ export default function ExperienceClient({
   return (
     <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-[#FDF2EC]/80 backdrop-blur-xl border-b border-[#5B2D7D]/5">
+      <header className="sticky top-0 z-30 bg-[#F6F2EC]/80 backdrop-blur-xl border-b border-[#556B5A]/5">
         <div className="flex items-center gap-4 px-6 py-4">
           <button
             onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
             className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
           >
-            <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
+            <ArrowLeft className="w-5 h-5 text-[#556B5A]" />
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              <Sparkles className="w-4 h-4 text-[#A4C538]" />
-              <span className="text-xs font-medium text-[#A4C538] uppercase tracking-wide">
+              <Sparkles className="w-4 h-4 text-[#7C9A86]" />
+              <span className="text-xs font-medium text-[#7C9A86] uppercase tracking-wide">
                 Experience
               </span>
             </div>
-            <h1 className="text-lg font-bold text-[#5B2D7D] truncate">
+            <h1 className="text-lg font-bold text-[#556B5A] truncate">
               {experience.item.title}
             </h1>
           </div>
@@ -102,7 +102,7 @@ export default function ExperienceClient({
             onClick={() => router.push(`/life-charm/experience/${experience.item.id}/edit?charmId=${charmId}`)}
             className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
           >
-            <Edit2 className="w-5 h-5 text-[#5B2D7D]" />
+            <Edit2 className="w-5 h-5 text-[#556B5A]" />
           </button>
         </div>
       </header>
@@ -114,8 +114,8 @@ export default function ExperienceClient({
           {/* Date & Location Tags */}
           <div className="flex flex-wrap gap-2 mb-4">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-sm">
-              <Calendar className="w-4 h-4 text-[#5B2D7D]" />
-              <span className="text-sm text-[#5B2D7D] font-medium">
+              <Calendar className="w-4 h-4 text-[#556B5A]" />
+              <span className="text-sm text-[#556B5A] font-medium">
                 {new Date(experience.date).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -126,8 +126,8 @@ export default function ExperienceClient({
 
             {experience.location && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-sm">
-                <MapPin className="w-4 h-4 text-[#5B2D7D]" />
-                <span className="text-sm text-[#5B2D7D] font-medium">
+                <MapPin className="w-4 h-4 text-[#556B5A]" />
+                <span className="text-sm text-[#556B5A] font-medium">
                   {experience.location}
                 </span>
               </div>
@@ -137,12 +137,12 @@ export default function ExperienceClient({
           {/* People */}
           {experience.peopleIds.length > 0 && (
             <div className="flex items-center gap-2 mb-6">
-              <Users className="w-4 h-4 text-[#5B2D7D]" />
+              <Users className="w-4 h-4 text-[#556B5A]" />
               <div className="flex flex-wrap gap-1.5">
                 {experience.peopleIds.map((id) => (
                   <span
                     key={id}
-                    className="px-3 py-1 bg-[#5B2D7D] rounded-full text-xs text-white font-medium"
+                    className="px-3 py-1 bg-[#556B5A] rounded-full text-xs text-white font-medium"
                   >
                     {getPersonName(id)}
                   </span>
@@ -160,11 +160,11 @@ export default function ExperienceClient({
             >
               <div className="flex gap-3">
                 <div className="shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-[#A4C538]/10 flex items-center justify-center">
-                    <Quote className="w-4 h-4 text-[#A4C538]" />
+                  <div className="w-8 h-8 rounded-full bg-[#7C9A86]/10 flex items-center justify-center">
+                    <Quote className="w-4 h-4 text-[#7C9A86]" />
                   </div>
                 </div>
-                <p className="text-[#5B2D7D] leading-relaxed italic flex-1">
+                <p className="text-[#556B5A] leading-relaxed italic flex-1">
                   &quot;{experience.reflection}&quot;
                 </p>
               </div>
@@ -188,7 +188,7 @@ export default function ExperienceClient({
                     onClick={() => openLightbox(index)}
                     className="w-full bg-white p-3 rounded-[32px] shadow-sm hover:shadow-md transition-shadow"
                   >
-                    <div className="relative aspect-square rounded-[24px] overflow-hidden bg-[#FDF2EC]">
+                    <div className="relative aspect-square rounded-[24px] overflow-hidden bg-[#F6F2EC]">
                       <Image
                         src={getOptimizedUrl(media.url, "image", 600)}
                         alt=""
@@ -216,14 +216,14 @@ export default function ExperienceClient({
                 )}
 
                 {media.type === "audio" && (
-                  <div className="bg-[#FFF5F0] p-4 rounded-[24px] shadow-sm border border-[#EADDDE]">
+                  <div className="bg-[#FFF5F0] p-4 rounded-[24px] shadow-sm border border-[#E6DED1]">
                     <AudioPlayer src={media.url} />
                   </div>
                 )}
               </motion.div>
             ))
           ) : (
-            <div className="w-full aspect-square rounded-[32px] bg-[#FFF5F0] border-2 border-dashed border-[#EADDDE] flex flex-col items-center justify-center text-[#A68CAB] gap-2">
+            <div className="w-full aspect-square rounded-[32px] bg-[#FFF5F0] border-2 border-dashed border-[#E6DED1] flex flex-col items-center justify-center text-[#A68CAB] gap-2">
               <ImageIcon className="w-8 h-8" />
               <span className="text-sm font-medium">No media added yet</span>
             </div>
@@ -301,7 +301,7 @@ export default function ExperienceClient({
 	                      poster={experience.media[selectedMediaIndex].posterUrl}
 	                    />
                   ) : (
-                    <div className="w-72 h-72 bg-gradient-to-br from-[#5B2D7D] to-[#3d1d54] rounded-3xl flex flex-col items-center justify-center">
+                    <div className="w-72 h-72 bg-gradient-to-br from-[#556B5A] to-[#3d1d54] rounded-3xl flex flex-col items-center justify-center">
                       <span className="text-7xl mb-4">🎵</span>
                       <span className="text-white/80 font-medium">Audio File</span>
                     </div>
@@ -344,7 +344,7 @@ export default function ExperienceClient({
 	                        </div>
 	                      </>
 	                    ) : (
-                      <div className="w-full h-full bg-[#5B2D7D] flex items-center justify-center">
+                      <div className="w-full h-full bg-[#556B5A] flex items-center justify-center">
                         <span className="text-lg">🎵</span>
                       </div>
                     )}

@@ -28,7 +28,7 @@ export function HabitCharmDrawer({ product, open, onOpenChange }: HabitCharmDraw
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-[#FDF2EC]/45 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] font-[Outfit]">
+      <DrawerContent className="bg-[#F6F2EC]/45 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] font-[Outfit]">
         <DrawerHeader className="sr-only">
             <DrawerTitle>Habit Charm</DrawerTitle>
             <DrawerDescription>{activeHabit ? "Track your habit" : "Setup your habit"}</DrawerDescription>
@@ -102,8 +102,8 @@ function HabitSetupContent({ product }: { product: any }) {
                             className="flex flex-col gap-6"
                         >
                             <div className="text-center">
-                                <h1 className="text-3xl font-bold text-[#5B2D7D]">What season are you in?</h1>
-                                <p className="text-[#5B2D7D]/60 mt-2">Choose an area to focus on gently.</p>
+                                <h1 className="text-3xl font-bold text-[#556B5A]">What season are you in?</h1>
+                                <p className="text-[#556B5A]/60 mt-2">Choose an area to focus on gently.</p>
                             </div>
 
                             <div className="grid grid-cols-1 gap-3">
@@ -120,10 +120,10 @@ function HabitSetupContent({ product }: { product: any }) {
                                             {area.icon}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-[#5B2D7D]">{area.title}</h3>
-                                            <p className="text-sm text-[#5B2D7D]/50">{area.description}</p>
+                                            <h3 className="font-bold text-[#556B5A]">{area.title}</h3>
+                                            <p className="text-sm text-[#556B5A]/50">{area.description}</p>
                                         </div>
-                                        <ArrowRight className="w-5 h-5 ml-auto text-[#5B2D7D]/30 group-hover:text-[#5B2D7D] transition-colors" />
+                                        <ArrowRight className="w-5 h-5 ml-auto text-[#556B5A]/30 group-hover:text-[#556B5A] transition-colors" />
                                     </button>
                                 ))}
                             </div>
@@ -139,11 +139,11 @@ function HabitSetupContent({ product }: { product: any }) {
                             className="flex flex-col gap-6"
                         >
                              <div className="text-center">
-                                <button onClick={handleBack} className="text-sm text-[#5B2D7D]/40 hover:text-[#5B2D7D] mb-4">
+                                <button onClick={handleBack} className="text-sm text-[#556B5A]/40 hover:text-[#556B5A] mb-4">
                                     ← Back to Areas
                                 </button>
-                                <h1 className="text-3xl font-bold text-[#5B2D7D]">Start Small</h1>
-                                <p className="text-[#5B2D7D]/60 mt-2">Pick a micro-habit for {selectedArea.title}.</p>
+                                <h1 className="text-3xl font-bold text-[#556B5A]">Start Small</h1>
+                                <p className="text-[#556B5A]/60 mt-2">Pick a micro-habit for {selectedArea.title}.</p>
                             </div>
 
                             <div className="flex flex-col gap-3">
@@ -153,13 +153,13 @@ function HabitSetupContent({ product }: { product: any }) {
                                         onClick={() => setSelectedHabit(lvl.description)}
                                         className={`p-4 rounded-2xl border transition-all text-left font-medium ${
                                             selectedHabit === lvl.description 
-                                            ? 'bg-[#5B2D7D] text-white border-[#5B2D7D] shadow-lg shadow-[#5B2D7D]/20' 
-                                            : 'bg-white/40 backdrop-blur-md text-[#5B2D7D] border-white/30 hover:border-white/50 shadow-sm'
+                                            ? 'bg-[#556B5A] text-white border-[#556B5A] shadow-lg shadow-[#556B5A]/20' 
+                                            : 'bg-white/40 backdrop-blur-md text-[#556B5A] border-white/30 hover:border-white/50 shadow-sm'
                                         }`}
                                     >
                                         <div className="flex flex-col">
                                             <span>{lvl.description}</span>
-                                            <span className={`text-[10px] uppercase tracking-widest mt-1 ${selectedHabit === lvl.description ? 'text-white/60' : 'text-[#5B2D7D]/40'}`}>
+                                            <span className={`text-[10px] uppercase tracking-widest mt-1 ${selectedHabit === lvl.description ? 'text-white/60' : 'text-[#556B5A]/40'}`}>
                                                 Level {lvl.level} • {lvl.duration}
                                             </span>
                                         </div>
@@ -167,7 +167,7 @@ function HabitSetupContent({ product }: { product: any }) {
                                 ))}
                                 
                                 <div className="relative mt-2">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5B2D7D]/40 text-sm">Or:</span>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#556B5A]/40 text-sm">Or:</span>
                                     <input 
                                         type="text"
                                         placeholder="Write your own..."
@@ -178,8 +178,8 @@ function HabitSetupContent({ product }: { product: any }) {
                                         }}
                                         className={`w-full p-4 pl-12 rounded-2xl border outline-none transition-all ${
                                             customHabit 
-                                            ? 'border-[#5B2D7D] bg-white text-[#5B2D7D]' 
-                                            : 'border-white/30 bg-white/20 backdrop-blur-md text-[#5B2D7D] focus:bg-white focus:border-white/50'
+                                            ? 'border-[#556B5A] bg-white text-[#556B5A]' 
+                                            : 'border-white/30 bg-white/20 backdrop-blur-md text-[#556B5A] focus:bg-white focus:border-white/50'
                                         }`}
                                     />
                                 </div>
@@ -188,7 +188,7 @@ function HabitSetupContent({ product }: { product: any }) {
                             <button
                                 onClick={handleSubmit}
                                 disabled={(!selectedHabit && !customHabit) || isSubmitting}
-                                className="mt-4 w-full py-4 rounded-full bg-[#A4C538] text-[#5B2D7D] font-bold text-lg shadow-lg hover:bg-[#95b330] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="mt-4 w-full py-4 rounded-full bg-[#7C9A86] text-[#556B5A] font-bold text-lg shadow-lg hover:bg-[#95b330] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? (
                                     <>
@@ -252,8 +252,8 @@ function HabitDashboardContent({ habit }: { habit: any }) {
              {/* Header */}
              <header className="p-6 flex items-center justify-between z-10">
                  <div className="flex flex-col">
-                     <span className="text-sm font-bold text-[#5B2D7D]/50 uppercase tracking-widest">Habit Charm</span>
-                     <h1 className="text-2xl font-bold text-[#5B2D7D]">{habit.title}</h1>
+                     <span className="text-sm font-bold text-[#556B5A]/50 uppercase tracking-widest">Habit Charm</span>
+                     <h1 className="text-2xl font-bold text-[#556B5A]">{habit.title}</h1>
                  </div>
                  <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center">
                      <div className="text-lg">
@@ -281,10 +281,10 @@ function HabitDashboardContent({ habit }: { habit: any }) {
                  {/* Streak Display */}
                  <div className="mb-12 flex flex-col items-center">
                      <div className="flex items-center gap-2 mb-2">
-                         <Flame className={`w-6 h-6 ${isLoggedToday ? 'text-orange-500' : 'text-[#5B2D7D]/30'}`} />
-                         <span className="text-6xl font-black text-[#5B2D7D]">{habit.currentStreak}</span>
+                         <Flame className={`w-6 h-6 ${isLoggedToday ? 'text-orange-500' : 'text-[#556B5A]/30'}`} />
+                         <span className="text-6xl font-black text-[#556B5A]">{habit.currentStreak}</span>
                      </div>
-                     <span className="text-[#5B2D7D]/60 font-medium">day streak</span>
+                     <span className="text-[#556B5A]/60 font-medium">day streak</span>
                  </div>
 
                  {/* Interaction Circle */}
@@ -293,10 +293,10 @@ function HabitDashboardContent({ habit }: { habit: any }) {
                          <motion.div 
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="w-48 h-48 rounded-full bg-[#A4C538] flex flex-col items-center justify-center shadow-lg shadow-[#A4C538]/30"
+                            className="w-48 h-48 rounded-full bg-[#7C9A86] flex flex-col items-center justify-center shadow-lg shadow-[#7C9A86]/30"
                          >
-                             <Check className="w-16 h-16 text-[#5B2D7D] mb-2" strokeWidth={3} />
-                             <span className="text-[#5B2D7D] font-bold text-lg">Done</span>
+                             <Check className="w-16 h-16 text-[#556B5A] mb-2" strokeWidth={3} />
+                             <span className="text-[#556B5A] font-bold text-lg">Done</span>
                          </motion.div>
                      ) : (
                          <button
@@ -305,20 +305,20 @@ function HabitDashboardContent({ habit }: { habit: any }) {
                             className="group relative w-48 h-48 rounded-full bg-white flex flex-col items-center justify-center shadow-xl transition-all active:scale-95 hover:shadow-2xl"
                          >
                              {/* Pulse Effect */}
-                             <span className="absolute inset-0 rounded-full border-2 border-[#5B2D7D]/10 animate-ping"></span>
+                             <span className="absolute inset-0 rounded-full border-2 border-[#556B5A]/10 animate-ping"></span>
                              
                              {isLogging ? (
                                  <motion.div 
                                     animate={{ rotate: 360 }}
                                     transition={{ repeat: Infinity, duration: 1 }}
-                                    className="w-12 h-12 border-4 border-[#5B2D7D]/20 border-t-[#5B2D7D] rounded-full"
+                                    className="w-12 h-12 border-4 border-[#556B5A]/20 border-t-[#556B5A] rounded-full"
                                  />
                              ) : (
                                  <>
-                                     <div className="w-16 h-16 rounded-full bg-[#FDF2EC] flex items-center justify-center mb-3 group-hover:bg-[#EADDDE] transition-colors">
-                                        <div className="w-8 h-8 rounded-full bg-[#5B2D7D]" />
+                                     <div className="w-16 h-16 rounded-full bg-[#F6F2EC] flex items-center justify-center mb-3 group-hover:bg-[#E6DED1] transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-[#556B5A]" />
                                      </div>
-                                     <span className="text-[#5B2D7D] font-bold text-lg">Tap to Log</span>
+                                     <span className="text-[#556B5A] font-bold text-lg">Tap to Log</span>
                                  </>
                              )}
                          </button>
@@ -327,13 +327,13 @@ function HabitDashboardContent({ habit }: { habit: any }) {
 
                  {/* Progress to Graduation */}
                  <div className="mt-16 w-full max-w-xs">
-                     <div className="flex justify-between text-xs text-[#5B2D7D]/50 mb-2 font-bold uppercase tracking-wider">
+                     <div className="flex justify-between text-xs text-[#556B5A]/50 mb-2 font-bold uppercase tracking-wider">
                          <span>Progress</span>
                          <span>{habit.currentStreak} / {habit.targetDays}</span>
                      </div>
-                     <div className="h-3 w-full bg-[#5B2D7D]/5 rounded-full overflow-hidden">
+                     <div className="h-3 w-full bg-[#556B5A]/5 rounded-full overflow-hidden">
                          <motion.div 
-                            className="h-full bg-[#5B2D7D]"
+                            className="h-full bg-[#556B5A]"
                             initial={{ width: 0 }}
                             animate={{ width: `${(habit.currentStreak / habit.targetDays) * 100}%` }}
                          />

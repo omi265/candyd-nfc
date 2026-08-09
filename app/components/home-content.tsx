@@ -47,18 +47,18 @@ function FilterBar({ tags, selectedFilter, onSelectFilter, searchQuery, setSearc
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
-                    className="w-full h-full bg-transparent outline-none text-[#5B2D7D] text-base placeholder-[#5B2D7D]/40 min-w-0"
+                    className="w-full h-full bg-transparent outline-none text-[#556B5A] text-base placeholder-[#556B5A]/40 min-w-0"
                     onBlur={() => !searchQuery && setIsSearchOpen(false)}
                 />
                 {searchQuery ? (
                      <button onClick={() => setSearchQuery("")} className="ml-2">
-                        <X className="w-4 h-4 text-[#5B2D7D]/60" />
+                        <X className="w-4 h-4 text-[#556B5A]/60" />
                      </button>
                 ) : null}
              </>
          ) : (
             <button onClick={() => setIsSearchOpen(true)} className="w-full h-full flex items-center justify-center">
-                <Search className="w-5 h-5 text-[#5B2D7D]" />
+                <Search className="w-5 h-5 text-[#556B5A]" />
             </button>
          )}
       </div>
@@ -69,8 +69,8 @@ function FilterBar({ tags, selectedFilter, onSelectFilter, searchQuery, setSearc
           onClick={() => onSelectFilter(selectedFilter === tag ? null : tag)}
           className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap shadow-sm transition-colors ${
               selectedFilter === tag
-              ? 'bg-[#5B2D7D] text-white'
-              : 'bg-[#EADDDE] text-[#5B2D7D] hover:bg-[#EADDDE]/80'
+              ? 'bg-[#556B5A] text-white'
+              : 'bg-[#E6DED1] text-[#556B5A] hover:bg-[#E6DED1]/80'
           }`}
         >
           {tag}
@@ -145,16 +145,16 @@ function MemoryCard({
                 {item.mediaType === 'audio' ? (
                     <div className="w-full h-full bg-[#FFF5F0] flex flex-col items-center justify-center relative overflow-hidden">
                         {/* Decorative circles */}
-                        <div className="absolute w-64 h-64 rounded-full bg-[#5B2D7D]/5 blur-3xl -top-10 -right-10"></div>
+                        <div className="absolute w-64 h-64 rounded-full bg-[#556B5A]/5 blur-3xl -top-10 -right-10"></div>
                         <div className="absolute w-64 h-64 rounded-full bg-[#F37B55]/10 blur-3xl -bottom-10 -left-10"></div>
 
-                        <div className="w-20 h-20 rounded-full bg-[#5B2D7D]/10 flex items-center justify-center mb-4 relative z-10">
-                            <Mic className="w-10 h-10 text-[#5B2D7D]" />
+                        <div className="w-20 h-20 rounded-full bg-[#556B5A]/10 flex items-center justify-center mb-4 relative z-10">
+                            <Mic className="w-10 h-10 text-[#556B5A]" />
                         </div>
                         {/* Simple bars visualization */}
                         <div className="flex items-end gap-1 h-8 mb-8 opacity-50">
                              {[40, 70, 50, 80, 60, 90, 40].map((h, i) => (
-                                 <div key={i} className="w-1 bg-[#5B2D7D] rounded-full" style={{ height: `${h}%` }}></div>
+                                 <div key={i} className="w-1 bg-[#556B5A] rounded-full" style={{ height: `${h}%` }}></div>
                              ))}
                         </div>
                     </div>
@@ -163,7 +163,7 @@ function MemoryCard({
                 )}
 
                 {/* Gradient Overlay */}
-                <div className={`absolute inset-0 ${item.mediaType === 'audio' ? 'bg-linear-to-t from-[#5B2D7D]/40 via-transparent to-transparent' : 'bg-linear-to-t from-black/60 via-black/10 to-transparent'}`}></div>
+                <div className={`absolute inset-0 ${item.mediaType === 'audio' ? 'bg-linear-to-t from-[#556B5A]/40 via-transparent to-transparent' : 'bg-linear-to-t from-black/60 via-black/10 to-transparent'}`}></div>
              </div>
 
              {/* Content */}
@@ -171,8 +171,8 @@ function MemoryCard({
                 className="relative z-10 text-center mb-6"
                 style={{ opacity: titleOpacity }}
             >
-                 <h3 className={`text-2xl font-bold font-[Outfit] ${item.mediaType === 'audio' ? 'text-[#5B2D7D]' : 'text-white'}`}>{item.title}</h3>
-                 <p className={`text-sm mt-1 ${item.mediaType === 'audio' ? 'text-[#5B2D7D]/70' : 'text-white/80'}`}>{item.date}</p>
+                 <h3 className={`text-2xl font-bold font-[Outfit] ${item.mediaType === 'audio' ? 'text-[#556B5A]' : 'text-white'}`}>{item.title}</h3>
+                 <p className={`text-sm mt-1 ${item.mediaType === 'audio' ? 'text-[#556B5A]/70' : 'text-white/80'}`}>{item.date}</p>
              </motion.div>
         </motion.div>
     )
@@ -215,10 +215,10 @@ function EmptyCard({
                     scale: useTransform(dist, [0, 400], [1, 0.9])
                 }}
              >
-                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 shadow-sm bg-[#EADDDE]`}>
-                    <Plus className="w-8 h-8 text-[#5B2D7D]" />
+                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 shadow-sm bg-[#E6DED1]`}>
+                    <Plus className="w-8 h-8 text-[#556B5A]" />
                  </div>
-                 <span className="text-[#5B2D7D] font-medium font-[Outfit]">Add a Memory</span>
+                 <span className="text-[#556B5A] font-medium font-[Outfit]">Add a Memory</span>
              </motion.div>
         </motion.div>
     )
@@ -235,9 +235,9 @@ function ListMemoryCard({ item, onClick }: { item: Extract<GridItemType, { type:
             <div className="relative">
                 {item.mediaType === 'audio' ? (
                      <div className="w-full aspect-square bg-[#FFF5F0] flex flex-col items-center justify-center relative overflow-hidden">
-                        <div className="absolute w-32 h-32 rounded-full bg-[#5B2D7D]/5 blur-2xl top-0 right-0"></div>
-                        <div className="w-12 h-12 rounded-full bg-[#5B2D7D]/10 flex items-center justify-center mb-2 relative z-10">
-                            <Mic className="w-6 h-6 text-[#5B2D7D]" />
+                        <div className="absolute w-32 h-32 rounded-full bg-[#556B5A]/5 blur-2xl top-0 right-0"></div>
+                        <div className="w-12 h-12 rounded-full bg-[#556B5A]/10 flex items-center justify-center mb-2 relative z-10">
+                            <Mic className="w-6 h-6 text-[#556B5A]" />
                         </div>
                      </div>
                 ) : (
@@ -248,8 +248,8 @@ function ListMemoryCard({ item, onClick }: { item: Extract<GridItemType, { type:
             </div>
 
             <div className="pt-2 pb-1">
-                 <h3 className="text-[#5B2D7D] font-bold text-lg leading-tight font-[Outfit]">{item.title}</h3>
-                 <p className="text-[#5B2D7D]/60 text-xs mt-1">{item.date}</p>
+                 <h3 className="text-[#556B5A] font-bold text-lg leading-tight font-[Outfit]">{item.title}</h3>
+                 <p className="text-[#556B5A]/60 text-xs mt-1">{item.date}</p>
             </div>
         </div>
     )
@@ -702,12 +702,12 @@ export default function HomeContent({ initialMemories, people = [], user, forced
 
                  <div
                     onClick={handleAddMemory}
-                    className="w-full mb-4 break-inside-avoid relative rounded-2xl overflow-hidden cursor-pointer bg-[#FDF2EC] border-2 border-dashed border-[#5B2D7D]/20 flex flex-col items-center justify-center p-8 aspect-4/5"
+                    className="w-full mb-4 break-inside-avoid relative rounded-2xl overflow-hidden cursor-pointer bg-[#F6F2EC] border-2 border-dashed border-[#556B5A]/20 flex flex-col items-center justify-center p-8 aspect-4/5"
                 >
-                     <div className="w-12 h-12 rounded-full bg-[#5B2D7D]/10 flex items-center justify-center mb-2">
-                        <Plus className="w-6 h-6 text-[#5B2D7D]" />
+                     <div className="w-12 h-12 rounded-full bg-[#556B5A]/10 flex items-center justify-center mb-2">
+                        <Plus className="w-6 h-6 text-[#556B5A]" />
                      </div>
-                     <span className="text-[#5B2D7D] font-medium font-[Outfit] text-sm">Add New</span>
+                     <span className="text-[#556B5A] font-medium font-[Outfit] text-sm">Add New</span>
                 </div>
             </div>
         </div>
@@ -717,24 +717,24 @@ export default function HomeContent({ initialMemories, people = [], user, forced
        {/* Bottom Controls */}
        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none z-20">
              {!forcedViewMode && (
-                 <div className="flex items-center gap-2 pointer-events-auto bg-[#FDF2EC]/80 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-[#EADDDE]">
+                 <div className="flex items-center gap-2 pointer-events-auto bg-[#F6F2EC]/80 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-[#E6DED1]">
                      <button
                         onClick={() => router.push('/life-charm')}
                         title="Bucket List"
-                        className="w-10 h-10 rounded-full flex items-center justify-center bg-[#5B2D7D] text-white hover:bg-[#4A246A] transition-colors shadow-sm"
+                        className="w-10 h-10 rounded-full flex items-center justify-center bg-[#556B5A] text-white hover:bg-[#445849] transition-colors shadow-sm"
                      >
                         <Heart className="w-5 h-5 fill-white text-white" />
                      </button>
-                     <div className="w-px h-6 bg-[#EADDDE]" />
+                     <div className="w-px h-6 bg-[#E6DED1]" />
                      <button
                         onClick={() => setViewMode('grid')}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D] hover:bg-[#5B2D7D]/10'}`}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-[#556B5A] text-white' : 'text-[#556B5A] hover:bg-[#556B5A]/10'}`}
                      >
                         <LayoutGrid className="w-6 h-6" />
                      </button>
                      <button
                         onClick={() => setViewMode('list')}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D] hover:bg-[#5B2D7D]/10'}`}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-[#556B5A] text-white' : 'text-[#556B5A] hover:bg-[#556B5A]/10'}`}
                      >
                         <List className="w-6 h-6" />
                      </button>
@@ -744,9 +744,9 @@ export default function HomeContent({ initialMemories, people = [], user, forced
              <div className={forcedViewMode ? "ml-auto pointer-events-auto" : ""}>
                  <button
                     onClick={handleAddMemory}
-                    className="w-14 h-14 rounded-full bg-[#A4C538] flex items-center justify-center shadow-lg hover:bg-[#95b330] transition-colors pointer-events-auto"
+                    className="w-14 h-14 rounded-full bg-[#7C9A86] flex items-center justify-center shadow-lg hover:bg-[#95b330] transition-colors pointer-events-auto"
                 >
-                     <Plus className="w-7 h-7 text-[#5B2D7D]" />
+                     <Plus className="w-7 h-7 text-[#556B5A]" />
                  </button>
              </div>
         </div>

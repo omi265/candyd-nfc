@@ -96,20 +96,20 @@ export default function AccountSettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-transparent font-[Outfit] text-[#5B2D7D] relative">
+        <div className="min-h-screen bg-transparent font-[Outfit] text-[#556B5A] relative">
              {/* Header */}
              <header className="flex items-center justify-between px-6 py-6">
                 <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
                     <ChevronLeft className="w-6 h-6 text-[#22005D]" />
                 </button>
                 <div />
-                <button className="w-10 h-10 flex items-center justify-center bg-[#FDF2EC] rounded-full shadow-sm border border-[#EADDDE]">
-                   <Menu className="w-6 h-6 text-[#5B2D7D]" />
+                <button className="w-10 h-10 flex items-center justify-center bg-[#F6F2EC] rounded-full shadow-sm border border-[#E6DED1]">
+                   <Menu className="w-6 h-6 text-[#556B5A]" />
                 </button>
             </header>
 
             <main className="px-6">
-                <h1 className="text-3xl font-bold mb-2 text-[#3E1C56]">Account settings</h1>
+                <h1 className="text-3xl font-bold mb-2 text-[#3A4B3E]">Account settings</h1>
                 <p className="text-[#9A92A6] text-sm mb-8">Manage your account</p>
 
                 <div className="space-y-4">
@@ -118,14 +118,14 @@ export default function AccountSettingsPage() {
                         onClick={() => setIsPasswordModalOpen(true)}
                         className="w-full bg-[#FFF9F6] rounded-3xl p-4 flex items-center gap-4 shadow-sm text-left"
                     >
-                        <div className="w-12 h-12 rounded-full bg-[#E8DCF0] flex items-center justify-center">
-                            <Lock className="w-6 h-6 text-[#5B2D7D]" />
+                        <div className="w-12 h-12 rounded-full bg-[#F2E6DE] flex items-center justify-center">
+                            <Lock className="w-6 h-6 text-[#556B5A]" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-[#5B2D7D] font-medium text-lg">Change password</h3>
+                            <h3 className="text-[#556B5A] font-medium text-lg">Change password</h3>
                             <p className="text-[#9A92A6] text-xs">Update your security credentials</p>
                         </div>
-                        <ChevronRight className="w-6 h-6 text-[#5B2D7D]" />
+                        <ChevronRight className="w-6 h-6 text-[#556B5A]" />
                     </button>
 
                     {/* Delete Profile Button */}
@@ -170,27 +170,27 @@ export default function AccountSettingsPage() {
                                     className="absolute right-0 top-0 disabled:opacity-50"
                                     disabled={isChangingPassword}
                                 >
-                                    <X className="w-6 h-6 text-[#3E1C56]" />
+                                    <X className="w-6 h-6 text-[#3A4B3E]" />
                                 </button>
                                 
                                 <h2 className="text-[#9A92A6] text-sm mb-2">Security</h2>
-                                <h3 className="text-[#3E1C56] text-3xl font-bold mb-8">Change password</h3>
+                                <h3 className="text-[#3A4B3E] text-3xl font-bold mb-8">Change password</h3>
 
                                 <form onSubmit={handleChangePassword} className="space-y-6">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Current Password</label>
+                                        <label className="text-xs font-bold text-[#556B5A] ml-1 uppercase tracking-wider">Current Password</label>
                                         <div className="relative">
                                             <input 
                                                 name="currentPassword"
                                                 type={showPasswords.current ? "text" : "password"}
-                                                className="w-full bg-[#FDF2EC]/50 border border-[#5B2D7D]/10 rounded-2xl px-5 py-4 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20"
+                                                className="w-full bg-[#F6F2EC]/50 border border-[#556B5A]/10 rounded-2xl px-5 py-4 text-[#556B5A] focus:outline-none focus:ring-2 focus:ring-[#556B5A]/20"
                                                 placeholder="••••••••"
                                                 required
                                             />
                                             <button 
                                                 type="button"
                                                 onClick={() => setShowPasswords(p => ({ ...p, current: !p.current }))}
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5B2D7D]/40"
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#556B5A]/40"
                                             >
                                                 {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                             </button>
@@ -198,12 +198,12 @@ export default function AccountSettingsPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">New Password</label>
+                                        <label className="text-xs font-bold text-[#556B5A] ml-1 uppercase tracking-wider">New Password</label>
                                         <div className="relative">
                                             <input 
                                                 name="newPassword"
                                                 type={showPasswords.new ? "text" : "password"}
-                                                className="w-full bg-[#FDF2EC]/50 border border-[#5B2D7D]/10 rounded-2xl px-5 py-4 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20"
+                                                className="w-full bg-[#F6F2EC]/50 border border-[#556B5A]/10 rounded-2xl px-5 py-4 text-[#556B5A] focus:outline-none focus:ring-2 focus:ring-[#556B5A]/20"
                                                 placeholder="••••••••"
                                                 required
                                                 minLength={6}
@@ -211,7 +211,7 @@ export default function AccountSettingsPage() {
                                             <button 
                                                 type="button"
                                                 onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))}
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5B2D7D]/40"
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#556B5A]/40"
                                             >
                                                 {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                             </button>
@@ -219,11 +219,11 @@ export default function AccountSettingsPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-[#5B2D7D] ml-1 uppercase tracking-wider">Confirm New Password</label>
+                                        <label className="text-xs font-bold text-[#556B5A] ml-1 uppercase tracking-wider">Confirm New Password</label>
                                         <input 
                                             name="confirmPassword"
                                             type={showPasswords.new ? "text" : "password"}
-                                            className="w-full bg-[#FDF2EC]/50 border border-[#5B2D7D]/10 rounded-2xl px-5 py-4 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20"
+                                            className="w-full bg-[#F6F2EC]/50 border border-[#556B5A]/10 rounded-2xl px-5 py-4 text-[#556B5A] focus:outline-none focus:ring-2 focus:ring-[#556B5A]/20"
                                             placeholder="••••••••"
                                             required
                                         />
@@ -232,7 +232,7 @@ export default function AccountSettingsPage() {
                                     <button 
                                         type="submit"
                                         disabled={isChangingPassword}
-                                        className="w-full bg-[#5B2D7D] text-white font-bold py-5 rounded-full shadow-lg shadow-[#5B2D7D]/20 flex items-center justify-center gap-2 hover:bg-[#4a2466] transition-all disabled:opacity-50 mt-4"
+                                        className="w-full bg-[#556B5A] text-white font-bold py-5 rounded-full shadow-lg shadow-[#556B5A]/20 flex items-center justify-center gap-2 hover:bg-[#4a2466] transition-all disabled:opacity-50 mt-4"
                                     >
                                         {isChangingPassword ? <Loader2 className="w-6 h-6 animate-spin" /> : "Update Password"}
                                     </button>
@@ -268,7 +268,7 @@ export default function AccountSettingsPage() {
                                     className="absolute right-0 top-0 disabled:opacity-50"
                                     disabled={isDeleting}
                                 >
-                                    <X className="w-6 h-6 text-[#3E1C56]" />
+                                    <X className="w-6 h-6 text-[#3A4B3E]" />
                                 </button>
                                 
                                 {/* Icon */}
@@ -277,23 +277,23 @@ export default function AccountSettingsPage() {
                                 </div>
 
                                 <h2 className="text-[#9A92A6] text-sm mb-2 self-start w-full">Deleting your profile</h2>
-                                <h3 className="text-[#3E1C56] text-3xl font-bold mb-4 self-start w-full">Close account</h3>
+                                <h3 className="text-[#3A4B3E] text-3xl font-bold mb-4 self-start w-full">Close account</h3>
                                 <p className="text-[#9A92A6] mb-8 leading-relaxed">
                                     We&apos;re sorry to see you go. Closing your account is permanent and cannot be undone.
                                 </p>
 
                                 {/* Download Data Card */}
                                 <div className="w-full bg-[#f3edf7] rounded-3xl p-6 mb-8 text-center">
-                                    <h4 className="text-[#3E1C56] font-bold text-lg mb-2">Want to <span className="italic">save your files</span> first?</h4>
+                                    <h4 className="text-[#3A4B3E] font-bold text-lg mb-2">Want to <span className="italic">save your files</span> first?</h4>
                                     <p className="text-[#9A92A6] text-sm mb-6 px-4">
                                         Before you go, we recommend downloading your memory library to your phone.
                                     </p>
                                     <button 
                                         onClick={handleExport}
                                         disabled={isExporting}
-                                        className="w-full bg-[#C2D647] text-[#3E1C56] font-semibold py-4 rounded-full flex items-center justify-center gap-2 hover:bg-[#b0c43d] transition-colors disabled:opacity-50"
+                                        className="w-full bg-[#C2D647] text-[#3A4B3E] font-semibold py-4 rounded-full flex items-center justify-center gap-2 hover:bg-[#b0c43d] transition-colors disabled:opacity-50"
                                     >
-                                        {isExporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <CloudDownload className="w-6 h-6 text-[#3E1C56]" />}
+                                        {isExporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <CloudDownload className="w-6 h-6 text-[#3A4B3E]" />}
                                         {isExporting ? "Preparing..." : "Download data"}
                                     </button>
                                 </div>
@@ -309,7 +309,7 @@ export default function AccountSettingsPage() {
                                 
                                 <button 
                                     onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
-                                    className="text-[#3E1C56] font-bold text-lg disabled:opacity-50"
+                                    className="text-[#3A4B3E] font-bold text-lg disabled:opacity-50"
                                     disabled={isDeleting}
                                 >
                                     Go back

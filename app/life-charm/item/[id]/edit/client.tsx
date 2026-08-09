@@ -107,15 +107,15 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
   return (
     <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
       {/* Header */}
-      <header className="flex flex-col border-b border-[#5B2D7D]/10 bg-white shrink-0">
+      <header className="flex flex-col border-b border-[#556B5A]/10 bg-white shrink-0">
         <div className="flex items-center gap-4 px-6 py-4">
           <button
             onClick={() => router.push(`/life-charm/item/${item.id}?charmId=${charmId}`)}
-            className="w-10 h-10 rounded-full bg-[#FDF2EC] flex items-center justify-center shadow-sm"
+            className="w-10 h-10 rounded-full bg-[#F6F2EC] flex items-center justify-center shadow-sm"
           >
-            <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
+            <ArrowLeft className="w-5 h-5 text-[#556B5A]" />
           </button>
-          <h1 className="text-xl font-bold text-[#5B2D7D]">Edit Experience</h1>
+          <h1 className="text-xl font-bold text-[#556B5A]">Edit Experience</h1>
         </div>
       </header>
 
@@ -124,7 +124,7 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
         <div className="space-y-6">
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-[#5B2D7D]/60 mb-2">
+              <label className="block text-sm font-medium text-[#556B5A]/60 mb-2">
                 What do you want to do? *
               </label>
               <input
@@ -132,14 +132,14 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Watch the sunset together"
-                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none focus:border-[#5B2D7D]/30 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-[#556B5A] placeholder-[#556B5A]/30 outline-none focus:border-[#556B5A]/30 transition-colors"
                 autoFocus
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-[#5B2D7D]/60 mb-2">
+              <label className="block text-sm font-medium text-[#556B5A]/60 mb-2">
                 Description (optional)
               </label>
               <textarea
@@ -147,34 +147,34 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add more details..."
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none focus:border-[#5B2D7D]/30 transition-colors resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-[#556B5A] placeholder-[#556B5A]/30 outline-none focus:border-[#556B5A]/30 transition-colors resize-none"
               />
             </div>
 
             {/* Who */}
             <div>
-              <label className="block text-sm font-medium text-[#5B2D7D]/60 mb-2">
+              <label className="block text-sm font-medium text-[#556B5A]/60 mb-2">
                 Who do you want to do this with?
               </label>
               <button
                 onClick={() => setShowPeopleSelector(!showPeopleSelector)}
-                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-left flex items-center justify-between"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-left flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-[#5B2D7D]/40" />
+                  <Users className="w-5 h-5 text-[#556B5A]/40" />
                   {selectedPeople.length > 0 ? (
-                    <span className="text-[#5B2D7D]">
+                    <span className="text-[#556B5A]">
                       {selectedPeople
                         .map((id) => people.find((p) => p.id === id)?.name)
                         .filter(Boolean)
                         .join(", ")}
                     </span>
                   ) : (
-                    <span className="text-[#5B2D7D]/30">Select people</span>
+                    <span className="text-[#556B5A]/30">Select people</span>
                   )}
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-[#5B2D7D]/40 transition-transform ${
+                  className={`w-5 h-5 text-[#556B5A]/40 transition-transform ${
                     showPeopleSelector ? "rotate-180" : ""
                   }`}
                 />
@@ -185,7 +185,7 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 p-3 bg-white rounded-xl border border-[#5B2D7D]/10 space-y-2"
+                  className="mt-2 p-3 bg-white rounded-xl border border-[#556B5A]/10 space-y-2"
                 >
                   {people.map((person) => (
                     <button
@@ -193,8 +193,8 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                       onClick={() => togglePerson(person.id)}
                       className={`w-full px-3 py-2 rounded-lg text-left flex items-center justify-between ${
                         selectedPeople.includes(person.id)
-                          ? "bg-[#5B2D7D] text-white"
-                          : "hover:bg-[#EADDDE]/50 text-[#5B2D7D]"
+                          ? "bg-[#556B5A] text-white"
+                          : "hover:bg-[#E6DED1]/50 text-[#556B5A]"
                       }`}
                     >
                       {person.name}
@@ -205,19 +205,19 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                   ))}
 
                   {/* Add new person */}
-                  <div className="flex gap-2 pt-2 border-t border-[#5B2D7D]/10">
+                  <div className="flex gap-2 pt-2 border-t border-[#556B5A]/10">
                     <input
                       type="text"
                       value={newPersonName}
                       onChange={(e) => setNewPersonName(e.target.value)}
                       placeholder="Add someone new..."
-                      className="flex-1 px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none text-sm"
+                      className="flex-1 px-3 py-2 rounded-lg bg-[#E6DED1]/30 text-[#556B5A] placeholder-[#556B5A]/30 outline-none text-sm"
                       onKeyDown={(e) => e.key === "Enter" && handleAddPerson()}
                     />
                     <button
                       onClick={handleAddPerson}
                       disabled={!newPersonName.trim() || isAddingPerson}
-                      className="px-3 py-2 bg-[#5B2D7D] text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                      className="px-3 py-2 bg-[#556B5A] text-white rounded-lg text-sm font-medium disabled:opacity-50"
                     >
                       {isAddingPerson ? "..." : "Add"}
                     </button>
@@ -228,30 +228,30 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
 
             {/* When */}
             <div>
-              <label className="block text-sm font-medium text-[#5B2D7D]/60 mb-2">
+              <label className="block text-sm font-medium text-[#556B5A]/60 mb-2">
                 When feels right?
               </label>
               <button
                 onClick={() => setShowWhenSelector(!showWhenSelector)}
-                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-left flex items-center justify-between"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-left flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-[#5B2D7D]/40" />
+                  <Calendar className="w-5 h-5 text-[#556B5A]/40" />
                   {whenType ? (
-                    <span className="text-[#5B2D7D]">
+                    <span className="text-[#556B5A]">
                       {WHEN_OPTIONS.find((o) => o.id === whenType)?.label}
                       {whenType === "specific_date" && targetDate && (
-                        <span className="ml-1 text-[#5B2D7D]/60">
+                        <span className="ml-1 text-[#556B5A]/60">
                           ({new Date(targetDate).toLocaleDateString()})
                         </span>
                       )}
                     </span>
                   ) : (
-                    <span className="text-[#5B2D7D]/30">Select timing</span>
+                    <span className="text-[#556B5A]/30">Select timing</span>
                   )}
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-[#5B2D7D]/40 transition-transform ${
+                  className={`w-5 h-5 text-[#556B5A]/40 transition-transform ${
                     showWhenSelector ? "rotate-180" : ""
                   }`}
                 />
@@ -262,7 +262,7 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 p-3 bg-white rounded-xl border border-[#5B2D7D]/10 space-y-2"
+                  className="mt-2 p-3 bg-white rounded-xl border border-[#556B5A]/10 space-y-2"
                 >
                   {WHEN_OPTIONS.map((option) => (
                     <button
@@ -275,8 +275,8 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                       }}
                       className={`w-full px-3 py-2 rounded-lg text-left ${
                         whenType === option.id
-                          ? "bg-[#5B2D7D] text-white"
-                          : "hover:bg-[#EADDDE]/50 text-[#5B2D7D]"
+                          ? "bg-[#556B5A] text-white"
+                          : "hover:bg-[#E6DED1]/50 text-[#556B5A]"
                       }`}
                     >
                       <div className="font-medium">{option.label}</div>
@@ -284,7 +284,7 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                         className={`text-xs ${
                           whenType === option.id
                             ? "text-white/70"
-                            : "text-[#5B2D7D]/50"
+                            : "text-[#556B5A]/50"
                         }`}
                       >
                         {option.description}
@@ -298,7 +298,7 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
                       type="date"
                       value={targetDate}
                       onChange={(e) => setTargetDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] outline-none mt-2"
+                      className="w-full px-3 py-2 rounded-lg bg-[#E6DED1]/30 text-[#556B5A] outline-none mt-2"
                     />
                   )}
                 </motion.div>
@@ -308,11 +308,11 @@ export default function EditItemClient({ item, people: initialPeople, charmId }:
       </div>
 
       {/* Submit Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#FDF2EC] via-[#FDF2EC] to-transparent pt-12 shrink-0 z-30">
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#F6F2EC] via-[#F6F2EC] to-transparent pt-12 shrink-0 z-30">
         <button
           onClick={handleSave}
           disabled={!title.trim() || isPending}
-          className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#93B132] transition-colors disabled:opacity-50"
+          className="w-full py-4 bg-[#7C9A86] text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#556B5A] transition-colors disabled:opacity-50"
         >
           {isPending ? (
             "Saving..."

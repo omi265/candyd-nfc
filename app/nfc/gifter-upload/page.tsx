@@ -111,7 +111,7 @@ function GalleryCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         </div>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#5B2D7D] to-[#3A1D52]">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#556B5A] to-[#3A1D52]">
           <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl transform -translate-x-10 translate-y-10" />
         </div>
@@ -335,11 +335,11 @@ function GifterUploadContent() {
         setDrawerOpen(true);
     };
 
-    if (isLoadingInitial) return <div className="h-dvh flex items-center justify-center bg-[#FDF2EC]"><RefreshCw className="w-8 h-8 animate-spin text-[#5B2D7D]" /></div>;
-    if (error) return <div className="h-dvh flex flex-col items-center justify-center p-6 text-center bg-[#FDF2EC]"><Zap className="w-8 h-8 text-red-500 mb-4" /><h2 className="text-xl font-bold">{error}</h2></div>;
+    if (isLoadingInitial) return <div className="h-dvh flex items-center justify-center bg-[#F6F2EC]"><RefreshCw className="w-8 h-8 animate-spin text-[#556B5A]" /></div>;
+    if (error) return <div className="h-dvh flex flex-col items-center justify-center p-6 text-center bg-[#F6F2EC]"><Zap className="w-8 h-8 text-red-500 mb-4" /><h2 className="text-xl font-bold">{error}</h2></div>;
 
     return (
-        <div className="flex flex-col h-full bg-[#FDF2EC] font-[Outfit] relative overflow-hidden">
+        <div className="flex flex-col h-full bg-[#F6F2EC] font-[Outfit] relative overflow-hidden">
             <AnimatePresence mode="wait">
                 {viewMode === 'upload' ? (
                     <motion.div 
@@ -352,18 +352,18 @@ function GifterUploadContent() {
                         <div className="max-w-xl mx-auto w-full">
                             <div className="flex items-start justify-between mb-8">
                                 <div className="flex items-start gap-3">
-                                    <Gift className="w-7 h-7 text-[#A4C538] mt-1" />
+                                    <Gift className="w-7 h-7 text-[#7C9A86] mt-1" />
                                     <div>
-                                        <h1 className="text-2xl font-black text-[#5B2D7D] uppercase leading-none">PRE-LOAD GIFT</h1>
+                                        <h1 className="text-2xl font-black text-[#556B5A] uppercase leading-none">PRE-LOAD GIFT</h1>
                                         <p className="text-[#A68CAB] text-[10px] font-bold uppercase mt-1">For {product.name}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setViewMode('gallery')} className="p-2 bg-white rounded-full shadow-sm text-[#5B2D7D]"><LayoutGrid className="w-5 h-5" /></button>
+                                <button onClick={() => setViewMode('gallery')} className="p-2 bg-white rounded-full shadow-sm text-[#556B5A]"><LayoutGrid className="w-5 h-5" /></button>
                             </div>
 
                             <div className="bg-white/50 backdrop-blur-md p-1.5 rounded-2xl flex gap-1.5 mb-8">
-                                <button onClick={() => setUploadMode('full')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${uploadMode === 'full' ? 'bg-[#5B2D7D] text-white' : 'text-[#5B2D7D]/60'}`}>Full Memory</button>
-                                <button onClick={() => setUploadMode('quick')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${uploadMode === 'quick' ? 'bg-[#A4C538] text-white' : 'text-[#5B2D7D]/60'}`}>Quick Snap</button>
+                                <button onClick={() => setUploadMode('full')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${uploadMode === 'full' ? 'bg-[#556B5A] text-white' : 'text-[#556B5A]/60'}`}>Full Memory</button>
+                                <button onClick={() => setUploadMode('quick')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${uploadMode === 'quick' ? 'bg-[#7C9A86] text-white' : 'text-[#556B5A]/60'}`}>Quick Snap</button>
                             </div>
 
                             {uploadMode === 'quick' ? (
@@ -376,9 +376,9 @@ function GifterUploadContent() {
                                 </div>
                             ) : (
                                 <div className="space-y-6">
-                                    <div onClick={() => imageInputRef.current?.click()} className="border-2 border-dashed border-[#5B2D7D]/20 bg-white/50 rounded-[32px] p-10 flex flex-col items-center justify-center cursor-pointer">
+                                    <div onClick={() => imageInputRef.current?.click()} className="border-2 border-dashed border-[#556B5A]/20 bg-white/50 rounded-[32px] p-10 flex flex-col items-center justify-center cursor-pointer">
                                         <Upload className="w-8 h-8 text-[#F37B55] mb-2" />
-                                        <p className="text-[#5B2D7D] font-black text-sm uppercase">Add Media</p>
+                                        <p className="text-[#556B5A] font-black text-sm uppercase">Add Media</p>
                                     </div>
                                     {mediaItems.length > 0 && (
                                         <div className="grid grid-cols-3 gap-2">
@@ -391,14 +391,14 @@ function GifterUploadContent() {
                                         </div>
                                     )}
                                     <div className="bg-white/80 rounded-[32px] p-6 space-y-4">
-                                        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" className="w-full bg-[#FDF2EC]/50 rounded-xl px-4 py-3 font-bold text-[#5B2D7D] outline-none" />
-                                        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="The story..." className="w-full bg-[#FDF2EC]/50 rounded-xl px-4 py-3 text-sm min-h-[100px] outline-none resize-none" />
+                                        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" className="w-full bg-[#F6F2EC]/50 rounded-xl px-4 py-3 font-bold text-[#556B5A] outline-none" />
+                                        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="The story..." className="w-full bg-[#F6F2EC]/50 rounded-xl px-4 py-3 text-sm min-h-[100px] outline-none resize-none" />
                                         <div className="flex gap-2">
-                                            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="flex-1 bg-[#FDF2EC]/50 rounded-xl px-4 py-3 text-xs font-bold" />
-                                            <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" className="flex-1 bg-[#FDF2EC]/50 rounded-xl px-4 py-3 text-xs font-bold outline-none" />
+                                            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="flex-1 bg-[#F6F2EC]/50 rounded-xl px-4 py-3 text-xs font-bold" />
+                                            <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" className="flex-1 bg-[#F6F2EC]/50 rounded-xl px-4 py-3 text-xs font-bold outline-none" />
                                         </div>
                                     </div>
-                                    <button onClick={handleSubmit} disabled={isUploading} className="w-full bg-[#5B2D7D] text-white py-5 rounded-[24px] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2">
+                                    <button onClick={handleSubmit} disabled={isUploading} className="w-full bg-[#556B5A] text-white py-5 rounded-[24px] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2">
                                         {isUploading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
                                         <span>Add to Gift</span>
                                     </button>
@@ -415,8 +415,8 @@ function GifterUploadContent() {
                         className="flex-1 relative flex flex-col"
                     >
                         <div className="p-6 flex items-center justify-between z-50">
-                            <h2 className="text-xl font-black text-[#5B2D7D] uppercase">GIFT GALLERY</h2>
-                            <button onClick={() => setViewMode('upload')} className="p-3 bg-[#5B2D7D] text-white rounded-2xl shadow-lg"><Plus className="w-6 h-6" /></button>
+                            <h2 className="text-xl font-black text-[#556B5A] uppercase">GIFT GALLERY</h2>
+                            <button onClick={() => setViewMode('upload')} className="p-3 bg-[#556B5A] text-white rounded-2xl shadow-lg"><Plus className="w-6 h-6" /></button>
                         </div>
 
                         {memories.length > 0 ? (
@@ -464,7 +464,7 @@ function GifterUploadContent() {
                             <div className="flex-1 flex flex-col items-center justify-center p-10 text-center opacity-40">
                                 <Feather className="w-16 h-16 mb-4" />
                                 <p className="font-bold">No memories yet. Add your first one!</p>
-                                <button onClick={() => setViewMode('upload')} className="mt-6 font-black text-[#5B2D7D] underline uppercase tracking-widest text-xs">Start Pre-loading</button>
+                                <button onClick={() => setViewMode('upload')} className="mt-6 font-black text-[#556B5A] underline uppercase tracking-widest text-xs">Start Pre-loading</button>
                             </div>
                         )}
                     </motion.div>

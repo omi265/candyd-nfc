@@ -219,7 +219,7 @@ export default function MarkAsLivedPage() {
   if (!item || !charmId) {
     return (
       <div className="min-h-dvh bg-transparent flex items-center justify-center">
-        <div className="animate-pulse text-[#5B2D7D]">Loading...</div>
+        <div className="animate-pulse text-[#556B5A]">Loading...</div>
       </div>
     );
   }
@@ -227,16 +227,16 @@ export default function MarkAsLivedPage() {
   return (
     <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
       {/* Header */}
-      <header className="flex items-center gap-4 px-6 py-4 border-b border-[#5B2D7D]/10">
+      <header className="flex items-center gap-4 px-6 py-4 border-b border-[#556B5A]/10">
         <button
           onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
         >
-          <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
+          <ArrowLeft className="w-5 h-5 text-[#556B5A]" />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-[#5B2D7D]">Mark as Lived</h1>
-          <p className="text-sm text-[#5B2D7D]/60 line-clamp-1">{item.title}</p>
+          <h1 className="text-xl font-bold text-[#556B5A]">Mark as Lived</h1>
+          <p className="text-sm text-[#556B5A]/60 line-clamp-1">{item.title}</p>
         </div>
       </header>
 
@@ -244,7 +244,7 @@ export default function MarkAsLivedPage() {
       <div className="flex-1 px-6 py-6 space-y-6 overflow-y-auto pb-32">
         {/* Date */}
         <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-[#5B2D7D]/60 mb-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-[#556B5A]/60 mb-2">
             <Calendar className="w-4 h-4" />
             When did this happen? *
           </label>
@@ -252,13 +252,13 @@ export default function MarkAsLivedPage() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] outline-none focus:border-[#5B2D7D]/30"
+            className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-[#556B5A] outline-none focus:border-[#556B5A]/30"
           />
         </div>
 
         {/* Location */}
         <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-[#5B2D7D]/60 mb-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-[#556B5A]/60 mb-2">
             <MapPin className="w-4 h-4" />
             Where? (optional)
           </label>
@@ -267,32 +267,32 @@ export default function MarkAsLivedPage() {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g., Sunset Point, Goa"
-            className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none focus:border-[#5B2D7D]/30"
+            className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-[#556B5A] placeholder-[#556B5A]/30 outline-none focus:border-[#556B5A]/30"
           />
         </div>
 
         {/* People */}
         <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-[#5B2D7D]/60 mb-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-[#556B5A]/60 mb-2">
             <Users className="w-4 h-4" />
             Who was there? (optional)
           </label>
           <button
             onClick={() => setShowPeopleSelector(!showPeopleSelector)}
-            className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-left flex items-center justify-between"
+            className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-left flex items-center justify-between"
           >
             {selectedPeople.length > 0 ? (
-              <span className="text-[#5B2D7D]">
+              <span className="text-[#556B5A]">
                 {selectedPeople
                   .map((id) => people.find((p) => p.id === id)?.name)
                   .filter(Boolean)
                   .join(", ")}
               </span>
             ) : (
-              <span className="text-[#5B2D7D]/30">Select people</span>
+              <span className="text-[#556B5A]/30">Select people</span>
             )}
             <ChevronDown
-              className={`w-5 h-5 text-[#5B2D7D]/40 transition-transform ${
+              className={`w-5 h-5 text-[#556B5A]/40 transition-transform ${
                 showPeopleSelector ? "rotate-180" : ""
               }`}
             />
@@ -302,7 +302,7 @@ export default function MarkAsLivedPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-2 p-3 bg-white rounded-xl border border-[#5B2D7D]/10 space-y-2"
+              className="mt-2 p-3 bg-white rounded-xl border border-[#556B5A]/10 space-y-2"
             >
               {people.map((person) => (
                 <button
@@ -310,8 +310,8 @@ export default function MarkAsLivedPage() {
                   onClick={() => togglePerson(person.id)}
                   className={`w-full px-3 py-2 rounded-lg text-left flex items-center justify-between ${
                     selectedPeople.includes(person.id)
-                      ? "bg-[#5B2D7D] text-white"
-                      : "hover:bg-[#EADDDE]/50 text-[#5B2D7D]"
+                      ? "bg-[#556B5A] text-white"
+                      : "hover:bg-[#E6DED1]/50 text-[#556B5A]"
                   }`}
                 >
                   {person.name}
@@ -319,19 +319,19 @@ export default function MarkAsLivedPage() {
                 </button>
               ))}
 
-              <div className="flex gap-2 pt-2 border-t border-[#5B2D7D]/10">
+              <div className="flex gap-2 pt-2 border-t border-[#556B5A]/10">
                 <input
                   type="text"
                   value={newPersonName}
                   onChange={(e) => setNewPersonName(e.target.value)}
                   placeholder="Add someone new..."
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none text-sm"
+                  className="flex-1 px-3 py-2 rounded-lg bg-[#E6DED1]/30 text-[#556B5A] placeholder-[#556B5A]/30 outline-none text-sm"
                   onKeyDown={(e) => e.key === "Enter" && handleAddPerson()}
                 />
                 <button
                   onClick={handleAddPerson}
                   disabled={!newPersonName.trim() || isAddingPerson}
-                  className="px-3 py-2 bg-[#5B2D7D] text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                  className="px-3 py-2 bg-[#556B5A] text-white rounded-lg text-sm font-medium disabled:opacity-50"
                 >
                   {isAddingPerson ? "..." : "Add"}
                 </button>
@@ -342,7 +342,7 @@ export default function MarkAsLivedPage() {
 
         {/* Reflection */}
         <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-[#5B2D7D]/60 mb-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-[#556B5A]/60 mb-2">
             <Sparkles className="w-4 h-4" />
             How was it? (optional)
           </label>
@@ -351,13 +351,13 @@ export default function MarkAsLivedPage() {
             onChange={(e) => setReflection(e.target.value)}
             placeholder="Share your thoughts and feelings about this experience..."
             rows={4}
-            className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none focus:border-[#5B2D7D]/30 resize-none"
+            className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-[#556B5A] placeholder-[#556B5A]/30 outline-none focus:border-[#556B5A]/30 resize-none"
           />
         </div>
 
         {/* Media Upload */}
         <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-[#5B2D7D]/60 mb-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-[#556B5A]/60 mb-2">
             <ImageIcon className="w-4 h-4" />
             Photos & Videos (optional)
           </label>
@@ -368,11 +368,11 @@ export default function MarkAsLivedPage() {
               {media.map((m) => (
                 <div
                   key={m.id}
-                  className="aspect-square rounded-xl overflow-hidden bg-[#EADDDE] relative"
+                  className="aspect-square rounded-xl overflow-hidden bg-[#E6DED1] relative"
                 >
                   {m.status === "uploading" ? (
                     <div className="w-full h-full flex items-center justify-center">
-                      <div className="animate-spin w-6 h-6 border-2 border-[#5B2D7D] border-t-transparent rounded-full" />
+                      <div className="animate-spin w-6 h-6 border-2 border-[#556B5A] border-t-transparent rounded-full" />
                     </div>
                   ) : m.status === "error" ? (
                     <div className="w-full h-full flex items-center justify-center text-red-500">
@@ -414,7 +414,7 @@ export default function MarkAsLivedPage() {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full py-4 border-2 border-dashed border-[#5B2D7D]/20 rounded-xl flex items-center justify-center gap-2 text-[#5B2D7D]/60 hover:border-[#5B2D7D]/40 transition-colors"
+            className="w-full py-4 border-2 border-dashed border-[#556B5A]/20 rounded-xl flex items-center justify-center gap-2 text-[#556B5A]/60 hover:border-[#556B5A]/40 transition-colors"
           >
             <Upload className="w-5 h-5" />
             <span>Add photos or videos</span>
@@ -423,11 +423,11 @@ export default function MarkAsLivedPage() {
       </div>
 
       {/* Submit Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#FDF2EC] via-[#FDF2EC] to-transparent pt-12">
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#F6F2EC] via-[#F6F2EC] to-transparent pt-12">
         <button
           onClick={handleSubmit}
           disabled={!date || isPending}
-          className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#93B132] transition-colors disabled:opacity-50"
+          className="w-full py-4 bg-[#7C9A86] text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#556B5A] transition-colors disabled:opacity-50"
         >
           {isPending ? (
             "Saving..."

@@ -171,15 +171,15 @@ export default function AddItemPage() {
   return (
     <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
       {/* Header */}
-      <header className="flex flex-col border-b border-[#5B2D7D]/10 bg-white shrink-0">
+      <header className="flex flex-col border-b border-[#556B5A]/10 bg-white shrink-0">
         <div className="flex items-center gap-4 px-6 py-4">
           <button
             onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
-            className="w-10 h-10 rounded-full bg-[#FDF2EC] flex items-center justify-center shadow-sm"
+            className="w-10 h-10 rounded-full bg-[#F6F2EC] flex items-center justify-center shadow-sm"
           >
-            <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
+            <ArrowLeft className="w-5 h-5 text-[#556B5A]" />
           </button>
-          <h1 className="text-xl font-bold text-[#5B2D7D]">Add Bucket List Item</h1>
+          <h1 className="text-xl font-bold text-[#556B5A]">Add Bucket List Item</h1>
         </div>
 
         {/* Tab Switcher */}
@@ -187,7 +187,7 @@ export default function AddItemPage() {
           <button
             onClick={() => setMode('custom')}
             className={`flex-1 py-2 text-sm font-bold border-b-2 transition-colors ${
-              mode === 'custom' ? "border-[#5B2D7D] text-[#5B2D7D]" : "border-transparent text-[#5B2D7D]/40"
+              mode === 'custom' ? "border-[#556B5A] text-[#556B5A]" : "border-transparent text-[#556B5A]/40"
             }`}
           >
             Custom
@@ -195,7 +195,7 @@ export default function AddItemPage() {
           <button
             onClick={() => setMode('templates')}
             className={`flex-1 py-2 text-sm font-bold border-b-2 transition-colors ${
-              mode === 'templates' ? "border-[#5B2D7D] text-[#5B2D7D]" : "border-transparent text-[#5B2D7D]/40"
+              mode === 'templates' ? "border-[#556B5A] text-[#556B5A]" : "border-transparent text-[#556B5A]/40"
             }`}
           >
             Browse Buckets
@@ -219,7 +219,7 @@ export default function AddItemPage() {
           <div className="space-y-6">
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-[#5B2D7D]/60 mb-2">
+              <label className="block text-sm font-medium text-[#556B5A]/60 mb-2">
                 What do you want to do? *
               </label>
               <input
@@ -227,14 +227,14 @@ export default function AddItemPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Watch the sunset together"
-                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none focus:border-[#5B2D7D]/30 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-[#556B5A] placeholder-[#556B5A]/30 outline-none focus:border-[#556B5A]/30 transition-colors"
                 autoFocus
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-[#5B2D7D]/60 mb-2">
+              <label className="block text-sm font-medium text-[#556B5A]/60 mb-2">
                 Description (optional)
               </label>
               <textarea
@@ -242,34 +242,34 @@ export default function AddItemPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add more details..."
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none focus:border-[#5B2D7D]/30 transition-colors resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-[#556B5A] placeholder-[#556B5A]/30 outline-none focus:border-[#556B5A]/30 transition-colors resize-none"
               />
             </div>
 
             {/* Who */}
             <div>
-              <label className="block text-sm font-medium text-[#5B2D7D]/60 mb-2">
+              <label className="block text-sm font-medium text-[#556B5A]/60 mb-2">
                 Who do you want to do this with?
               </label>
               <button
                 onClick={() => setShowPeopleSelector(!showPeopleSelector)}
-                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-left flex items-center justify-between"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-left flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-[#5B2D7D]/40" />
+                  <Users className="w-5 h-5 text-[#556B5A]/40" />
                   {selectedPeople.length > 0 ? (
-                    <span className="text-[#5B2D7D]">
+                    <span className="text-[#556B5A]">
                       {selectedPeople
                         .map((id) => people.find((p) => p.id === id)?.name)
                         .filter(Boolean)
                         .join(", ")}
                     </span>
                   ) : (
-                    <span className="text-[#5B2D7D]/30">Select people</span>
+                    <span className="text-[#556B5A]/30">Select people</span>
                   )}
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-[#5B2D7D]/40 transition-transform ${
+                  className={`w-5 h-5 text-[#556B5A]/40 transition-transform ${
                     showPeopleSelector ? "rotate-180" : ""
                   }`}
                 />
@@ -280,7 +280,7 @@ export default function AddItemPage() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 p-3 bg-white rounded-xl border border-[#5B2D7D]/10 space-y-2"
+                  className="mt-2 p-3 bg-white rounded-xl border border-[#556B5A]/10 space-y-2"
                 >
                   {people.map((person) => (
                     <button
@@ -288,8 +288,8 @@ export default function AddItemPage() {
                       onClick={() => togglePerson(person.id)}
                       className={`w-full px-3 py-2 rounded-lg text-left flex items-center justify-between ${
                         selectedPeople.includes(person.id)
-                          ? "bg-[#5B2D7D] text-white"
-                          : "hover:bg-[#EADDDE]/50 text-[#5B2D7D]"
+                          ? "bg-[#556B5A] text-white"
+                          : "hover:bg-[#E6DED1]/50 text-[#556B5A]"
                       }`}
                     >
                       {person.name}
@@ -300,19 +300,19 @@ export default function AddItemPage() {
                   ))}
 
                   {/* Add new person */}
-                  <div className="flex gap-2 pt-2 border-t border-[#5B2D7D]/10">
+                  <div className="flex gap-2 pt-2 border-t border-[#556B5A]/10">
                     <input
                       type="text"
                       value={newPersonName}
                       onChange={(e) => setNewPersonName(e.target.value)}
                       placeholder="Add someone new..."
-                      className="flex-1 px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none text-sm"
+                      className="flex-1 px-3 py-2 rounded-lg bg-[#E6DED1]/30 text-[#556B5A] placeholder-[#556B5A]/30 outline-none text-sm"
                       onKeyDown={(e) => e.key === "Enter" && handleAddPerson()}
                     />
                     <button
                       onClick={handleAddPerson}
                       disabled={!newPersonName.trim() || isAddingPerson}
-                      className="px-3 py-2 bg-[#5B2D7D] text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                      className="px-3 py-2 bg-[#556B5A] text-white rounded-lg text-sm font-medium disabled:opacity-50"
                     >
                       {isAddingPerson ? "..." : "Add"}
                     </button>
@@ -323,30 +323,30 @@ export default function AddItemPage() {
 
             {/* When */}
             <div>
-              <label className="block text-sm font-medium text-[#5B2D7D]/60 mb-2">
+              <label className="block text-sm font-medium text-[#556B5A]/60 mb-2">
                 hope to tick this off by
               </label>
               <button
                 onClick={() => setShowWhenSelector(!showWhenSelector)}
-                className="w-full px-4 py-3 rounded-xl bg-white border border-[#5B2D7D]/10 text-left flex items-center justify-between"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-[#556B5A]/10 text-left flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-[#5B2D7D]/40" />
+                  <Calendar className="w-5 h-5 text-[#556B5A]/40" />
                   {whenType ? (
-                    <span className="text-[#5B2D7D]">
+                    <span className="text-[#556B5A]">
                       {WHEN_OPTIONS.find((o) => o.id === whenType)?.label}
                       {whenType === "specific_date" && targetDate && (
-                        <span className="ml-1 text-[#5B2D7D]/60">
+                        <span className="ml-1 text-[#556B5A]/60">
                           ({new Date(targetDate).toLocaleDateString()})
                         </span>
                       )}
                     </span>
                   ) : (
-                    <span className="text-[#5B2D7D]/30">Select timing</span>
+                    <span className="text-[#556B5A]/30">Select timing</span>
                   )}
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-[#5B2D7D]/40 transition-transform ${
+                  className={`w-5 h-5 text-[#556B5A]/40 transition-transform ${
                     showWhenSelector ? "rotate-180" : ""
                   }`}
                 />
@@ -357,7 +357,7 @@ export default function AddItemPage() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 p-3 bg-white rounded-xl border border-[#5B2D7D]/10 space-y-2"
+                  className="mt-2 p-3 bg-white rounded-xl border border-[#556B5A]/10 space-y-2"
                 >
                   {WHEN_OPTIONS.map((option) => (
                     <button
@@ -370,8 +370,8 @@ export default function AddItemPage() {
                       }}
                       className={`w-full px-3 py-2 rounded-lg text-left ${
                         whenType === option.id
-                          ? "bg-[#5B2D7D] text-white"
-                          : "hover:bg-[#EADDDE]/50 text-[#5B2D7D]"
+                          ? "bg-[#556B5A] text-white"
+                          : "hover:bg-[#E6DED1]/50 text-[#556B5A]"
                       }`}
                     >
                       <div className="font-medium">{option.label}</div>
@@ -379,7 +379,7 @@ export default function AddItemPage() {
                         className={`text-xs ${
                           whenType === option.id
                             ? "text-white/70"
-                            : "text-[#5B2D7D]/50"
+                            : "text-[#556B5A]/50"
                         }`}
                       >
                         {option.description}
@@ -393,7 +393,7 @@ export default function AddItemPage() {
                       type="date"
                       value={targetDate}
                       onChange={(e) => setTargetDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] outline-none mt-2"
+                      className="w-full px-3 py-2 rounded-lg bg-[#E6DED1]/30 text-[#556B5A] outline-none mt-2"
                     />
                   )}
                 </motion.div>
@@ -412,7 +412,7 @@ export default function AddItemPage() {
                   <button
                     onClick={() => setExpandedTemplateId(isExpanded ? null : template.id)}
                     className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
-                      isExpanded ? "bg-[#5B2D7D] text-white shadow-md" : "bg-white"
+                      isExpanded ? "bg-[#556B5A] text-white shadow-md" : "bg-white"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -421,14 +421,14 @@ export default function AddItemPage() {
                         <h3 className="font-bold">{template.name}</h3>
                         {selectedInTemplate > 0 && (
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            isExpanded ? "bg-white/20 text-white" : "bg-[#5B2D7D]/10 text-[#5B2D7D]"
+                            isExpanded ? "bg-white/20 text-white" : "bg-[#556B5A]/10 text-[#556B5A]"
                           }`}>
                             {selectedInTemplate} selected
                           </span>
                         )}
                       </div>
                     </div>
-                    {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5 text-[#5B2D7D]/40" />}
+                    {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5 text-[#556B5A]/40" />}
                   </button>
 
                   {isExpanded && (
@@ -444,14 +444,14 @@ export default function AddItemPage() {
                             key={item}
                             onClick={() => toggleTemplateItem(item)}
                             className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition-colors ${
-                              isSelected ? "bg-[#5B2D7D]/10" : "hover:bg-[#EADDDE]/30"
+                              isSelected ? "bg-[#556B5A]/10" : "hover:bg-[#E6DED1]/30"
                             }`}
                           >
-                            <span className={`text-sm ${isSelected ? "text-[#5B2D7D] font-medium" : "text-[#5B2D7D]/70"}`}>
+                            <span className={`text-sm ${isSelected ? "text-[#556B5A] font-medium" : "text-[#556B5A]/70"}`}>
                               {item}
                             </span>
                             <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                              isSelected ? "bg-[#5B2D7D] border-[#5B2D7D]" : "border-[#5B2D7D]/20"
+                              isSelected ? "bg-[#556B5A] border-[#556B5A]" : "border-[#556B5A]/20"
                             }`}>
                               {isSelected && <Check className="w-3 h-3 text-white" />}
                             </div>
@@ -468,11 +468,11 @@ export default function AddItemPage() {
       </div>
 
       {/* Submit Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#FDF2EC] via-[#FDF2EC] to-transparent pt-12 shrink-0">
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#F6F2EC] via-[#F6F2EC] to-transparent pt-12 shrink-0">
         <button
           onClick={handleSubmit}
           disabled={(mode === 'custom' ? !title.trim() : selectedTemplateItems.length === 0) || isPending || (mode === 'custom' && pendingCount >= 5)}
-          className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#93B132] transition-colors disabled:opacity-50"
+          className="w-full py-4 bg-[#7C9A86] text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#556B5A] transition-colors disabled:opacity-50"
         >
           {isPending ? (
             "Adding..."

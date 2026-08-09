@@ -60,25 +60,25 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Mode Toggle */}
-      <div className="flex bg-[#EADDDE]/30 p-1 rounded-xl">
+      <div className="flex bg-[#E6DED1]/30 p-1 rounded-xl">
           <button
             type="button"
             onClick={() => { setMode("BATCH"); setEmail(""); }}
-            className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${mode === "BATCH" ? "bg-white text-[#5B2D7D] shadow-sm" : "text-[#5B2D7D]/60 hover:text-[#5B2D7D]"}`}
+            className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${mode === "BATCH" ? "bg-white text-[#556B5A] shadow-sm" : "text-[#556B5A]/60 hover:text-[#556B5A]"}`}
           >
             Batch
           </button>
           <button
             type="button"
             onClick={() => { setMode("EXISTING"); setEmail(""); }}
-            className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${mode === "EXISTING" ? "bg-white text-[#5B2D7D] shadow-sm" : "text-[#5B2D7D]/60 hover:text-[#5B2D7D]"}`}
+            className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${mode === "EXISTING" ? "bg-white text-[#556B5A] shadow-sm" : "text-[#556B5A]/60 hover:text-[#556B5A]"}`}
           >
             Existing
           </button>
           <button
             type="button"
             onClick={() => { setMode("NEW"); setEmail(""); }}
-            className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${mode === "NEW" ? "bg-white text-[#5B2D7D] shadow-sm" : "text-[#5B2D7D]/60 hover:text-[#5B2D7D]"}`}
+            className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${mode === "NEW" ? "bg-white text-[#556B5A] shadow-sm" : "text-[#556B5A]/60 hover:text-[#556B5A]"}`}
           >
             New
           </button>
@@ -86,19 +86,19 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
 
       {mode === "BATCH" ? (
           <div>
-            <label className="block text-sm font-medium text-[#5B2D7D] mb-1">Number of Links</label>
+            <label className="block text-sm font-medium text-[#556B5A] mb-1">Number of Links</label>
             <input
                 type="number"
                 min={1}
                 max={50}
                 value={batchCount}
                 onChange={(e) => setBatchCount(parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white border border-[#EADDDE] rounded-xl focus:ring-2 focus:ring-[#5B2D7D] outline-none text-[#5B2D7D] font-[Outfit]"
+                className="w-full px-4 py-3 bg-white border border-[#E6DED1] rounded-xl focus:ring-2 focus:ring-[#556B5A] outline-none text-[#556B5A] font-[Outfit]"
             />
           </div>
       ) : (
           <div>
-            <label className="block text-sm font-medium text-[#5B2D7D] mb-1">
+            <label className="block text-sm font-medium text-[#556B5A] mb-1">
                 {mode === "EXISTING" ? "Select User" : "User Email"}
             </label>
             
@@ -108,7 +108,7 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
                 required={mode === "EXISTING"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-[#EADDDE] rounded-xl focus:ring-2 focus:ring-[#5B2D7D] outline-none text-[#5B2D7D] appearance-none font-[Outfit]"
+                className="w-full px-4 py-3 bg-white border border-[#E6DED1] rounded-xl focus:ring-2 focus:ring-[#556B5A] outline-none text-[#556B5A] appearance-none font-[Outfit]"
                 >
                 <option value="" className="font-[Outfit]">-- Choose a user --</option>
                 {users.map((user) => (
@@ -124,14 +124,14 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter new user email..."
-                    className="w-full px-4 py-3 bg-white border border-[#EADDDE] rounded-xl focus:ring-2 focus:ring-[#5B2D7D] outline-none text-[#5B2D7D] font-[Outfit]"
+                    className="w-full px-4 py-3 bg-white border border-[#E6DED1] rounded-xl focus:ring-2 focus:ring-[#556B5A] outline-none text-[#556B5A] font-[Outfit]"
                 />
             )}
           </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-[#5B2D7D] mb-2">Charm Type</label>
+        <label className="block text-sm font-medium text-[#556B5A] mb-2">Charm Type</label>
         <div className="grid grid-cols-1 gap-2">
           {CHARM_TYPES.map((type) => (
             <button
@@ -141,16 +141,16 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
               onClick={() => !type.disabled && setCharmType(type.id)}
               className={`px-4 py-3 rounded-xl text-left transition-all flex items-center gap-3 ${
                 charmType === type.id
-                  ? "bg-[#5B2D7D] text-white shadow-md"
+                  ? "bg-[#556B5A] text-white shadow-md"
                   : type.disabled
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white border border-[#EADDDE] text-[#5B2D7D] hover:border-[#5B2D7D]/30 shadow-sm"
+                  : "bg-white border border-[#E6DED1] text-[#556B5A] hover:border-[#556B5A]/30 shadow-sm"
               }`}
             >
               <span className="text-2xl">{type.emoji}</span>
               <div className="flex-1">
                 <div className="font-bold">{type.label}</div>
-                <div className={`text-xs ${charmType === type.id ? "text-white/70" : "text-[#5B2D7D]/50"}`}>
+                <div className={`text-xs ${charmType === type.id ? "text-white/70" : "text-[#556B5A]/50"}`}>
                   {type.description}
                 </div>
               </div>
@@ -162,7 +162,7 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-[#A4C538] text-white font-bold py-4 rounded-xl hover:bg-[#93B132] transition-colors disabled:opacity-50 shadow-lg mt-4"
+        className="w-full bg-[#7C9A86] text-white font-bold py-4 rounded-xl hover:bg-[#556B5A] transition-colors disabled:opacity-50 shadow-lg mt-4"
       >
         {isPending ? "Creating..." : "Create Product Link"}
       </button>

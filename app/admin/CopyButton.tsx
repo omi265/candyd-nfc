@@ -50,7 +50,7 @@ export function CopyButton({ token, baseUrl = "/nfc/login?token=" }: { token: st
   return (
     <button
       onClick={handleCopy}
-      className="p-2 hover:bg-[#F0E6F5] rounded-full transition-colors text-[#5B2D7D]"
+      className="p-2 hover:bg-[#E6DED1] rounded-full transition-colors text-[#556B5A]"
       title="Copy Link"
     >
       {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}

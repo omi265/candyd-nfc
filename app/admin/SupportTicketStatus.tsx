@@ -49,7 +49,7 @@ export function SupportTicketStatus({ ticketId, initialStatus }: SupportTicketSt
       
       {isPending ? (
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
-              <Loader2 className="w-3 h-3 animate-spin text-[#5B2D7D]" />
+              <Loader2 className="w-3 h-3 animate-spin text-[#556B5A]" />
           </div>
       ) : (
           <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">

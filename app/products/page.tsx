@@ -38,11 +38,11 @@ const CHARMS = [
     emoji: "✨",
     description: "The ultimate bucket list for your journey. Track milestones, share experiences, and celebrate your growth.",
     features: ["Interactive Bucket Lists", "Shared Milestones", "Experience Reflections", "Achievement Badges"],
-    bgColor: "bg-[#A4C538]",
-    accentColor: "text-[#A4C538]",
-    gradient: "from-[#A4C538] to-[#7A9B1E]",
+    bgColor: "bg-[#7C9A86]",
+    accentColor: "text-[#7C9A86]",
+    gradient: "from-[#7C9A86] to-[#556B5A]",
     shopifyUrl: "https://candyd.co",
-    icon: <div className="w-20 h-20 bg-white rounded-[24px] flex items-center justify-center shadow-lg"><Heart className="w-10 h-10 text-[#A4C538] fill-[#A4C538]" /></div>
+    icon: <div className="w-20 h-20 bg-white rounded-[24px] flex items-center justify-center shadow-lg"><Heart className="w-10 h-10 text-[#7C9A86] fill-[#7C9A86]" /></div>
   },
   {
     id: "habit",
@@ -65,14 +65,14 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-transparent font-[Outfit] pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-[#FDF2EC]/80 backdrop-blur-xl border-b border-[#5B2D7D]/5 px-6 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-[#F6F2EC]/80 backdrop-blur-xl border-b border-[#556B5A]/5 px-6 py-4 flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-[#EADDDE]"
+          className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-[#E6DED1]"
         >
-          <ArrowLeft className="w-5 h-5 text-[#5B2D7D]" />
+          <ArrowLeft className="w-5 h-5 text-[#556B5A]" />
         </button>
-        <h1 className="text-xl font-black text-[#5B2D7D] uppercase tracking-tight">Explore Charms</h1>
+        <h1 className="text-xl font-black text-[#556B5A] uppercase tracking-tight">Explore Charms</h1>
         <div className="w-10" /> {/* Spacer */}
       </header>
 
@@ -83,14 +83,14 @@ export default function ProductsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-2xl mx-auto"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#5B2D7D]/5 rounded-full mb-6">
-            <Sparkles className="w-4 h-4 text-[#5B2D7D]" />
-            <span className="text-xs font-bold text-[#5B2D7D] uppercase tracking-wider">Magic in every tap</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#556B5A]/5 rounded-full mb-6">
+            <Sparkles className="w-4 h-4 text-[#556B5A]" />
+            <span className="text-xs font-bold text-[#556B5A] uppercase tracking-wider">Magic in every tap</span>
           </div>
-          <h2 className="text-4xl font-black text-[#5B2D7D] leading-none uppercase mb-4 tracking-tighter">
-            Choose Your <br/><span className="text-[#A4C538]">Digital Companion</span>
+          <h2 className="text-4xl font-black text-[#556B5A] leading-none uppercase mb-4 tracking-tighter">
+            Choose Your <br/><span className="text-[#7C9A86]">Digital Companion</span>
           </h2>
-          <p className="text-[#5B2D7D]/60 text-lg leading-relaxed">
+          <p className="text-[#556B5A]/60 text-lg leading-relaxed">
             Our physical charms connect your style to your stories. Pick the one that fits your journey best.
           </p>
         </motion.div>
@@ -104,7 +104,7 @@ export default function ProductsPage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="group relative overflow-hidden bg-white rounded-[48px] shadow-2xl border border-[#EADDDE] flex flex-col md:flex-row p-4 gap-4"
+            className="group relative overflow-hidden bg-white rounded-[48px] shadow-2xl border border-[#E6DED1] flex flex-col md:flex-row p-4 gap-4"
           >
             {/* Visual Side */}
             <div className={`w-full md:w-2/5 min-h-[350px] py-16 flex items-center justify-center bg-gradient-to-br ${charm.gradient} relative overflow-hidden rounded-[36px]`}>
@@ -130,31 +130,31 @@ export default function ProductsPage() {
                         {charm.type}
                     </span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-[#5B2D7D]/5 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-[#556B5A]/5 flex items-center justify-center">
                     <Sparkles className={`w-4 h-4 ${charm.accentColor}`} />
                 </div>
               </div>
               
-              <h3 className="text-4xl font-black text-[#5B2D7D] uppercase tracking-tighter mb-4 leading-none">
+              <h3 className="text-4xl font-black text-[#556B5A] uppercase tracking-tighter mb-4 leading-none">
                 {charm.name}
               </h3>
               
-              <p className="text-[#5B2D7D]/70 text-lg leading-relaxed mb-8 font-medium">
+              <p className="text-[#556B5A]/70 text-lg leading-relaxed mb-8 font-medium">
                 {charm.description}
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
                 {charm.features.map(feature => (
-                    <div key={feature} className="flex items-start gap-3 bg-[#FDF2EC]/50 p-3 rounded-2xl border border-[#EADDDE]/50">
+                    <div key={feature} className="flex items-start gap-3 bg-[#F6F2EC]/50 p-3 rounded-2xl border border-[#E6DED1]/50">
                         <div className={`mt-0.5 shrink-0 ${charm.accentColor}`}>
                             <StarBullet />
                         </div>
-                        <span className="text-[11px] font-black text-[#5B2D7D] uppercase leading-tight">{feature}</span>
+                        <span className="text-[11px] font-black text-[#556B5A] uppercase leading-tight">{feature}</span>
                     </div>
                 ))}
               </div>
 
-              <div className="mt-auto pt-8 border-t border-[#EADDDE]/50">
+              <div className="mt-auto pt-8 border-t border-[#E6DED1]/50">
                 <a
                     href={charm.shopifyUrl}
                     target="_blank"
@@ -176,7 +176,7 @@ export default function ProductsPage() {
           <div className="w-12 h-12 mx-auto mb-6 opacity-30 relative">
               <Image src="/Candyd_logo.svg" alt="Logo" fill className="object-contain" />
           </div>
-          <p className="text-[#5B2D7D]/40 text-sm font-bold uppercase tracking-widest">
+          <p className="text-[#556B5A]/40 text-sm font-bold uppercase tracking-widest">
               Crafted with magic by Candyd
           </p>
       </section>

@@ -171,43 +171,43 @@ export default function ManageCharmsPage() {
                     <p className="text-[#9A92A6] text-xs font-bold uppercase tracking-wider mb-3 ml-1">Your Charms</p>
                     <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 px-1 snap-x snap-mandatory">
                         {products.map((product) => (
-                            <div key={product.id} className="flex-shrink-0 flex items-center gap-1 bg-white border border-[#EADDDE] rounded-xl transition-all hover:border-[#5B2D7D]/30 p-1 pr-2 snap-start">
+                            <div key={product.id} className="flex-shrink-0 flex items-center gap-1 bg-white border border-[#E6DED1] rounded-xl transition-all hover:border-[#556B5A]/30 p-1 pr-2 snap-start">
                                 <button
                                     onClick={() => handleCharmSelect(product)}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${
                                         selectedProduct?.id === product.id
-                                            ? "bg-[#5B2D7D] text-white shadow-md shadow-[#5B2D7D]/20"
-                                            : "bg-transparent text-[#5B2D7D]"
+                                            ? "bg-[#556B5A] text-white shadow-md shadow-[#556B5A]/20"
+                                            : "bg-transparent text-[#556B5A]"
                                     }`}
                                 >
-                                    <Sparkles className={`w-4 h-4 ${selectedProduct?.id === product.id ? "text-white" : "text-[#5B2D7D]"}`} />
+                                    <Sparkles className={`w-4 h-4 ${selectedProduct?.id === product.id ? "text-white" : "text-[#556B5A]"}`} />
                                     <span className="font-medium text-sm whitespace-nowrap">{product.name}</span>
                                 </button>
-                                <div className="w-px h-6 bg-[#EADDDE]" />
+                                <div className="w-px h-6 bg-[#E6DED1]" />
                                 <ShareButton token={product.token} charmName={product.name} variant="icon" />
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <h1 className="text-3xl font-bold mb-8 text-[#3E1C56]">Charm settings</h1>
+                <h1 className="text-3xl font-bold mb-8 text-[#3A4B3E]">Charm settings</h1>
 
                 {/* Memory Usage Card */}
                 <div className="bg-[#FFF9F6] rounded-[32px] p-6 mb-8 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-baseline gap-1">
-                            <span className="text-5xl font-bold text-[#3E1C56]">
+                            <span className="text-5xl font-bold text-[#3A4B3E]">
                                 {isLoadingStats ? "..." : `${percentUsed}%`}
                             </span>
                             <span className="text-[#9A92A6]">Memory used</span>
                         </div>
-                        <button className="bg-[#C2D647] text-[#3E1C56] px-4 py-2 rounded-full font-semibold text-sm hover:bg-[#b0c43d] transition-colors">
+                        <button className="bg-[#C2D647] text-[#3A4B3E] px-4 py-2 rounded-full font-semibold text-sm hover:bg-[#b0c43d] transition-colors">
                             Upgrade plan
                         </button>
                     </div>
                     
                     {/* Progress Bar */}
-                    <div className="h-6 w-full bg-[#EADDDE] rounded-full mb-4 relative overflow-hidden">
+                    <div className="h-6 w-full bg-[#E6DED1] rounded-full mb-4 relative overflow-hidden">
                         <motion.div 
                             initial={{ width: 0 }}
                             animate={{ width: `${percentUsed}%` }}
@@ -230,8 +230,8 @@ export default function ManageCharmsPage() {
                     <div>
                         <div className="bg-[#FFF9F6] rounded-2xl p-4 flex items-center justify-between shadow-sm">
                             <div className="flex items-center gap-4">
-                                <ShieldCheck className="w-6 h-6 text-[#5B2D7D]" />
-                                <span className="text-[#3E1C56] text-lg font-medium">Guest access</span>
+                                <ShieldCheck className="w-6 h-6 text-[#556B5A]" />
+                                <span className="text-[#3A4B3E] text-lg font-medium">Guest access</span>
                             </div>
                             <button 
                                 onClick={handleToggleGuestUploads}
@@ -249,13 +249,13 @@ export default function ManageCharmsPage() {
                         </p>
                     </div>
 
-                    <div className="h-px bg-[#EADDDE] w-full" />
+                    <div className="h-px bg-[#E6DED1] w-full" />
 
                     <div>
                         <div className="bg-[#FFF9F6] rounded-2xl p-4 flex items-center justify-between shadow-sm">
                             <div className="flex items-center gap-4">
-                                <Heart className="w-6 h-6 text-[#5B2D7D]" />
-                                <span className="text-[#3E1C56] text-lg font-medium">Auto-Approve</span>
+                                <Heart className="w-6 h-6 text-[#556B5A]" />
+                                <span className="text-[#3A4B3E] text-lg font-medium">Auto-Approve</span>
                             </div>
                             <button 
                                 onClick={() => handleUpdateSettings({ autoApproveGuestUploads: !selectedProduct?.autoApproveGuestUploads })}
@@ -273,13 +273,13 @@ export default function ManageCharmsPage() {
                         </p>
                     </div>
 
-                    <div className="h-px bg-[#EADDDE] w-full" />
+                    <div className="h-px bg-[#E6DED1] w-full" />
 
                     <div>
                         <div className="bg-[#FFF9F6] rounded-2xl p-4 flex items-center justify-between shadow-sm">
                             <div className="flex items-center gap-4">
-                                <Upload className="w-6 h-6 text-[#5B2D7D]" />
-                                <span className="text-[#3E1C56] text-lg font-medium">Upload Button</span>
+                                <Upload className="w-6 h-6 text-[#556B5A]" />
+                                <span className="text-[#3A4B3E] text-lg font-medium">Upload Button</span>
                             </div>
                             <button 
                                 onClick={() => handleUpdateSettings({ enableGuestUploadButton: !selectedProduct?.enableGuestUploadButton })}
@@ -304,10 +304,10 @@ export default function ManageCharmsPage() {
                                     exit={{ height: 0, opacity: 0 }}
                                     className="mt-4 overflow-hidden"
                                 >
-                                    <div className="bg-[#FFF9F6] rounded-2xl p-4 shadow-sm border border-[#EADDDE]">
+                                    <div className="bg-[#FFF9F6] rounded-2xl p-4 shadow-sm border border-[#E6DED1]">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <Lock className="w-4 h-4 text-[#5B2D7D]" />
-                                            <span className="text-sm font-bold text-[#5B2D7D] uppercase tracking-wider">Upload Password</span>
+                                            <Lock className="w-4 h-4 text-[#556B5A]" />
+                                            <span className="text-sm font-bold text-[#556B5A] uppercase tracking-wider">Upload Password</span>
                                         </div>
                                         <input 
                                             type="text" 
@@ -315,7 +315,7 @@ export default function ManageCharmsPage() {
                                             onChange={(e) => setGuestPassword(e.target.value)}
                                             onBlur={handlePasswordBlur}
                                             placeholder="Set a password for guests..."
-                                            className="w-full bg-white border border-[#EADDDE] rounded-xl px-4 py-3 text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all"
+                                            className="w-full bg-white border border-[#E6DED1] rounded-xl px-4 py-3 text-[#556B5A] focus:outline-none focus:ring-2 focus:ring-[#556B5A]/20 transition-all"
                                         />
                                         <p className="text-[#9A92A6] text-[10px] mt-2 italic px-1">
                                             Guests must enter this password to use the upload button.
@@ -326,13 +326,13 @@ export default function ManageCharmsPage() {
                         </AnimatePresence>
                     </div>
 
-                    <div className="h-px bg-[#EADDDE] w-full" />
+                    <div className="h-px bg-[#E6DED1] w-full" />
 
                     <div>
                         <div className="bg-[#FFF9F6] rounded-2xl p-4 shadow-sm">
                             <div className="flex items-center gap-4 mb-4">
-                                <Share2 className="w-6 h-6 text-[#5B2D7D]" />
-                                <span className="text-[#3E1C56] text-lg font-medium">Share Charm</span>
+                                <Share2 className="w-6 h-6 text-[#556B5A]" />
+                                <span className="text-[#3A4B3E] text-lg font-medium">Share Charm</span>
                             </div>
                             <ShareButton 
                                 token={selectedProduct?.token} 
@@ -345,7 +345,7 @@ export default function ManageCharmsPage() {
                         </p>
                     </div>
 
-                    <div className="h-px bg-[#EADDDE] w-full" />
+                    <div className="h-px bg-[#E6DED1] w-full" />
 
                     <div>
                         <button 
@@ -390,7 +390,7 @@ export default function ManageCharmsPage() {
                                     onClick={() => setIsDeleteModalOpen(false)}
                                     className="absolute right-0 top-0"
                                 >
-                                    <X className="w-6 h-6 text-[#3E1C56]" />
+                                    <X className="w-6 h-6 text-[#3A4B3E]" />
                                 </button>
                                 
                                 {/* Icon */}
@@ -401,7 +401,7 @@ export default function ManageCharmsPage() {
                                 <h2 className="text-[#9A92A6] text-sm mb-2 self-start w-full">
                                     {selectedProduct ? selectedProduct.name : "Charm XYZ"}
                                 </h2>
-                                <h3 className="text-[#3E1C56] text-3xl font-bold mb-4 self-start w-full leading-tight">
+                                <h3 className="text-[#3A4B3E] text-3xl font-bold mb-4 self-start w-full leading-tight">
                                     Unpair & Delete Charm Data
                                 </h3>
 
@@ -409,26 +409,26 @@ export default function ManageCharmsPage() {
                                     <h4 className="text-[#9A92A6] font-bold mb-4">What you will lose:</h4>
                                     
                                     <div className="space-y-3">
-                                        <div className="bg-[#FFF9F6] border border-[#EADDDE] rounded-2xl p-4 flex gap-4 items-center">
+                                        <div className="bg-[#FFF9F6] border border-[#E6DED1] rounded-2xl p-4 flex gap-4 items-center">
                                             <div className="w-10 h-10 bg-[#EAE0F0] rounded-lg flex items-center justify-center shrink-0">
-                                                <ImageIcon className="w-6 h-6 text-[#5B2D7D]" />
+                                                <ImageIcon className="w-6 h-6 text-[#556B5A]" />
                                             </div>
                                             <p className="text-[#9A92A6] text-sm">Every memory, photo, and story linked to this specific charm.</p>
                                         </div>
 
-                                        <div className="bg-[#FFF9F6] border border-[#EADDDE] rounded-2xl p-4 flex gap-4 items-center">
+                                        <div className="bg-[#FFF9F6] border border-[#E6DED1] rounded-2xl p-4 flex gap-4 items-center">
                                             <div className="w-10 h-10 bg-[#EAE0F0] rounded-lg flex items-center justify-center shrink-0">
-                                                <Nfc className="w-6 h-6 text-[#5B2D7D]" />
+                                                <Nfc className="w-6 h-6 text-[#556B5A]" />
                                             </div>
                                             <p className="text-[#9A92A6] text-sm">The ability to tap the physical {selectedProduct ? selectedProduct.name : "Charm XYZ"} to access any data.</p>
                                         </div>
 
-                                        <div className="bg-[#FFF9F6] border border-[#EADDDE] rounded-2xl p-4 flex gap-4 items-center">
+                                        <div className="bg-[#FFF9F6] border border-[#E6DED1] rounded-2xl p-4 flex gap-4 items-center">
                                             <div className="w-10 h-10 bg-[#EAE0F0] rounded-lg flex items-center justify-center shrink-0">
-                                                <Users className="w-6 h-6 text-[#5B2D7D]" />
+                                                <Users className="w-6 h-6 text-[#556B5A]" />
                                             </div>
                                             <p className="text-[#9A92A6] text-sm">
-                                                All members who have access to this charm <span className="font-bold text-[#3E1C56]">[User 1], [User 2], and 3 others</span> will immediately lose access to its memories.
+                                                All members who have access to this charm <span className="font-bold text-[#3A4B3E]">[User 1], [User 2], and 3 others</span> will immediately lose access to its memories.
                                             </p>
                                         </div>
                                     </div>
@@ -438,16 +438,16 @@ export default function ManageCharmsPage() {
                                     The data cannot be recovered by you or any shared user.
                                 </div>
 
-                                <div className="w-full h-px bg-[#EADDDE] mb-6" />
+                                <div className="w-full h-px bg-[#E6DED1] mb-6" />
 
                                 <div className="w-full mb-6">
-                                    <label className="block text-[#3E1C56] font-bold text-lg mb-4">Confirmation</label>
+                                    <label className="block text-[#3A4B3E] font-bold text-lg mb-4">Confirmation</label>
                                     <input 
                                         type="text" 
                                         value={deleteInput}
                                         onChange={(e) => setDeleteInput(e.target.value)}
                                         placeholder="Type the word delete to proceed"
-                                        className="w-full bg-[#FFF9F6] border border-[#EADDDE] rounded-xl px-4 py-4 text-[#3E1C56] focus:outline-none focus:border-[#F44336]"
+                                        className="w-full bg-[#FFF9F6] border border-[#E6DED1] rounded-xl px-4 py-4 text-[#3A4B3E] focus:outline-none focus:border-[#F44336]"
                                     />
                                 </div>
 
@@ -461,7 +461,7 @@ export default function ManageCharmsPage() {
                                 
                                 <button 
                                     onClick={() => setIsDeleteModalOpen(false)}
-                                    className="text-[#3E1C56] font-bold text-lg mt-6"
+                                    className="text-[#3A4B3E] font-bold text-lg mt-6"
                                 >
                                     Go back
                                 </button>

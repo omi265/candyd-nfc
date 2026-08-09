@@ -141,14 +141,14 @@ function MenuDropdown({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="absolute top-16 left-4 right-4 z-50 backdrop-blur-2xl bg-[#FDF2EC]/40 rounded-2xl p-4 shadow-lg border border-white/30"
+          className="absolute top-16 left-4 right-4 z-50 backdrop-blur-2xl bg-[#F6F2EC]/40 rounded-2xl p-4 shadow-lg border border-white/30"
         >
           {/* Charm selector */}
           <motion.div
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: 0.05 }}
-            className="bg-[#E8DCF0]/60 backdrop-blur-sm rounded-2xl p-4 mb-4"
+            className="bg-[#F2E6DE]/60 backdrop-blur-sm rounded-2xl p-4 mb-4"
           >
             <button
               onClick={() => {
@@ -157,15 +157,15 @@ function MenuDropdown({
               }}
               className="w-full flex items-center justify-center gap-2 py-2"
             >
-              <Sparkles className="w-5 h-5 text-[#5B2D7D]" />
-              <span className="text-[#5B2D7D] font-medium">
+              <Sparkles className="w-5 h-5 text-[#556B5A]" />
+              <span className="text-[#556B5A] font-medium">
                 {displayLabel}
               </span>
               <motion.div
                 animate={{ rotate: isCharmDropdownOpen ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <ChevronDown className="w-4 h-4 text-[#5B2D7D]" />
+                <ChevronDown className="w-4 h-4 text-[#556B5A]" />
               </motion.div>
             </button>
 
@@ -187,12 +187,12 @@ function MenuDropdown({
                             haptics.light();
                             handleCharmSelect(null);
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2 text-[#5B2D7D] hover:bg-[#D8CCE8]/50 rounded-lg transition-colors"
+                        className="w-full flex items-center justify-center gap-2 py-2 text-[#556B5A] hover:bg-[#E6DED1]/50 rounded-lg transition-colors"
                     >
                         <span className={!currentCharmId ? "font-medium" : "opacity-70"}>
                             All Charms
                         </span>
-                        {!currentCharmId && <Check className="w-4 h-4 text-[#5B2D7D]" />}
+                        {!currentCharmId && <Check className="w-4 h-4 text-[#556B5A]" />}
                     </motion.button>
                   
                     {products.map((product, index) => (
@@ -205,16 +205,16 @@ function MenuDropdown({
                             haptics.light();
                             handleCharmSelect(product.id);
                         }}
-                        className="w-full flex items-center justify-between px-3 py-2 text-[#5B2D7D] hover:bg-[#D8CCE8]/50 rounded-xl transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-2 text-[#556B5A] hover:bg-[#E6DED1]/50 rounded-xl transition-colors"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          {product.type === "LIFE" && <Heart className="w-4 h-4 text-[#A4C538] fill-[#A4C538] shrink-0" />}
+                          {product.type === "LIFE" && <Heart className="w-4 h-4 text-[#7C9A86] fill-[#7C9A86] shrink-0" />}
                           {product.type === "HABIT" && <Zap className="w-4 h-4 text-[#EA580C] fill-[#EA580C] shrink-0" />}
-                          {product.type === "MEMORY" && <Sparkles className="w-4 h-4 text-[#5B2D7D] shrink-0" />}
+                          {product.type === "MEMORY" && <Sparkles className="w-4 h-4 text-[#556B5A] shrink-0" />}
                           <span
                             className={`truncate ${
                               currentCharmId === product.id
-                                ? "font-bold text-[#5B2D7D]"
+                                ? "font-bold text-[#556B5A]"
                                 : "opacity-80"
                             }`}
                           >
@@ -222,16 +222,16 @@ function MenuDropdown({
                           </span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0 ml-2">
-                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/60 text-[#5B2D7D]/70 uppercase tracking-wider">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/60 text-[#556B5A]/70 uppercase tracking-wider">
                             {product.type === "LIFE" ? "Bucket List" : product.type === "HABIT" ? "Habit" : "Memory"}
                           </span>
-                          {currentCharmId === product.id && <Check className="w-4 h-4 text-[#5B2D7D]" />}
+                          {currentCharmId === product.id && <Check className="w-4 h-4 text-[#556B5A]" />}
                         </div>
                       </motion.button>
                     ))}
                     
                     {products.length === 0 && !isLoadingProducts && (
-                        <div className="text-center text-[#5B2D7D]/60 text-sm py-2">
+                        <div className="text-center text-[#556B5A]/60 text-sm py-2">
                             No charms found
                         </div>
                     )}
@@ -260,7 +260,7 @@ function MenuDropdown({
                 className="flex items-center gap-3 px-2 py-1"
               >
                 <StarIcon />
-                <span className="text-[#5B2D7D] font-bold text-xl tracking-wide uppercase">
+                <span className="text-[#556B5A] font-bold text-xl tracking-wide uppercase">
                   {item.label}
                 </span>
               </motion.div>
@@ -282,7 +282,7 @@ function MenuDropdown({
                 className="flex items-center gap-3 px-2 py-1"
               >
                 <StarIcon />
-                <span className="text-[#5B2D7D] font-bold text-xl tracking-wide uppercase">
+                <span className="text-[#556B5A] font-bold text-xl tracking-wide uppercase">
                   RESTART TOUR
                 </span>
               </motion.div>
@@ -303,7 +303,7 @@ function MenuDropdown({
                 className="flex items-center gap-3 px-2 py-1"
               >
                 <StarIcon />
-                <span className="text-[#5B2D7D] font-bold text-xl tracking-wide uppercase">
+                <span className="text-[#556B5A] font-bold text-xl tracking-wide uppercase">
                   LOGOUT
                 </span>
               </motion.div>
@@ -348,7 +348,7 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref, 
                         haptics.light();
                         router.push(backHref);
                     }}
-                    className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors shrink-0"
+                    className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#556B5A] hover:bg-[#F6F2EC] transition-colors shrink-0"
                   >
                       <ChevronLeft className="w-6 h-6" />
                   </button>
@@ -364,15 +364,15 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref, 
           <div className="flex flex-col min-w-0">
             {isLoading ? (
                 <div className="space-y-2">
-                    <div className="h-3 w-20 bg-[#5B2D7D]/10 rounded-full animate-pulse" />
-                    <div className="h-4 w-32 bg-[#5B2D7D]/20 rounded-full animate-pulse" />
+                    <div className="h-3 w-20 bg-[#556B5A]/10 rounded-full animate-pulse" />
+                    <div className="h-4 w-32 bg-[#556B5A]/20 rounded-full animate-pulse" />
                 </div>
             ) : contextTitle ? (
-                <h1 className="text-lg font-bold text-[#5B2D7D] leading-tight line-clamp-1">{contextTitle}</h1>
+                <h1 className="text-lg font-bold text-[#556B5A] leading-tight line-clamp-1">{contextTitle}</h1>
             ) : (
                 <>
-                    <p className="text-[#5B2D7D] text-xs opacity-70">Hello, {userName}!</p>
-                    <p className="text-[#5B2D7D] font-semibold text-sm">Today, {formattedDate}</p>
+                    <p className="text-[#556B5A] text-xs opacity-70">Hello, {userName}!</p>
+                    <p className="text-[#556B5A] font-semibold text-sm">Today, {formattedDate}</p>
                 </>
             )}
           </div>
@@ -391,7 +391,7 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref, 
                           haptics.light();
                           router.push('/support');
                       }}
-                      className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
+                      className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#556B5A] hover:bg-[#F6F2EC] transition-colors"
                     >
                         <LifeBuoy className="w-5 h-5" />
                     </button>
@@ -401,7 +401,7 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref, 
                           haptics.light();
                           setIsMenuOpen(!isMenuOpen);
                       }}
-                      className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#5B2D7D] hover:bg-[#FDF2EC] transition-colors"
+                      className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-[#556B5A] hover:bg-[#F6F2EC] transition-colors"
                     >
                         <Menu className="w-6 h-6" />
                     </button>

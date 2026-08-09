@@ -16,7 +16,7 @@ export function HapticDebug() {
                 <button
                     key={btn.label}
                     onClick={(e) => { e.stopPropagation(); btn.action(); }}
-                    className="px-3 py-1.5 bg-[#5B2D7D]/80 backdrop-blur-md border border-white/20 text-white text-[10px] font-black rounded-full pointer-events-auto active:scale-95 transition-all shadow-xl"
+                    className="px-3 py-1.5 bg-[#556B5A]/80 backdrop-blur-md border border-white/20 text-white text-[10px] font-black rounded-full pointer-events-auto active:scale-95 transition-all shadow-xl"
                 >
                     {btn.label}
                 </button>

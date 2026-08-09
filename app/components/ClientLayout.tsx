@@ -27,16 +27,16 @@ function GlobalLayout({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="h-dvh bg-[#FDF2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-lg overflow-hidden isolate">
+    <div className="h-dvh bg-[#F6F2EC] flex flex-col w-full md:max-w-7xl mx-auto relative shadow-lg overflow-hidden isolate">
       <div
-        className="absolute inset-0 pointer-events-none -z-10 bg-[#FDF2EC]"
+        className="absolute inset-0 pointer-events-none -z-10 bg-[#F6F2EC]"
         style={{
           contain: "strict",
           background:
-            "radial-gradient(circle at 90% 6%, rgba(164,197,56,0.32), transparent 34%), radial-gradient(circle at 8% 94%, rgba(91,45,125,0.24), transparent 38%), linear-gradient(180deg, #FDF2EC 0%, #F9ECE8 100%)",
+            "radial-gradient(circle at 90% 6%, rgba(164,197,56,0.32), transparent 34%), radial-gradient(circle at 8% 94%, rgba(91,45,125,0.24), transparent 38%), linear-gradient(180deg, #F6F2EC 0%, #F9ECE8 100%)",
         }}
       >
-          <div className="absolute inset-0 bg-[#EADDDE]/15" />
+          <div className="absolute inset-0 bg-[#E6DED1]/15" />
       </div>
 
       {!hideHeader && (

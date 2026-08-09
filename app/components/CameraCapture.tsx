@@ -296,7 +296,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
                 <button
                   onClick={handleUpload}
                   disabled={isUploading}
-                  className="w-24 h-24 bg-[#5B2D7D] rounded-full text-white flex items-center justify-center shadow-2xl shadow-[#5B2D7D]/50 active:scale-95 transition-transform disabled:opacity-50"
+                  className="w-24 h-24 bg-[#556B5A] rounded-full text-white flex items-center justify-center shadow-2xl shadow-[#556B5A]/50 active:scale-95 transition-transform disabled:opacity-50"
                 >
                   {isUploading ? (
                     <Loader2 className="w-10 h-10 animate-spin" />

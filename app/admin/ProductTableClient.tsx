@@ -79,21 +79,21 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
             {/* Toolbar */}
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5B2D7D]/40" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#556B5A]/40" />
                     <input 
                         type="text"
                         placeholder="Search products, users, or comments..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-white/50 border border-[#5B2D7D]/10 rounded-xl pl-10 pr-4 py-2 text-sm text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all"
+                        className="w-full bg-white/50 border border-[#556B5A]/10 rounded-xl pl-10 pr-4 py-2 text-sm text-[#556B5A] focus:outline-none focus:ring-2 focus:ring-[#556B5A]/20 transition-all"
                     />
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto">
-                    <Filter className="w-4 h-4 text-[#5B2D7D]/40" />
+                    <Filter className="w-4 h-4 text-[#556B5A]/40" />
                     <select 
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
-                        className="bg-white/50 border border-[#5B2D7D]/10 rounded-xl px-3 py-2 text-sm text-[#5B2D7D] focus:outline-none focus:ring-2 focus:ring-[#5B2D7D]/20 transition-all cursor-pointer"
+                        className="bg-white/50 border border-[#556B5A]/10 rounded-xl px-3 py-2 text-sm text-[#556B5A] focus:outline-none focus:ring-2 focus:ring-[#556B5A]/20 transition-all cursor-pointer"
                     >
                         <option value="ALL">All Types</option>
                         <option value="MEMORY">Memory</option>
@@ -107,29 +107,29 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="border-b border-[#5B2D7D]/10">
+                        <tr className="border-b border-[#556B5A]/10">
                             <th 
-                                className="pb-3 font-medium text-[#5B2D7D]/60 cursor-pointer hover:text-[#5B2D7D] transition-colors"
+                                className="pb-3 font-medium text-[#556B5A]/60 cursor-pointer hover:text-[#556B5A] transition-colors"
                                 onClick={() => toggleSort('name')}
                             >
                                 <div className="flex items-center">Product Name <SortIcon column="name" /></div>
                             </th>
                             <th 
-                                className="pb-3 font-medium text-[#5B2D7D]/60 cursor-pointer hover:text-[#5B2D7D] transition-colors"
+                                className="pb-3 font-medium text-[#556B5A]/60 cursor-pointer hover:text-[#556B5A] transition-colors"
                                 onClick={() => toggleSort('type')}
                             >
                                 <div className="flex items-center">Type <SortIcon column="type" /></div>
                             </th>
                             <th 
-                                className="pb-3 font-medium text-[#5B2D7D]/60 cursor-pointer hover:text-[#5B2D7D] transition-colors"
+                                className="pb-3 font-medium text-[#556B5A]/60 cursor-pointer hover:text-[#556B5A] transition-colors"
                                 onClick={() => toggleSort('user')}
                             >
                                 <div className="flex items-center">Assigned To <SortIcon column="user" /></div>
                             </th>
-                            <th className="pb-3 font-medium text-[#5B2D7D]/60">Comments</th>
-                            <th className="pb-3 font-medium text-[#5B2D7D]/60">Token Link</th>
-                            <th className="pb-3 font-medium text-[#5B2D7D]/60">Gifter Link</th>
-                            <th className="pb-3 font-medium text-[#5B2D7D]/60 text-right">Actions</th>
+                            <th className="pb-3 font-medium text-[#556B5A]/60">Comments</th>
+                            <th className="pb-3 font-medium text-[#556B5A]/60">Token Link</th>
+                            <th className="pb-3 font-medium text-[#556B5A]/60">Gifter Link</th>
+                            <th className="pb-3 font-medium text-[#556B5A]/60 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -143,14 +143,14 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
                                     key={product.id} 
                                     className="group hover:bg-white/50 transition-colors"
                                 >
-                                    <td className="py-3 pr-4 text-[#5B2D7D] font-medium">{product.name}</td>
+                                    <td className="py-3 pr-4 text-[#556B5A] font-medium">{product.name}</td>
                                     <td className="py-3 pr-4">
                                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                                             product.type === "LIFE"
-                                                ? "bg-[#A4C538]/20 text-[#7A9429]"
+                                                ? "bg-[#7C9A86]/20 text-[#7A9429]"
                                                 : product.type === "HABIT"
                                                 ? "bg-[#F37B55]/20 text-[#D45A35]"
-                                                : "bg-[#5B2D7D]/20 text-[#5B2D7D]"
+                                                : "bg-[#556B5A]/20 text-[#556B5A]"
                                         }`}>
                                             {product.type === "LIFE" ? "Life" : product.type === "HABIT" ? "Habit" : "Memory"}
                                         </span>
@@ -158,11 +158,11 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
                                     <td className="py-3 pr-4">
                                         {product.user ? (
                                             <>
-                                                <div className="text-sm font-medium text-[#5B2D7D]">{product.user.name || "Unnamed"}</div>
-                                                <div className="text-xs text-[#5B2D7D]/60">{product.user.email}</div>
+                                                <div className="text-sm font-medium text-[#556B5A]">{product.user.name || "Unnamed"}</div>
+                                                <div className="text-xs text-[#556B5A]/60">{product.user.email}</div>
                                             </>
                                         ) : (
-                                            <span className="text-xs font-bold text-[#A4C538] bg-[#A4C538]/10 px-2 py-1 rounded-lg italic">Unassigned</span>
+                                            <span className="text-xs font-bold text-[#7C9A86] bg-[#7C9A86]/10 px-2 py-1 rounded-lg italic">Unassigned</span>
                                         )}
                                     </td>
                                     <td className="py-3 pr-4 min-w-[200px]">
@@ -170,7 +170,7 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
                                     </td>
                                     <td className="py-3 pr-4">
                                         <div className="flex items-center gap-2">
-                                            <code className="font-mono text-[10px] text-[#5B2D7D]/80 truncate max-w-[150px] bg-white/50 px-2 py-1 rounded border border-[#5B2D7D]/10">
+                                            <code className="font-mono text-[10px] text-[#556B5A]/80 truncate max-w-[150px] bg-white/50 px-2 py-1 rounded border border-[#556B5A]/10">
                                                 /nfc/login?token={product.token}
                                             </code>
                                             <CopyButton token={product.token as string} />
@@ -179,7 +179,7 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
                                     <td className="py-3 pr-4">
                                         {product.type !== 'HABIT' && (
                                             <div className="flex items-center gap-2">
-                                                <code className="font-mono text-[10px] text-[#A4C538] truncate max-w-[150px] bg-white/50 px-2 py-1 rounded border border-[#A4C538]/10">
+                                                <code className="font-mono text-[10px] text-[#7C9A86] truncate max-w-[150px] bg-white/50 px-2 py-1 rounded border border-[#7C9A86]/10">
                                                     /nfc/gifter-upload?token={product.token}
                                                 </code>
                                                 <CopyButton token={product.token as string} baseUrl="/nfc/gifter-upload?token=" />
@@ -194,7 +194,7 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
                         </AnimatePresence>
                         {filteredAndSortedProducts.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="py-12 text-center text-[#5B2D7D]/40">
+                                <td colSpan={6} className="py-12 text-center text-[#556B5A]/40">
                                     No products found matching your search.
                                 </td>
                             </tr>

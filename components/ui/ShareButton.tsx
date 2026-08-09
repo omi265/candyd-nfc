@@ -72,7 +72,7 @@ export function ShareButton({ token, charmName, variant = "icon" }: ShareButtonP
     return (
         <button
             onClick={handleShare}
-            className="w-full bg-[#EAE0F0] text-[#5B2D7D] py-4 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
+            className="w-full bg-[#EAE0F0] text-[#556B5A] py-4 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
         >
             {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
             <span>{copied ? "Copied!" : "Share Charm Link"}</span>
@@ -83,7 +83,7 @@ export function ShareButton({ token, charmName, variant = "icon" }: ShareButtonP
   return (
     <button
       onClick={handleShare}
-      className="p-2 hover:bg-[#F0E6F5] rounded-full transition-colors text-[#5B2D7D]"
+      className="p-2 hover:bg-[#E6DED1] rounded-full transition-colors text-[#556B5A]"
       title="Share Link"
     >
       {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}

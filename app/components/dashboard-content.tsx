@@ -82,12 +82,12 @@ function CharmCard({
   const contentOpacity = useTransform(dist, [0, 200], [1, 0.8]);
 
   let icon = <Heart className="w-12 h-12 text-white fill-white" />;
-  let bgGradient = "from-[#A4C538] to-[#7A9B1E]"; // Life (Green)
+  let bgGradient = "from-[#7C9A86] to-[#556B5A]"; // Life (Green)
   let typeLabel = "Life";
 
   if (product.type === "LIFE") {
       icon = <Heart className="w-12 h-12 text-white fill-white" />;
-      bgGradient = "from-[#A4C538] to-[#7A9B1E]";
+      bgGradient = "from-[#7C9A86] to-[#556B5A]";
       typeLabel = "Life";
   } else if (product.type === "HABIT") {
       icon = <Zap className="w-12 h-12 text-white fill-white" />;
@@ -167,7 +167,7 @@ function AddCharmCard({
   return (
     <motion.div
       onClick={onClick}
-      className="w-full h-full rounded-none flex flex-col items-center justify-center overflow-hidden cursor-pointer bg-white/60 shadow-md border-2 border-dashed border-[#5B2D7D]/20"
+      className="w-full h-full rounded-none flex flex-col items-center justify-center overflow-hidden cursor-pointer bg-white/60 shadow-md border-2 border-dashed border-[#556B5A]/20"
       style={{
         opacity,
         willChange: "transform, opacity",
@@ -183,10 +183,10 @@ function AddCharmCard({
           scale: useTransform(dist, [0, 400], [1, 0.9]),
         }}
       >
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-sm bg-[#5B2D7D]/10">
-          <Plus className="w-10 h-10 text-[#5B2D7D]" />
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-sm bg-[#556B5A]/10">
+          <Plus className="w-10 h-10 text-[#556B5A]" />
         </div>
-        <span className="text-[#5B2D7D] font-black uppercase tracking-tight text-xl">
+        <span className="text-[#556B5A] font-black uppercase tracking-tight text-xl">
           Add Charm
         </span>
       </motion.div>

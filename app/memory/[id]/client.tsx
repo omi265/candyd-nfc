@@ -51,7 +51,7 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
             initial={false}
             className={`relative overflow-hidden bg-gray-200 select-none transition-all ${
                 isReordering 
-                ? "flex items-center h-28 rounded-xl ring-1 ring-[#EADDDE] bg-white p-0 overflow-hidden" 
+                ? "flex items-center h-28 rounded-xl ring-1 ring-[#E6DED1] bg-white p-0 overflow-hidden" 
                 : `rounded-[20px] ${item.type === 'audio' ? 'h-24' : 'h-48'}`
             }`}
         >
@@ -63,7 +63,7 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
                         disabled={index === 0}
-                        className="w-14 h-full flex items-center justify-center bg-[#A4C538]/20 text-[#5B2D7D] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#A4C538]/30 transition-colors active:scale-95 shrink-0"
+                        className="w-14 h-full flex items-center justify-center bg-[#7C9A86]/20 text-[#556B5A] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#7C9A86]/30 transition-colors active:scale-95 shrink-0"
                     >
                         <ChevronUp className="w-8 h-8" />
                     </button>
@@ -71,7 +71,7 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                     {/* Content */}
                     <div className="flex-1 flex items-center gap-3 px-2 min-w-0 overflow-hidden">
                         {/* Small Thumbnail */}
-                        <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden relative bg-[#FDF2EC]">
+                        <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden relative bg-[#F6F2EC]">
                             {item.type?.includes('video') ? (
                                 <div className="w-full h-full relative">
                                     {item.url.includes("cloudinary.com") ? (
@@ -91,7 +91,7 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                                 </div>
                             ) : item.type === 'audio' ? (
                                 <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
-                                    <Mic className="w-8 h-8 text-[#5B2D7D]" />
+                                    <Mic className="w-8 h-8 text-[#556B5A]" />
                                 </div>
                             ) : (
                                 <Image 
@@ -106,14 +106,14 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-bold text-[#5B2D7D] capitalize truncate">
+                            <p className="text-[13px] font-bold text-[#556B5A] capitalize truncate">
                                 {item.type?.split('/')[0] || "Media"}
                             </p>
                             <p className="text-[10px] text-[#A68CAB] truncate">
                                 {index === 0 ? "Cover Media" : `Item ${index + 1}`}
                             </p>
                             {item.isNew && (
-                                <span className="inline-block mt-1 bg-[#A4C538]/20 text-[#5B2D7D] text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                                <span className="inline-block mt-1 bg-[#7C9A86]/20 text-[#556B5A] text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
                                     NEW
                                 </span>
                             )}
@@ -134,7 +134,7 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
                         disabled={index === totalItems - 1}
-                        className="w-14 h-full flex items-center justify-center bg-[#5B2D7D]/10 text-[#5B2D7D] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#5B2D7D]/20 transition-colors active:scale-95 shrink-0"
+                        className="w-14 h-full flex items-center justify-center bg-[#556B5A]/10 text-[#556B5A] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#556B5A]/20 transition-colors active:scale-95 shrink-0"
                     >
                         <ChevronDown className="w-8 h-8" />
                     </button>
@@ -186,12 +186,12 @@ const DraggableMediaItem = ({ item, index, isReordering, totalItems, onMoveUp, o
                   {/* Indicators */}
                   <div className="absolute inset-x-0 top-0 p-3 flex justify-between items-start pointer-events-none z-10 transition-opacity duration-200">
                       {index === 0 && (
-                          <span className="bg-[#5B2D7D] text-[#A4C538] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                          <span className="bg-[#556B5A] text-[#7C9A86] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
                               COVER
                           </span>
                       )}
                       {item.isNew && (
-                          <span className={`bg-[#A4C538] text-[#5B2D7D] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm ${index === 0 ? 'ml-auto' : ''}`}>
+                          <span className={`bg-[#7C9A86] text-[#556B5A] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm ${index === 0 ? 'ml-auto' : ''}`}>
                               NEW
                           </span>
                       )}
@@ -614,20 +614,20 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
     return (
         <div className="flex flex-col h-full bg-transparent font-[Outfit] relative">
-             <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-[#FDF2EC] to-transparent z-10 pointer-events-none"></div>
+             <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-[#F6F2EC] to-transparent z-10 pointer-events-none"></div>
 
              <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-32" ref={scrollContainerRef}>
                 <div className="max-w-xl mx-auto w-full">
                  {/* Header / Nav */}
                  <div className="flex items-center justify-between mb-6 sticky top-0 z-20">
-                      <button onClick={handleCancel} className="w-10 h-10 rounded-full bg-[#EADDDE]/50 backdrop-blur-sm flex items-center justify-center">
-                          <ChevronLeft className="w-6 h-6 text-[#5B2D7D]" />
+                      <button onClick={handleCancel} className="w-10 h-10 rounded-full bg-[#E6DED1]/50 backdrop-blur-sm flex items-center justify-center">
+                          <ChevronLeft className="w-6 h-6 text-[#556B5A]" />
                       </button>
                       <div className="text-center">
                           <span className="block text-[#A68CAB] text-[10px] uppercase tracking-wider font-bold">Edit Memory</span>
-                          <h1 className="text-[#5B2D7D] text-2xl font-black uppercase leading-none">{title || "Untitled"}</h1>
+                          <h1 className="text-[#556B5A] text-2xl font-black uppercase leading-none">{title || "Untitled"}</h1>
                           <div className="bg-[#D4C3D8]/40 px-3 py-1 rounded-full inline-block mt-2">
-                              <span className="text-[#5B2D7D] text-[10px] font-bold block">{new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                              <span className="text-[#556B5A] text-[10px] font-bold block">{new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                           </div>
                       </div>
                       <div className="w-10"></div> {/* Spacer */}
@@ -642,7 +642,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value.slice(0, 15))}
-                            className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
+                            className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
                         />
                         <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 15 Characters</p>
                       </div>
@@ -655,7 +655,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Describe the moment"
                             rows={3}
-                            className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none leading-relaxed"
+                            className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none leading-relaxed"
                         />
                          <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 2 lines</p>
                       </div>
@@ -670,8 +670,8 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                         onClick={() => setIsReordering(!isReordering)}
                                         className={`text-[11px] font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${
                                             isReordering 
-                                            ? "bg-[#A4C538] text-[#5B2D7D]" 
-                                            : "bg-[#EADDDE] text-[#5B2D7D]"
+                                            ? "bg-[#7C9A86] text-[#556B5A]" 
+                                            : "bg-[#E6DED1] text-[#556B5A]"
                                         }`}
                                     >
                                         {isReordering ? (
@@ -706,9 +706,9 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                               ))}
 
                               {/* Add Button */}
-                              <label className="block w-full bg-[#EADDDE]/50 border border-dashed border-[#5B2D7D]/20 rounded-[20px] p-4 text-center cursor-pointer hover:bg-[#EADDDE] transition-colors relative">
+                              <label className="block w-full bg-[#E6DED1]/50 border border-dashed border-[#556B5A]/20 rounded-[20px] p-4 text-center cursor-pointer hover:bg-[#E6DED1] transition-colors relative">
                                   <div className="flex flex-col items-center justify-center gap-2 py-6">
-                                      <span className="text-[#5B2D7D] font-bold flex items-center gap-1">Add Media <Plus className="w-6 h-6" /></span>
+                                      <span className="text-[#556B5A] font-bold flex items-center gap-1">Add Media <Plus className="w-6 h-6" /></span>
                                   </div>
                                   <input type="file" className="hidden" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
                               </label>
@@ -719,54 +719,54 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                       <div>
                            <label className="block text-[#C27A59] text-[13px] font-bold mb-2">Date<span className="text-[#C27A59]">*</span></label>
                            <div className="relative">
-                                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] font-medium appearance-none" />
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#5B2D7D]"><Calendar className="w-5 h-5" /></div>
+                                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#556B5A] font-medium appearance-none" />
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#556B5A]"><Calendar className="w-5 h-5" /></div>
                            </div>
                       </div>
 
                        {/* Time */}
                        <div>
-                           <label className="block text-[#5B2D7D] text-[13px] font-bold mb-2">Time</label>
+                           <label className="block text-[#556B5A] text-[13px] font-bold mb-2">Time</label>
                            <div className="relative">
-                                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] font-medium appearance-none" />
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#5B2D7D]"><Clock className="w-5 h-5" /></div>
+                                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#556B5A] font-medium appearance-none" />
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#556B5A]"><Clock className="w-5 h-5" /></div>
                            </div>
                       </div>
 
                       {/* Location */}
                       <div>
-                           <label className="block text-[#5B2D7D] text-[13px] font-bold mb-2">Location</label>
+                           <label className="block text-[#556B5A] text-[13px] font-bold mb-2">Location</label>
                            <div className="relative">
-                                <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#5B2D7D] font-medium" placeholder="Select location" />
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#5B2D7D]"><MapPin className="w-5 h-5" /></div>
+                                <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-[#FFF5F0] border-none rounded-xl p-4 pl-12 text-[#556B5A] font-medium" placeholder="Select location" />
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#556B5A]"><MapPin className="w-5 h-5" /></div>
                            </div>
                       </div>
 
                         {/* People */}
                         <div className="mb-6">
-                            <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">People</label>
+                            <label className="block text-[#556B5A] text-[13px] font-bold mb-1">People</label>
                             <p className="text-[#A68CAB] text-[10px] mb-3">Who was there with you?</p>
 
                             <button
                                 type="button"
                                 onClick={() => setShowPeopleSelector(!showPeopleSelector)}
-                                className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-left flex items-center justify-between"
+                                className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-left flex items-center justify-between"
                             >
                                 <div className="flex items-center gap-2">
-                                    <Users className="w-5 h-5 text-[#5B2D7D]/40" />
+                                    <Users className="w-5 h-5 text-[#556B5A]/40" />
                                     {selectedPeople.length > 0 ? (
-                                        <span className="text-[#5B2D7D] text-[13px]">
+                                        <span className="text-[#556B5A] text-[13px]">
                                             {selectedPeople
                                                 .map((id) => people.find((p) => p.id === id)?.name)
                                                 .filter(Boolean)
                                                 .join(", ")}
                                         </span>
                                     ) : (
-                                        <span className="text-[#5B2D7D]/30 text-[13px]">Select people</span>
+                                        <span className="text-[#556B5A]/30 text-[13px]">Select people</span>
                                     )}
                                 </div>
                                 <ChevronDown
-                                    className={`w-5 h-5 text-[#5B2D7D]/40 transition-transform ${
+                                    className={`w-5 h-5 text-[#556B5A]/40 transition-transform ${
                                         showPeopleSelector ? "rotate-180" : ""
                                     }`}
                                 />
@@ -776,7 +776,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                 <motion.div
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="mt-2 p-3 bg-white rounded-xl border border-[#5B2D7D]/10 space-y-2 shadow-sm"
+                                    className="mt-2 p-3 bg-white rounded-xl border border-[#556B5A]/10 space-y-2 shadow-sm"
                                 >
                                     {people.map((person) => (
                                         <button
@@ -785,8 +785,8 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                             onClick={() => togglePerson(person.id)}
                                             className={`w-full px-3 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${
                                                 selectedPeople.includes(person.id)
-                                                    ? "bg-[#5B2D7D] text-white"
-                                                    : "hover:bg-[#EADDDE]/50 text-[#5B2D7D]"
+                                                    ? "bg-[#556B5A] text-white"
+                                                    : "hover:bg-[#E6DED1]/50 text-[#556B5A]"
                                             }`}
                                         >
                                             <span className="text-[13px] font-medium">{person.name}</span>
@@ -796,20 +796,20 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                         </button>
                                     ))}
 
-                                    <div className="flex gap-2 pt-2 border-t border-[#5B2D7D]/10">
+                                    <div className="flex gap-2 pt-2 border-t border-[#556B5A]/10">
                                         <input
                                             type="text"
                                             value={newPersonName}
                                             onChange={(e) => setNewPersonName(e.target.value)}
                                             placeholder="Add someone new..."
-                                            className="flex-1 px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none text-[13px]"
+                                            className="flex-1 px-3 py-2 rounded-lg bg-[#E6DED1]/30 text-[#556B5A] placeholder-[#556B5A]/30 outline-none text-[13px]"
                                             onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddPerson())}
                                         />
                                         <button
                                             type="button"
                                             onClick={handleAddPerson}
                                             disabled={!newPersonName.trim() || isAddingPerson}
-                                            className="px-3 py-2 bg-[#5B2D7D] text-white rounded-lg text-[11px] font-bold disabled:opacity-50"
+                                            className="px-3 py-2 bg-[#556B5A] text-white rounded-lg text-[11px] font-bold disabled:opacity-50"
                                         >
                                             {isAddingPerson ? "..." : "Add"}
                                         </button>
@@ -822,11 +822,11 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                       <button
                         type="button"
                         onClick={() => setOptionalExpanded(!optionalExpanded)}
-                        className="w-full bg-[#EADDDE] py-3.5 rounded-xl flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-[13px]"
+                        className="w-full bg-[#E6DED1] py-3.5 rounded-xl flex items-center justify-center gap-2 text-[#556B5A] font-bold text-[13px]"
                       >
                         Edit optional fields
                             <motion.div animate={{ rotate: optionalExpanded ? 180 : 0 }}>
-                                <ChevronDown className="w-5 h-5 text-[#5B2D7D]" />
+                                <ChevronDown className="w-5 h-5 text-[#556B5A]" />
                             </motion.div>
                        </button>
 
@@ -841,7 +841,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                             >
                                 {/* Emotions */}
                                 <div>
-                                    <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">How did you feel in the moment ?</label>
+                                    <label className="block text-[#556B5A] text-[13px] font-bold mb-1">How did you feel in the moment ?</label>
                                     <p className="text-[#A68CAB] text-[10px] mb-3">What did you feel in that moment? Choose all that apply.</p>
                                     <div className="flex flex-wrap gap-2">
                                         {EMOTIONS.map(emotion => (
@@ -851,8 +851,8 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 onClick={() => toggleEmotion(emotion)}
                                                 className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                     selectedEmotions.includes(emotion)
-                                                    ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
-                                                    : 'bg-[#FFF5F0] text-[#5B2D7D] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                                    ? 'bg-[#556B5A] text-white border-[#556B5A]'
+                                                    : 'bg-[#FFF5F0] text-[#556B5A] border-[#FBE0D6] hover:bg-[#F8E9F0]'
                                                 }`}
                                             >
                                                 {emotion}
@@ -865,7 +865,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 type="button"
                                                 key={emotion}
                                                 onClick={() => toggleEmotion(emotion)}
-                                                className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                                className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#556B5A] text-white border-[#556B5A] flex items-center gap-2"
                                             >
                                                 {emotion}
                                                 <X className="w-3 h-3 text-white/70" />
@@ -881,7 +881,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 onBlur={addCustomEmotion}
                                                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEmotion())}
                                                 placeholder="Type..."
-                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[80px]"
+                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#556B5A] border border-[#C27A59] outline-none min-w-[80px]"
                                             />
                                         ) : (
                                             <button 
@@ -897,7 +897,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
                                 {/* Mood */}
                                 <div>
-                                    <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Select a vibe that captures your memory</label>
+                                    <label className="block text-[#556B5A] text-[13px] font-bold mb-1">Select a vibe that captures your memory</label>
                                     <p className="text-[#A68CAB] text-[10px] mb-3">Pick a mood that fits the vibe of the memory best.</p>
                                     <div className="flex flex-wrap gap-2">
                                         {MOODS.map(mood => (
@@ -907,8 +907,8 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 onClick={() => handleMoodSelect(mood)}
                                                 className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                     selectedMood === mood
-                                                    ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
-                                                    : 'bg-[#FFF5F0] text-[#5B2D7D] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                                    ? 'bg-[#556B5A] text-white border-[#556B5A]'
+                                                    : 'bg-[#FFF5F0] text-[#556B5A] border-[#FBE0D6] hover:bg-[#F8E9F0]'
                                                 }`}
                                             >
                                                 {mood}
@@ -920,7 +920,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                             <button
                                                 type="button"
                                                 onClick={() => setSelectedMood(null)}
-                                                className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                                className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#556B5A] text-white border-[#556B5A] flex items-center gap-2"
                                             >
                                                 {selectedMood}
                                                 <X className="w-3 h-3 text-white/70" />
@@ -936,7 +936,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                                 onBlur={addCustomMood}
                                                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomMood())}
                                                 placeholder="Type mood..."
-                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[100px]"
+                                                className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#556B5A] border border-[#C27A59] outline-none min-w-[100px]"
                                             />
                                         ) : (
                                             !selectedMood || MOODS.includes(selectedMood) ? (
@@ -960,23 +960,23 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                             type="button" 
                             onClick={handleSave} 
                             disabled={isPending || (isUploading && mediaItems.length === 0)}
-                            className="w-full bg-[#A4C538] text-[#5B2D7D] text-[15px] font-bold h-[56px] rounded-[28px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#95b330] transition-all disabled:opacity-70 active:scale-95"
+                            className="w-full bg-[#7C9A86] text-[#556B5A] text-[15px] font-bold h-[56px] rounded-[28px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#95b330] transition-all disabled:opacity-70 active:scale-95"
                         >
                             {isUploading ? "Uploading & Saving..." : isPending ? "Saving..." : "Save"}
                         </button>
 
                          {/* Manage Memory */}
-                         <div className="bg-[#EADDDE] rounded-[24px] p-4">
+                         <div className="bg-[#E6DED1] rounded-[24px] p-4">
                              <div className="flex items-center justify-between w-full mb-4">
-                                  <span className="text-[#5B2D7D] font-bold text-[13px]">Manage Memory</span>
-                                  <ChevronDown className="w-6 h-6 text-[#5B2D7D]" />
+                                  <span className="text-[#556B5A] font-bold text-[13px]">Manage Memory</span>
+                                  <ChevronDown className="w-6 h-6 text-[#556B5A]" />
                              </div>
                              
                              <div className="flex gap-4">
                                   <button onClick={handleDelete} className="flex-1 bg-[#FBE0D6] rounded-xl py-3 flex items-center justify-center gap-2 text-[#C27A59] font-bold text-[11px]">
                                       <Trash2 className="w-5 h-5" /> Delete memory
                                   </button>
-                                  <button className="flex-1 bg-[#FFF5F0] rounded-xl py-3 flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-[11px]">
+                                  <button className="flex-1 bg-[#FFF5F0] rounded-xl py-3 flex items-center justify-center gap-2 text-[#556B5A] font-bold text-[11px]">
                                       <Archive className="w-5 h-5" /> Archive memory
                                   </button>
                              </div>
@@ -1007,7 +1007,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                      <div className="w-20 h-20 rounded-full bg-[#FBE0D6] flex items-center justify-center mb-6">
                                          <Trash2 className="w-10 h-10 text-[#C27A59]" />
                                      </div>
-                                     <h3 className="text-[#5B2D7D] text-2xl font-black uppercase mb-2">Delete this memory?</h3>
+                                     <h3 className="text-[#556B5A] text-2xl font-black uppercase mb-2">Delete this memory?</h3>
                                      <p className="text-[#A68CAB] text-sm leading-relaxed mb-8">
                                          This action is permanent and will remove this memory from your collection.
                                      </p>
@@ -1021,7 +1021,7 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                                          </button>
                                          <button
                                              onClick={() => setShowDeleteConfirm(false)}
-                                             className="w-full bg-[#EADDDE]/50 text-[#5B2D7D] font-bold py-4 rounded-full active:scale-95 transition-transform"
+                                             className="w-full bg-[#E6DED1]/50 text-[#556B5A] font-bold py-4 rounded-full active:scale-95 transition-transform"
                                          >
                                              Cancel
                                          </button>

@@ -376,13 +376,13 @@ function MemoryUploadContent() {
 
     return (
         <div className="flex flex-col h-full bg-transparent font-[Outfit] relative overflow-x-hidden">
-             <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-[#FDF2EC] to-transparent z-10 pointer-events-none"></div>
+             <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-[#F6F2EC] to-transparent z-10 pointer-events-none"></div>
 
              <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-12 overflow-x-hidden">
                 <div className="max-w-xl mx-auto w-full relative z-20">
                     <button 
                         onClick={() => router.back()}
-                        className="mb-6 p-2 -ml-2 text-[#5B2D7D] hover:bg-[#5B2D7D]/5 rounded-full transition-colors flex items-center gap-1 group"
+                        className="mb-6 p-2 -ml-2 text-[#556B5A] hover:bg-[#556B5A]/5 rounded-full transition-colors flex items-center gap-1 group"
                     >
                         <ChevronLeft className="w-5 h-5 group-active:-translate-x-1 transition-transform" />
                         <span className="text-sm font-medium">Back</span>
@@ -391,10 +391,10 @@ function MemoryUploadContent() {
                     <div className="flex items-start justify-between mb-8 mt-2">
                          <div className="flex items-start gap-3">
                              <div className="mt-1">
-                                <Feather className="w-7 h-7 text-[#5B2D7D]" />
+                                <Feather className="w-7 h-7 text-[#556B5A]" />
                              </div>
                             <div>
-                                <h1 className="text-[28px] font-black text-[#5B2D7D] uppercase leading-[0.9] tracking-tight">PRESERVE YOUR<br/> MEMORY</h1>
+                                <h1 className="text-[28px] font-black text-[#556B5A] uppercase leading-[0.9] tracking-tight">PRESERVE YOUR<br/> MEMORY</h1>
                                 <p className="text-[#A68CAB] text-[11px] mt-2 leading-relaxed max-w-[280px]">
                                     Add the memories your jewellery carries. Each one brings it to life.
                                 </p>
@@ -411,7 +411,7 @@ function MemoryUploadContent() {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value.slice(0, 15))}
                                 placeholder="Name Your Memory"
-                                className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
+                                className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px]"
                             />
                             <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 15 Characters</p>
                         </div>
@@ -424,7 +424,7 @@ function MemoryUploadContent() {
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Describe the moment"
                                 rows={2}
-                                className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none"
+                                className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] resize-none"
                             />
                              <p className="text-[#A68CAB] text-[10px] mt-1.5 ml-1">Character Limit : 2 lines</p>
                         </div>
@@ -439,8 +439,8 @@ function MemoryUploadContent() {
                                         onClick={() => setIsReordering(!isReordering)}
                                         className={`text-[11px] font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors ${
                                             isReordering 
-                                            ? "bg-[#A4C538] text-[#5B2D7D]" 
-                                            : "bg-[#EADDDE] text-[#5B2D7D]"
+                                            ? "bg-[#7C9A86] text-[#556B5A]" 
+                                            : "bg-[#E6DED1] text-[#556B5A]"
                                         }`}
                                     >
                                         {isReordering ? (
@@ -458,24 +458,24 @@ function MemoryUploadContent() {
                             <p className="text-[#A68CAB] text-[10px] mb-3 ml-1">You can add and edit the media later</p>
                             
                             {!hasMedia ? (
-                                <div className="border border-dashed border-[#5B2D7D]/20 bg-[#FFF5F0] rounded-[32px] p-6 flex flex-col items-center justify-center text-center min-h-[250px] gap-4">
+                                <div className="border border-dashed border-[#556B5A]/20 bg-[#FFF5F0] rounded-[32px] p-6 flex flex-col items-center justify-center text-center min-h-[250px] gap-4">
                                     <div>
                                         <button type="button" className="w-14 h-14 bg-[#F37B55] rounded-2xl flex items-center justify-center mb-3 shadow-[0_4px_10px_rgba(243,123,85,0.3)] mx-auto relative z-10 transition-transform active:scale-95">
                                         <Upload className="w-8 h-8 text-white" />
                                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
                                         </button>
-                                        <p className="text-[#5B2D7D] font-semibold text-[15px] mb-1">Upload your file or drag</p>
+                                        <p className="text-[#556B5A] font-semibold text-[15px] mb-1">Upload your file or drag</p>
                                         <p className="text-[#A68CAB] text-[10px]">Supported Format: SVG, JPG, PNG.....</p>
                                     </div>
                                     
                                     <div className="flex justify-center gap-3 w-full">
-                                        <button type="button" onClick={() => imageInputRef.current?.click()} className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium hover:bg-[#EADDDE] transition-colors">
+                                        <button type="button" onClick={() => imageInputRef.current?.click()} className="bg-[#E6DED1]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#556B5A] text-[11px] font-medium hover:bg-[#E6DED1] transition-colors">
                                             <ImageIcon className="w-4 h-4" /> Image
                                         </button>
-                                        <button type="button" onClick={() => videoInputRef.current?.click()} className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium hover:bg-[#EADDDE] transition-colors">
+                                        <button type="button" onClick={() => videoInputRef.current?.click()} className="bg-[#E6DED1]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#556B5A] text-[11px] font-medium hover:bg-[#E6DED1] transition-colors">
                                             <VideoIcon className="w-4 h-4" /> Video
                                         </button>
-                                        <button type="button" onClick={() => audioInputRef.current?.click()} className="bg-[#EADDDE]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#5B2D7D] text-[11px] font-medium hover:bg-[#EADDDE] transition-colors">
+                                        <button type="button" onClick={() => audioInputRef.current?.click()} className="bg-[#E6DED1]/50 px-4 py-2 rounded-xl flex items-center gap-2 text-[#556B5A] text-[11px] font-medium hover:bg-[#E6DED1] transition-colors">
                                             <Mic className="w-4 h-4" /> Audio
                                         </button>
                                     </div>
@@ -490,33 +490,33 @@ function MemoryUploadContent() {
                                             key={item.id}
                                             layout
                                             initial={false}
-                                            className="relative overflow-hidden flex items-center h-28 rounded-xl ring-1 ring-[#EADDDE] bg-white p-0 overflow-hidden select-none transition-all"
+                                            className="relative overflow-hidden flex items-center h-28 rounded-xl ring-1 ring-[#E6DED1] bg-white p-0 overflow-hidden select-none transition-all"
                                         >
                                             {/* Move Up Button */}
                                             <button 
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); handleMoveUp(index); }}
                                                 disabled={index === 0}
-                                                className="w-14 h-full flex items-center justify-center bg-[#A4C538]/20 text-[#5B2D7D] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#A4C538]/30 transition-colors active:scale-95 shrink-0"
+                                                className="w-14 h-full flex items-center justify-center bg-[#7C9A86]/20 text-[#556B5A] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#7C9A86]/30 transition-colors active:scale-95 shrink-0"
                                             >
                                                 <ChevronDown className="w-8 h-8 rotate-180" />
                                             </button>
 
                                             {/* Content */}
                                             <div className="flex-1 flex items-center gap-3 px-2 min-w-0 overflow-hidden">
-                                                <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden relative bg-[#FDF2EC]">
+                                                <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden relative bg-[#F6F2EC]">
                                                     {item.file.type.startsWith("video") ? (
                                                         <video src={item.previewUrl} className="w-full h-full object-cover" muted preload="metadata" />
                                                     ) : (item.file.type.startsWith("audio") || item.type?.startsWith("audio")) ? (
                                                         <div className="w-full h-full flex items-center justify-center bg-[#FFF5F0]">
-                                                            <Mic className="w-8 h-8 text-[#5B2D7D]" />
+                                                            <Mic className="w-8 h-8 text-[#556B5A]" />
                                                         </div>
                                                     ) : (
                                                         <Image src={item.previewUrl} alt="preview" fill className="object-cover" sizes="80px" />
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-[13px] font-bold text-[#5B2D7D] capitalize truncate">
+                                                    <p className="text-[13px] font-bold text-[#556B5A] capitalize truncate">
                                                         {item.file.type.split('/')[0] || "Media"}
                                                     </p>
                                                     <p className="text-[10px] text-[#A68CAB] truncate">
@@ -543,7 +543,7 @@ function MemoryUploadContent() {
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); handleMoveDown(index); }}
                                                 disabled={index === mediaItems.length - 1}
-                                                className="w-14 h-full flex items-center justify-center bg-[#5B2D7D]/10 text-[#5B2D7D] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#5B2D7D]/20 transition-colors active:scale-95 shrink-0"
+                                                className="w-14 h-full flex items-center justify-center bg-[#556B5A]/10 text-[#556B5A] disabled:opacity-10 disabled:bg-gray-100 hover:bg-[#556B5A]/20 transition-colors active:scale-95 shrink-0"
                                             >
                                                 <ChevronDown className="w-8 h-8" />
                                             </button>
@@ -553,7 +553,7 @@ function MemoryUploadContent() {
                                     <button 
                                         type="button"
                                         onClick={() => setIsReordering(false)}
-                                        className="w-full bg-[#5B2D7D] text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform"
+                                        className="w-full bg-[#556B5A] text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform"
                                     >
                                         Done Reordering
                                     </button>
@@ -605,11 +605,11 @@ function MemoryUploadContent() {
                                                 </button>
                                             </div>
                                         ))}
-                                        <label className="shrink-0 w-24 h-24 rounded-xl border border-dashed border-[#5B2D7D]/30 flex flex-col items-center justify-center gap-1 cursor-pointer bg-white/50 hover:bg-white transition-colors">
+                                        <label className="shrink-0 w-24 h-24 rounded-xl border border-dashed border-[#556B5A]/30 flex flex-col items-center justify-center gap-1 cursor-pointer bg-white/50 hover:bg-white transition-colors">
                                             <div className="w-8 h-8 rounded-full bg-[#F37B55] flex items-center justify-center shadow-sm">
                                                 <Upload className="w-5 h-5 text-white" />
                                             </div>
-                                            <span className="text-[9px] text-[#5B2D7D] font-medium">Add More</span>
+                                            <span className="text-[9px] text-[#556B5A] font-medium">Add More</span>
                                             <input type="file" className="hidden" onChange={handleFileChange} multiple accept="image/*,video/*,audio/*" />
                                         </label>
                                     </div>
@@ -641,72 +641,72 @@ function MemoryUploadContent() {
                                     type="date"
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
-                                    className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 pl-12 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
+                                    className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 pl-12 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                                 />
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <Calendar className="w-5 h-5 text-[#5B2D7D]" />
+                                    <Calendar className="w-5 h-5 text-[#556B5A]" />
                                 </div>
                              </div>
                         </div>
                         
                         {/* Time */}
                         <div>
-                             <label className="block text-[#5B2D7D] text-[13px] font-bold mb-2">Time</label>
+                             <label className="block text-[#556B5A] text-[13px] font-bold mb-2">Time</label>
                              <div className="relative">
                                 <input
                                     type="time"
                                     value={time}
                                     onChange={(e) => setTime(e.target.value)}
-                                    className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 pl-12 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
+                                    className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 pl-12 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                                 />
                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <Clock className="w-5 h-5 text-[#5B2D7D]" />
+                                    <Clock className="w-5 h-5 text-[#556B5A]" />
                                 </div>
                              </div>
                         </div>
 
                         {/* Location */}
                         <div>
-                             <label className="block text-[#5B2D7D] text-[13px] font-bold mb-2">Location</label>
+                             <label className="block text-[#556B5A] text-[13px] font-bold mb-2">Location</label>
                              <div className="relative">
                                 <input
                                     type="text"
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)}
                                     placeholder="Pick a location"
-                                    className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 pl-12 text-[#5B2D7D] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
+                                    className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 pl-12 text-[#556B5A] placeholder-[#D8C4D0] focus:ring-1 focus:ring-[#C27A59] outline-none text-[13px] font-medium"
                                 />
                                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                                    <MapPin className="w-5 h-5 text-[#5B2D7D]" />
+                                    <MapPin className="w-5 h-5 text-[#556B5A]" />
                                 </div>
                              </div>
                         </div>
 
                         {/* People */}
                         <div className="mb-6">
-                            <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">People</label>
+                            <label className="block text-[#556B5A] text-[13px] font-bold mb-1">People</label>
                             <p className="text-[#A68CAB] text-[10px] mb-3">Who was there with you?</p>
 
                             <button
                                 type="button"
                                 onClick={() => setShowPeopleSelector(!showPeopleSelector)}
-                                className="w-full bg-[#FFF5F0] border border-[#EADDDE] rounded-xl p-4 text-left flex items-center justify-between"
+                                className="w-full bg-[#FFF5F0] border border-[#E6DED1] rounded-xl p-4 text-left flex items-center justify-between"
                             >
                                 <div className="flex items-center gap-2">
-                                    <Users className="w-5 h-5 text-[#5B2D7D]/40" />
+                                    <Users className="w-5 h-5 text-[#556B5A]/40" />
                                     {selectedPeople.length > 0 ? (
-                                        <span className="text-[#5B2D7D] text-[13px]">
+                                        <span className="text-[#556B5A] text-[13px]">
                                             {selectedPeople
                                                 .map((id) => people.find((p) => p.id === id)?.name)
                                                 .filter(Boolean)
                                                 .join(", ")}
                                         </span>
                                     ) : (
-                                        <span className="text-[#5B2D7D]/30 text-[13px]">Select people</span>
+                                        <span className="text-[#556B5A]/30 text-[13px]">Select people</span>
                                     )}
                                 </div>
                                 <ChevronDown
-                                    className={`w-5 h-5 text-[#5B2D7D]/40 transition-transform ${
+                                    className={`w-5 h-5 text-[#556B5A]/40 transition-transform ${
                                         showPeopleSelector ? "rotate-180" : ""
                                     }`}
                                 />
@@ -716,7 +716,7 @@ function MemoryUploadContent() {
                                 <motion.div
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="mt-2 p-3 bg-white rounded-xl border border-[#5B2D7D]/10 space-y-2 shadow-sm"
+                                    className="mt-2 p-3 bg-white rounded-xl border border-[#556B5A]/10 space-y-2 shadow-sm"
                                 >
                                     {people.map((person) => (
                                         <button
@@ -725,8 +725,8 @@ function MemoryUploadContent() {
                                             onClick={() => togglePerson(person.id)}
                                             className={`w-full px-3 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${
                                                 selectedPeople.includes(person.id)
-                                                    ? "bg-[#5B2D7D] text-white"
-                                                    : "hover:bg-[#EADDDE]/50 text-[#5B2D7D]"
+                                                    ? "bg-[#556B5A] text-white"
+                                                    : "hover:bg-[#E6DED1]/50 text-[#556B5A]"
                                             }`}
                                         >
                                             <span className="text-[13px] font-medium">{person.name}</span>
@@ -736,20 +736,20 @@ function MemoryUploadContent() {
                                         </button>
                                     ))}
 
-                                    <div className="flex gap-2 pt-2 border-t border-[#5B2D7D]/10">
+                                    <div className="flex gap-2 pt-2 border-t border-[#556B5A]/10">
                                         <input
                                             type="text"
                                             value={newPersonName}
                                             onChange={(e) => setNewPersonName(e.target.value)}
                                             placeholder="Add someone new..."
-                                            className="flex-1 px-3 py-2 rounded-lg bg-[#EADDDE]/30 text-[#5B2D7D] placeholder-[#5B2D7D]/30 outline-none text-[13px]"
+                                            className="flex-1 px-3 py-2 rounded-lg bg-[#E6DED1]/30 text-[#556B5A] placeholder-[#556B5A]/30 outline-none text-[13px]"
                                             onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddPerson())}
                                         />
                                         <button
                                             type="button"
                                             onClick={handleAddPerson}
                                             disabled={!newPersonName.trim() || isAddingPerson}
-                                            className="px-3 py-2 bg-[#5B2D7D] text-white rounded-lg text-[11px] font-bold disabled:opacity-50"
+                                            className="px-3 py-2 bg-[#556B5A] text-white rounded-lg text-[11px] font-bold disabled:opacity-50"
                                         >
                                             {isAddingPerson ? "..." : "Add"}
                                         </button>
@@ -762,11 +762,11 @@ function MemoryUploadContent() {
                         <button
                             type="button"
                             onClick={() => setOptionalExpanded(!optionalExpanded)}
-                            className="w-full bg-[#EADDDE] py-3.5 rounded-xl flex items-center justify-center gap-2 text-[#5B2D7D] font-bold text-[13px]"
+                            className="w-full bg-[#E6DED1] py-3.5 rounded-xl flex items-center justify-center gap-2 text-[#556B5A] font-bold text-[13px]"
                         >
                             Edit optional fields
                                 <motion.div animate={{ rotate: optionalExpanded ? 180 : 0 }}>
-                                    <ChevronDown className="w-5 h-5 text-[#5B2D7D]" />
+                                    <ChevronDown className="w-5 h-5 text-[#556B5A]" />
                                 </motion.div>
                         </button>
 
@@ -781,7 +781,7 @@ function MemoryUploadContent() {
                                 >
                                     {/* Emotions */}
                                     <div>
-                                        <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">How did you feel in the moment ?</label>
+                                        <label className="block text-[#556B5A] text-[13px] font-bold mb-1">How did you feel in the moment ?</label>
                                         <p className="text-[#A68CAB] text-[10px] mb-3">What did you feel in that moment? Choose all that apply.</p>
                                         <div className="flex flex-wrap gap-2">
                                             {EMOTIONS.map(emotion => (
@@ -791,8 +791,8 @@ function MemoryUploadContent() {
                                                     onClick={() => toggleEmotion(emotion)}
                                                     className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                         selectedEmotions.includes(emotion)
-                                                        ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
-                                                        : 'bg-[#FFF5F0] text-[#5B2D7D] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                                        ? 'bg-[#556B5A] text-white border-[#556B5A]'
+                                                        : 'bg-[#FFF5F0] text-[#556B5A] border-[#FBE0D6] hover:bg-[#F8E9F0]'
                                                     }`}
                                                 >
                                                     {emotion}
@@ -804,7 +804,7 @@ function MemoryUploadContent() {
                                                     type="button"
                                                     key={emotion}
                                                     onClick={() => toggleEmotion(emotion)}
-                                                    className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#556B5A] text-white border-[#556B5A] flex items-center gap-2"
                                                 >
                                                     {emotion}
                                                     <X className="w-3 h-3 text-white/70" />
@@ -820,7 +820,7 @@ function MemoryUploadContent() {
                                                     onBlur={addCustomEmotion}
                                                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomEmotion())}
                                                     placeholder="Type..."
-                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[80px]"
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#556B5A] border border-[#C27A59] outline-none min-w-[80px]"
                                                 />
                                             ) : (
                                                 <button 
@@ -836,7 +836,7 @@ function MemoryUploadContent() {
 
                                     {/* Mood */}
                                     <div>
-                                        <label className="block text-[#5B2D7D] text-[13px] font-bold mb-1">Select a vibe that captures your memory</label>
+                                        <label className="block text-[#556B5A] text-[13px] font-bold mb-1">Select a vibe that captures your memory</label>
                                         <p className="text-[#A68CAB] text-[10px] mb-3">Pick a mood that fits the vibe of the memory best.</p>
                                         <div className="flex flex-wrap gap-2">
                                             {MOODS.map(mood => (
@@ -846,8 +846,8 @@ function MemoryUploadContent() {
                                                     onClick={() => handleMoodSelect(mood)}
                                                     className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border ${
                                                         selectedMood === mood
-                                                        ? 'bg-[#5B2D7D] text-white border-[#5B2D7D]'
-                                                        : 'bg-[#FFF5F0] text-[#5B2D7D] border-[#FBE0D6] hover:bg-[#F8E9F0]'
+                                                        ? 'bg-[#556B5A] text-white border-[#556B5A]'
+                                                        : 'bg-[#FFF5F0] text-[#556B5A] border-[#FBE0D6] hover:bg-[#F8E9F0]'
                                                     }`}
                                                 >
                                                     {mood}
@@ -858,7 +858,7 @@ function MemoryUploadContent() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setSelectedMood(null)}
-                                                    className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#5B2D7D] text-white border-[#5B2D7D] flex items-center gap-2"
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors border bg-[#556B5A] text-white border-[#556B5A] flex items-center gap-2"
                                                 >
                                                     {selectedMood}
                                                     <X className="w-3 h-3 text-white/70" />
@@ -874,7 +874,7 @@ function MemoryUploadContent() {
                                                     onBlur={addCustomMood}
                                                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomMood())}
                                                     placeholder="Type mood..."
-                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#5B2D7D] border border-[#C27A59] outline-none min-w-[100px]"
+                                                    className="px-5 py-2.5 rounded-xl text-[13px] bg-[#FFF5F0] text-[#556B5A] border border-[#C27A59] outline-none min-w-[100px]"
                                                 />
                                             ) : (
                                                 !selectedMood || MOODS.includes(selectedMood) ? (
@@ -898,7 +898,7 @@ function MemoryUploadContent() {
                              <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="w-[56px] h-[56px] rounded-full bg-[#EADDDE] flex items-center justify-center shadow-lg text-[#5B2D7D] shrink-0 active:scale-95 transition-transform"
+                                className="w-[56px] h-[56px] rounded-full bg-[#E6DED1] flex items-center justify-center shadow-lg text-[#556B5A] shrink-0 active:scale-95 transition-transform"
                             >
                                 <ChevronLeft className="w-6 h-6" />
                             </button>
@@ -907,7 +907,7 @@ function MemoryUploadContent() {
                                 type="button" 
                                 onClick={handleSubmit} 
                                 disabled={isPending || isUploading}
-                                className="flex-1 bg-[#A4C538] text-[#5B2D7D] text-[15px] font-bold h-[56px] rounded-[28px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#95b330] transition-all disabled:opacity-70 active:scale-95"
+                                className="flex-1 bg-[#7C9A86] text-[#556B5A] text-[15px] font-bold h-[56px] rounded-[28px] flex items-center justify-center gap-2 shadow-lg hover:bg-[#95b330] transition-all disabled:opacity-70 active:scale-95"
                             >
                                  <span className="">{isUploading ? "Uploading media..." : isPending ? "Saving..." : "Create now"}</span>
                                  <ArrowRight className="w-5 h-5" />

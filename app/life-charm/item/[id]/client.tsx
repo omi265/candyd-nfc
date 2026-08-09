@@ -86,7 +86,7 @@ export default function ItemDetailClient({
       {/* Hero Section */}
       <div className="relative">
         {/* Background */}
-        <div className={`h-72 relative overflow-hidden ${isLived && heroMedia ? '' : isLived ? 'bg-gradient-to-br from-[#A4C538] to-[#7A9B1E]' : 'bg-gradient-to-br from-[#5B2D7D] to-[#3d1d54]'}`}>
+        <div className={`h-72 relative overflow-hidden ${isLived && heroMedia ? '' : isLived ? 'bg-gradient-to-br from-[#7C9A86] to-[#556B5A]' : 'bg-gradient-to-br from-[#556B5A] to-[#3d1d54]'}`}>
           {isLived && heroMedia ? (
             <>
               {heroMedia.type === "image" ? (
@@ -110,7 +110,7 @@ export default function ItemDetailClient({
 	                  poster={heroMedia.posterUrl}
 	                />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#A4C538] to-[#7A9B1E]" />
+                <div className="w-full h-full bg-gradient-to-br from-[#7C9A86] to-[#556B5A]" />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             </>
@@ -164,13 +164,13 @@ export default function ItemDetailClient({
             animate={{ opacity: 1, y: 0 }}
             className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full shadow-2xl ${
               isLived
-                ? "bg-[#A4C538] text-[#5B2D7D] border-2 border-white/30"
+                ? "bg-[#7C9A86] text-[#556B5A] border-2 border-white/30"
                 : "bg-white/20 backdrop-blur-md text-white border border-white/20"
             }`}
           >
             <div
               className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                isLived ? "bg-[#5B2D7D] text-[#A4C538]" : "border-2 border-white/50"
+                isLived ? "bg-[#556B5A] text-[#7C9A86]" : "border-2 border-white/50"
               }`}
             >
               {isLived ? (
@@ -180,13 +180,13 @@ export default function ItemDetailClient({
               )}
             </div>
             <div className="flex flex-col">
-                <span className={`text-[10px] uppercase font-black tracking-widest leading-none ${isLived ? 'text-[#5B2D7D]/60' : 'text-white/60'}`}>Status</span>
+                <span className={`text-[10px] uppercase font-black tracking-widest leading-none ${isLived ? 'text-[#556B5A]/60' : 'text-white/60'}`}>Status</span>
                 <span className="text-sm font-black uppercase tracking-tight">
                 {isLived ? "Experience Lived" : "Pending Adventure"}
                 </span>
             </div>
             {isLived && item.livedAt && (
-              <div className="ml-auto pl-4 border-l border-[#5B2D7D]/20">
+              <div className="ml-auto pl-4 border-l border-[#556B5A]/20">
                 <span className="text-[10px] font-black uppercase block opacity-60">Lived on</span>
                 <span className="text-xs font-bold whitespace-nowrap">
                     {new Date(item.livedAt).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -206,11 +206,11 @@ export default function ItemDetailClient({
           className="bg-white rounded-3xl shadow-lg p-6 mb-6"
         >
           {/* Title */}
-          <h1 className="text-2xl font-bold text-[#5B2D7D] mb-3">{item.title}</h1>
+          <h1 className="text-2xl font-bold text-[#556B5A] mb-3">{item.title}</h1>
 
           {/* Description */}
           {item.description && (
-            <p className="text-[#5B2D7D]/70 leading-relaxed mb-6">
+            <p className="text-[#556B5A]/70 leading-relaxed mb-6">
               {item.description}
             </p>
           )}
@@ -220,12 +220,12 @@ export default function ItemDetailClient({
             {/* People */}
             {item.peopleIds.length > 0 && (
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#5B2D7D]" />
+                <Users className="w-4 h-4 text-[#556B5A]" />
                 <div className="flex flex-wrap gap-1">
                   {item.peopleIds.map((id) => (
                     <span
                       key={id}
-                      className="px-3 py-1 bg-[#5B2D7D] rounded-full text-xs text-white font-medium"
+                      className="px-3 py-1 bg-[#556B5A] rounded-full text-xs text-white font-medium"
                     >
                       {getPersonName(id)}
                     </span>
@@ -237,8 +237,8 @@ export default function ItemDetailClient({
             {/* When */}
             {item.whenType && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-[#FBE0D6] rounded-full">
-                <Calendar className="w-4 h-4 text-[#5B2D7D]" />
-                <span className="text-xs text-[#5B2D7D] font-medium">
+                <Calendar className="w-4 h-4 text-[#556B5A]" />
+                <span className="text-xs text-[#556B5A] font-medium">
                   {WHEN_LABELS[item.whenType] || item.whenType}
                   {item.whenType === "specific_date" && item.targetDate && (
                     <span className="ml-1 opacity-70">
@@ -260,7 +260,7 @@ export default function ItemDetailClient({
             className="bg-white rounded-3xl shadow-lg overflow-hidden mb-24"
           >
             {/* Experience Header */}
-            <div className="bg-gradient-to-r from-[#A4C538] to-[#8fb32e] p-4">
+            <div className="bg-gradient-to-r from-[#7C9A86] to-[#8fb32e] p-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-white" />
                 <h2 className="font-bold text-white">Your Experience</h2>
@@ -271,7 +271,7 @@ export default function ItemDetailClient({
               {/* Reflection */}
               {item.experience?.reflection && (
                 <div className="mb-5">
-                  <p className="text-[#5B2D7D] italic text-lg leading-relaxed border-l-4 border-[#A4C538] pl-4">
+                  <p className="text-[#556B5A] italic text-lg leading-relaxed border-l-4 border-[#7C9A86] pl-4">
                     &quot;{item.experience.reflection}&quot;
                   </p>
                 </div>
@@ -280,9 +280,9 @@ export default function ItemDetailClient({
               {/* Experience Meta */}
               <div className="flex flex-wrap gap-3 mb-5">
                 {item.experience?.location && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#FDF2EC] rounded-full">
-                    <MapPin className="w-4 h-4 text-[#5B2D7D]" />
-                    <span className="text-xs text-[#5B2D7D] font-medium">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F6F2EC] rounded-full">
+                    <MapPin className="w-4 h-4 text-[#556B5A]" />
+                    <span className="text-xs text-[#556B5A] font-medium">
                       {item.experience.location}
                     </span>
                   </div>
@@ -290,12 +290,12 @@ export default function ItemDetailClient({
                 {item.experience?.peopleIds &&
                   item.experience.peopleIds.length > 0 && (
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#5B2D7D]" />
+                      <Users className="w-4 h-4 text-[#556B5A]" />
                       <div className="flex flex-wrap gap-1">
                         {item.experience.peopleIds.map((id) => (
                           <span
                             key={id}
-                            className="px-2 py-1 bg-[#5B2D7D] rounded-full text-xs text-white font-medium"
+                            className="px-2 py-1 bg-[#556B5A] rounded-full text-xs text-white font-medium"
                           >
                             {getPersonName(id)}
                           </span>
@@ -311,7 +311,7 @@ export default function ItemDetailClient({
                   {item.experience.media.slice(0, 3).map((media, index) => (
                     <div
                       key={media.id}
-                      className="aspect-square rounded-2xl overflow-hidden bg-[#EADDDE] relative"
+                      className="aspect-square rounded-2xl overflow-hidden bg-[#E6DED1] relative"
                     >
                       {media.type === "image" ? (
                         <Image
@@ -334,7 +334,7 @@ export default function ItemDetailClient({
                           </div>
                         </>
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#5B2D7D]/10">
+                        <div className="w-full h-full flex items-center justify-center bg-[#556B5A]/10">
                           <span className="text-2xl">🎵</span>
                         </div>
                       )}
@@ -353,7 +353,7 @@ export default function ItemDetailClient({
               {/* View Experience Button */}
               <button
                 onClick={handleViewExperience}
-                className="w-full py-4 bg-[#FDF2EC] text-[#5B2D7D] rounded-2xl font-semibold flex items-center justify-center gap-2 hover:bg-[#EADDDE] transition-colors"
+                className="w-full py-4 bg-[#F6F2EC] text-[#556B5A] rounded-2xl font-semibold flex items-center justify-center gap-2 hover:bg-[#E6DED1] transition-colors"
               >
                 View full experience
                 <ChevronRight className="w-5 h-5" />
@@ -370,13 +370,13 @@ export default function ItemDetailClient({
             transition={{ delay: 0.2 }}
             className="bg-white rounded-3xl shadow-lg p-8 text-center mb-24"
           >
-            <div className="w-16 h-16 rounded-full bg-[#A4C538]/10 flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-8 h-8 text-[#A4C538]" />
+            <div className="w-16 h-16 rounded-full bg-[#7C9A86]/10 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8 text-[#7C9A86]" />
             </div>
-            <h3 className="text-lg font-bold text-[#5B2D7D] mb-2">
+            <h3 className="text-lg font-bold text-[#556B5A] mb-2">
               Experience Complete!
             </h3>
-            <p className="text-[#5B2D7D]/60 text-sm">
+            <p className="text-[#556B5A]/60 text-sm">
               You&apos;ve lived this experience. Great job!
             </p>
           </motion.div>
@@ -385,12 +385,12 @@ export default function ItemDetailClient({
 
       {/* Action Button */}
       {!isLived && (
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#FDF2EC] via-[#FDF2EC] to-transparent pt-12 z-30">
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#F6F2EC] via-[#F6F2EC] to-transparent pt-12 z-30">
           <motion.button
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             onClick={handleMarkAsLived}
-            className="w-full py-4 bg-[#A4C538] text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-[#A4C538]/30 hover:bg-[#93B132] transition-colors active:scale-[0.98]"
+            className="w-full py-4 bg-[#7C9A86] text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-[#7C9A86]/30 hover:bg-[#556B5A] transition-colors active:scale-[0.98]"
           >
             <Sparkles className="w-6 h-6" />
             Mark as Lived
@@ -409,10 +409,10 @@ export default function ItemDetailClient({
             <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-7 h-7 text-red-500" />
             </div>
-            <h3 className="text-xl font-bold text-[#5B2D7D] text-center mb-2">
+            <h3 className="text-xl font-bold text-[#556B5A] text-center mb-2">
               Delete this item?
             </h3>
-            <p className="text-[#5B2D7D]/60 text-center mb-6">
+            <p className="text-[#556B5A]/60 text-center mb-6">
               This action cannot be undone.
               {hasExperience &&
                 " Any associated experience and media will also be deleted."}
@@ -420,7 +420,7 @@ export default function ItemDetailClient({
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-3.5 bg-[#EADDDE] text-[#5B2D7D] rounded-xl font-semibold hover:bg-[#d4c3d8] transition-colors"
+                className="flex-1 py-3.5 bg-[#E6DED1] text-[#556B5A] rounded-xl font-semibold hover:bg-[#d4c3d8] transition-colors"
               >
                 Cancel
               </button>

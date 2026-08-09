@@ -81,7 +81,7 @@ function FilterBar({ searchQuery, setSearchQuery, isSearchOpen, setIsSearchOpen 
 
   return (
     <div className="flex items-center gap-3 px-5 py-3 z-30 relative">
-      <div className={`shrink-0 rounded-full bg-white shadow-sm border border-[#EADDDE] flex items-center transition-all duration-300 overflow-hidden h-10 ${isSearchOpen ? 'w-full px-4' : 'w-10 justify-center'}`}>
+      <div className={`shrink-0 rounded-full bg-white shadow-sm border border-[#E6DED1] flex items-center transition-all duration-300 overflow-hidden h-10 ${isSearchOpen ? 'w-full px-4' : 'w-10 justify-center'}`}>
          {isSearchOpen ? (
              <>
                 <input
@@ -90,22 +90,22 @@ function FilterBar({ searchQuery, setSearchQuery, isSearchOpen, setIsSearchOpen 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search memories and items..."
-                    className="w-full h-full bg-transparent outline-none text-[#5B2D7D] text-sm placeholder-[#5B2D7D]/40 min-w-0"
+                    className="w-full h-full bg-transparent outline-none text-[#556B5A] text-sm placeholder-[#556B5A]/40 min-w-0"
                     onBlur={() => !searchQuery && setIsSearchOpen(false)}
                 />
                 {searchQuery ? (
                      <button onClick={() => setSearchQuery("")} className="ml-2">
-                        <X className="w-4 h-4 text-[#5B2D7D]/60" />
+                        <X className="w-4 h-4 text-[#556B5A]/60" />
                      </button>
                 ) : (
                     <button onClick={() => setIsSearchOpen(false)} className="ml-2">
-                        <X className="w-4 h-4 text-[#5B2D7D]/60" />
+                        <X className="w-4 h-4 text-[#556B5A]/60" />
                     </button>
                 )}
              </>
          ) : (
             <button onClick={() => setIsSearchOpen(true)} className="w-full h-full flex items-center justify-center">
-                <Search className="w-5 h-5 text-[#5B2D7D]" />
+                <Search className="w-5 h-5 text-[#556B5A]" />
             </button>
          )}
       </div>
@@ -204,8 +204,8 @@ function GridCard({
 
   // Background colors
   const bgGradient = item.type === 'life_item'
-    ? "from-[#A4C538] to-[#7A9B1E]"
-    : "from-[#5B2D7D] to-[#3A1D52]";
+    ? "from-[#7C9A86] to-[#556B5A]"
+    : "from-[#556B5A] to-[#3A1D52]";
 
   return (
     <motion.div
@@ -810,21 +810,21 @@ export default function LifeCharmContent({
         </motion.div>
             ) : searchQuery ? (
                 <div className="w-full h-full flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-16 h-16 rounded-full bg-[#EADDDE]/30 flex items-center justify-center mb-4">
-                        <Search className="w-8 h-8 text-[#5B2D7D]/20" />
+                    <div className="w-16 h-16 rounded-full bg-[#E6DED1]/30 flex items-center justify-center mb-4">
+                        <Search className="w-8 h-8 text-[#556B5A]/20" />
                     </div>
-                    <h3 className="text-[#5B2D7D] font-bold text-lg">No results found</h3>
-                    <p className="text-[#5B2D7D]/60 text-sm max-w-[200px] mx-auto mt-1">We couldn&apos;t find anything matching your search.</p>
+                    <h3 className="text-[#556B5A] font-bold text-lg">No results found</h3>
+                    <p className="text-[#556B5A]/60 text-sm max-w-[200px] mx-auto mt-1">We couldn&apos;t find anything matching your search.</p>
                     <button 
                         onClick={() => setSearchQuery("")}
-                        className="mt-6 text-[#5B2D7D] font-bold text-sm underline underline-offset-4"
+                        className="mt-6 text-[#556B5A] font-bold text-sm underline underline-offset-4"
                     >
                         Clear search
                     </button>
                 </div>
             ) : (
                 <div className="w-full h-full flex items-center justify-center px-6 text-center">
-                    <p className="text-2xl font-bold tracking-tight text-[#5B2D7D]/40">
+                    <p className="text-2xl font-bold tracking-tight text-[#556B5A]/40">
                         Start adding your memories
                     </p>
                 </div>
@@ -842,46 +842,46 @@ export default function LifeCharmContent({
                             <div 
                                 key={item.id} 
                                 onClick={() => handleListItemClick(item)}
-                                className="bg-white rounded-2xl p-4 shadow-sm border border-[#EADDDE] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
+                                className="bg-white rounded-2xl p-4 shadow-sm border border-[#E6DED1] flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
                             >
-                                <div className={`w-16 h-16 shrink-0 rounded-xl overflow-hidden relative ${isLived ? '' : 'bg-[#EADDDE]/30 flex items-center justify-center'}`}>
+                                <div className={`w-16 h-16 shrink-0 rounded-xl overflow-hidden relative ${isLived ? '' : 'bg-[#E6DED1]/30 flex items-center justify-center'}`}>
                                     {hasMedia && firstMedia?.type === 'image' ? (
                                         <Image src={getOptimizedUrl(firstMedia.url, 'image', 200)} alt="" fill className="object-cover" />
                                     ) : (
-                                        <div className={`w-full h-full flex items-center justify-center ${isLived ? 'bg-[#A4C538]/20' : ''}`}>
-                                            {isLived ? <Check className="w-6 h-6 text-[#A4C538]" /> : <div className="w-3 h-3 rounded-full bg-[#EADDDE]" />}
+                                        <div className={`w-full h-full flex items-center justify-center ${isLived ? 'bg-[#7C9A86]/20' : ''}`}>
+                                            {isLived ? <Check className="w-6 h-6 text-[#7C9A86]" /> : <div className="w-3 h-3 rounded-full bg-[#E6DED1]" />}
                                         </div>
                                     )}
                                 </div>
                                 
                                 <div className="flex-1 min-w-0">
-                                    <h3 className={`font-bold text-lg truncate ${isLived ? 'text-[#5B2D7D]' : 'text-[#5B2D7D]/60'}`}>{item.title}</h3>
-                                    {item.description && <p className="text-sm text-[#5B2D7D]/60 truncate">{item.description}</p>}
+                                    <h3 className={`font-bold text-lg truncate ${isLived ? 'text-[#556B5A]' : 'text-[#556B5A]/60'}`}>{item.title}</h3>
+                                    {item.description && <p className="text-sm text-[#556B5A]/60 truncate">{item.description}</p>}
                                     {isLived && item.livedAt && (
-                                        <p className="text-xs text-[#A4C538] font-medium mt-1">
+                                        <p className="text-xs text-[#7C9A86] font-medium mt-1">
                                             {new Date(item.livedAt).toLocaleDateString()}
                                         </p>
                                     )}
                                     {!isLived && item.targetDate && (
-                                        <p className="text-xs text-[#5B2D7D]/40 font-medium mt-1">
+                                        <p className="text-xs text-[#556B5A]/40 font-medium mt-1">
                                             Target: {new Date(item.targetDate).toLocaleDateString()}
                                         </p>
                                     )}
                                 </div>
                                 
-                                {isLived && <div className="w-2 h-2 rounded-full bg-[#A4C538]" />}
+                                {isLived && <div className="w-2 h-2 rounded-full bg-[#7C9A86]" />}
                             </div>
                          )
                     }) : (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-16 h-16 rounded-full bg-[#EADDDE]/30 flex items-center justify-center mb-4">
-                                <Search className="w-8 h-8 text-[#5B2D7D]/20" />
+                            <div className="w-16 h-16 rounded-full bg-[#E6DED1]/30 flex items-center justify-center mb-4">
+                                <Search className="w-8 h-8 text-[#556B5A]/20" />
                             </div>
-                            <h3 className="text-[#5B2D7D] font-bold text-lg">No results found</h3>
-                            <p className="text-[#5B2D7D]/60 text-sm max-w-[200px] mx-auto mt-1">We couldn&apos;t find anything matching your search.</p>
+                            <h3 className="text-[#556B5A] font-bold text-lg">No results found</h3>
+                            <p className="text-[#556B5A]/60 text-sm max-w-[200px] mx-auto mt-1">We couldn&apos;t find anything matching your search.</p>
                             <button 
                                 onClick={() => setSearchQuery("")}
-                                className="mt-6 text-[#5B2D7D] font-bold text-sm underline underline-offset-4"
+                                className="mt-6 text-[#556B5A] font-bold text-sm underline underline-offset-4"
                             >
                                 Clear search
                             </button>
@@ -907,17 +907,17 @@ export default function LifeCharmContent({
                     setViewMode('grid');
                 }
             }}
-            className="h-12 bg-white/80 backdrop-blur-xl border border-[#EADDDE] shadow-lg rounded-2xl flex items-center p-1.5 cursor-pointer relative pointer-events-auto flex-1 max-w-[240px]"
+            className="h-12 bg-white/80 backdrop-blur-xl border border-[#E6DED1] shadow-lg rounded-2xl flex items-center p-1.5 cursor-pointer relative pointer-events-auto flex-1 max-w-[240px]"
         >
             <motion.div 
-                className="absolute inset-y-1.5 w-[calc(50%-6px)] bg-[#5B2D7D] rounded-xl shadow-sm"
+                className="absolute inset-y-1.5 w-[calc(50%-6px)] bg-[#556B5A] rounded-xl shadow-sm"
                 animate={{ x: viewMode === 'grid' ? 0 : '100%' }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />
-            <div className={`flex-1 flex items-center justify-center relative z-10 text-[10px] font-black uppercase tracking-wider transition-colors duration-200 ${viewMode === 'grid' ? 'text-white' : 'text-[#5B2D7D]'}`}>
+            <div className={`flex-1 flex items-center justify-center relative z-10 text-[10px] font-black uppercase tracking-wider transition-colors duration-200 ${viewMode === 'grid' ? 'text-white' : 'text-[#556B5A]'}`}>
                 Gallery
             </div>
-            <div className={`flex-1 flex items-center justify-center relative z-10 text-[10px] font-black uppercase tracking-wider transition-colors duration-200 ${viewMode === 'list' ? 'text-white' : 'text-[#5B2D7D]'}`}>
+            <div className={`flex-1 flex items-center justify-center relative z-10 text-[10px] font-black uppercase tracking-wider transition-colors duration-200 ${viewMode === 'list' ? 'text-white' : 'text-[#556B5A]'}`}>
                 Bucket List
             </div>
         </div>
@@ -928,10 +928,10 @@ export default function LifeCharmContent({
             {/* Quick Capture Button */}
             <button
                 onClick={() => setShowCamera(true)}
-                className="w-14 h-14 rounded-full bg-white border border-[#EADDDE] flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
+                className="w-14 h-14 rounded-full bg-white border border-[#E6DED1] flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors"
                 title="Quick Capture"
             >
-                <Camera className="w-6 h-6 text-[#5B2D7D]" />
+                <Camera className="w-6 h-6 text-[#556B5A]" />
             </button>
 
             {/* Primary: Add Memory (Grid) or Add Experience (List) */}
@@ -939,8 +939,8 @@ export default function LifeCharmContent({
                 onClick={handleFabClick}
                 className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-colors ${
                     viewMode === 'grid' 
-                    ? 'bg-[#5B2D7D] hover:bg-[#4A246A]' 
-                    : 'bg-[#A4C538] hover:bg-[#93B132]'
+                    ? 'bg-[#556B5A] hover:bg-[#445849]' 
+                    : 'bg-[#7C9A86] hover:bg-[#556B5A]'
                 }`}
             >
                 {viewMode === 'grid' ? <ImageIcon className="w-6 h-6 text-white" /> : <Plus className="w-7 h-7 text-white" />}

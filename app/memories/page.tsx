@@ -11,7 +11,7 @@ export default async function MemoriesPage() {
   ]).catch(() => [[], []] as [any[], any[]]);
 
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-transparent text-[#5B2D7D]">Loading...</div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-transparent text-[#556B5A]">Loading...</div>}>
       <HomeContent
         initialMemories={memories}
         people={allPeople}

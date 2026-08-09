@@ -38,21 +38,21 @@ export default function ProfilePage() {
     if (isLoading) return <div className="min-h-screen bg-transparent flex items-center justify-center">Loading...</div>;
 
     return (
-        <div className="min-h-screen bg-transparent font-[Outfit] text-[#5B2D7D]">
+        <div className="min-h-screen bg-transparent font-[Outfit] text-[#556B5A]">
              {/* Header */}
              <header className="flex items-center justify-between px-6 py-6">
                 <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
                     <ChevronLeft className="w-6 h-6 text-[#22005D]" />
                 </button>
                 <div /> 
-                <button className="w-10 h-10 flex items-center justify-center bg-[#FDF2EC] rounded-full shadow-sm border border-[#EADDDE]">
-                   <Menu className="w-6 h-6 text-[#5B2D7D]" />
+                <button className="w-10 h-10 flex items-center justify-center bg-[#F6F2EC] rounded-full shadow-sm border border-[#E6DED1]">
+                   <Menu className="w-6 h-6 text-[#556B5A]" />
                 </button>
             </header>
 
             <main className="px-6 pb-20">
                 <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-3xl font-bold text-[#3E1C56]">Profile</h1>
+                    <h1 className="text-3xl font-bold text-[#3A4B3E]">Profile</h1>
                 </div>
 
                 <p className="text-[#9A92A6] text-sm mb-8 leading-relaxed">
@@ -63,7 +63,7 @@ export default function ProfilePage() {
                 <div className="bg-[#FFF9F6] rounded-3xl p-4 flex items-center gap-4 mb-8 shadow-sm">
                     <UserCircle className="w-[60px] h-[60px] text-[#9A92A6]" />
                     <div>
-                        <h2 className="text-[#3E1C56] font-semibold text-base mb-1">Profile photo</h2>
+                        <h2 className="text-[#3A4B3E] font-semibold text-base mb-1">Profile photo</h2>
                         <button className="text-[#9A92A6] text-sm">Change photo</button>
                     </div>
                 </div>
@@ -71,34 +71,34 @@ export default function ProfilePage() {
                 {/* Form Fields */}
                 <form action={action} className="space-y-6">
                     <div>
-                        <label className="block text-[#3E1C56] font-semibold mb-2">Name</label>
+                        <label className="block text-[#3A4B3E] font-semibold mb-2">Name</label>
                         <input 
                             name="name"
                             type="text" 
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Your Name"
-                            className="w-full bg-[#FFF9F6] border border-[#EADDDE] rounded-xl px-4 py-3 text-[#3E1C56] focus:outline-none focus:border-[#5B2D7D]"
+                            className="w-full bg-[#FFF9F6] border border-[#E6DED1] rounded-xl px-4 py-3 text-[#3A4B3E] focus:outline-none focus:border-[#556B5A]"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-[#3E1C56] font-semibold mb-2">Contact Information</label>
+                        <label className="block text-[#3A4B3E] font-semibold mb-2">Contact Information</label>
                          <input 
                             name="contact"
                             type="tel" 
                             value={contact}
                             onChange={(e) => setContact(e.target.value)}
                             placeholder="+1 234 567 8900"
-                            className="w-full bg-[#FFF9F6] border border-[#EADDDE] rounded-xl px-4 py-3 text-[#3E1C56] focus:outline-none focus:border-[#5B2D7D]"
+                            className="w-full bg-[#FFF9F6] border border-[#E6DED1] rounded-xl px-4 py-3 text-[#3A4B3E] focus:outline-none focus:border-[#556B5A]"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={isPending}
-                        className="w-full bg-[#5B2D7D] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                        className="w-full bg-[#556B5A] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                         Save Changes
