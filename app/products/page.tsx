@@ -17,8 +17,8 @@ function StarBullet({ className }: { className?: string }) {
     <div 
       className={`w-5 h-5 bg-current ${className}`}
       style={{
-        maskImage: 'url(/Star.svg)',
-        WebkitMaskImage: 'url(/Star.svg)',
+        maskImage: 'url(/beige png.png)',
+        WebkitMaskImage: 'url(/beige png.png)',
         maskRepeat: 'no-repeat',
         WebkitMaskRepeat: 'no-repeat',
         maskSize: 'contain',
@@ -174,7 +174,7 @@ export default function ProductsPage() {
       {/* Footer Branding */}
       <section className="px-6 py-20 text-center">
           <div className="w-12 h-12 mx-auto mb-6 opacity-30 relative">
-              <Image src="/Candyd_logo.svg" alt="Logo" fill className="object-contain" />
+              <Image src="/beige png.png" alt="Logo" fill className="object-contain" />
           </div>
           <p className="text-[#556B5A]/40 text-sm font-bold uppercase tracking-widest">
               Crafted with magic by Candyd

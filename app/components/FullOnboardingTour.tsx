@@ -93,7 +93,7 @@ export default function FullOnboardingTour() {
 
           {/* Charm */}
           <div className="w-24 h-24 bg-[#556B5A] rounded-[24px] flex items-center justify-center mb-12 shadow-xl relative z-10">
-             <img src="/Candyd_logo.svg" alt="Candyd" className="w-16 h-16 invert" />
+             <img src="/beige png.png" alt="Candyd" className="w-16 h-16 invert" />
           </div>
 
           {/* Phone Tapping Animation */}

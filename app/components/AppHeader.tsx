@@ -29,7 +29,7 @@ function StarIcon() {
   return (
     <div className="w-6 h-6 flex items-center justify-center relative">
       <Image
-        src="/Star.svg"
+        src="/beige png.png"
         alt="Star"
         fill
         className="object-contain"

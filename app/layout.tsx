@@ -17,15 +17,15 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Candyd | Relive Your Memories",
-  description: "Unbox a moment. Relive a memory. Candyd uses NFC technology to link your physical products to digital experiences.",
-  keywords: ["NFC", "Memories", "Digital Experiences", "Candyd", "Memory Management"],
-  authors: [{ name: "Candyd Team" }],
+  title: "OUR DVE | Relive Your Experiences",
+  description: "OUR DVE uses NFC technology to link physical products to digital experiences.",
+  keywords: ["OUR DVE", "NFC", "Memories", "Digital Experiences", "Bucket List"],
+  authors: [{ name: "OUR DVE Team" }],
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Candyd",
+    title: "OUR DVE",
   },
   other: {
     "mobile-web-app-capable": "yes",

@@ -61,7 +61,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
                     <div className="absolute inset-[10px] bg-[#F6F2EC] flex flex-col items-center justify-center overflow-hidden">
                         
                         {/* Replicating the App's Gradient/Glow internally */}
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(164,197,56,0.22),transparent_34%),radial-gradient(circle_at_18%_88%,rgba(91,45,125,0.16),transparent_38%)]" />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(124,154,134,0.3),transparent_34%),radial-gradient(circle_at_18%_88%,rgba(85,107,90,0.2),transparent_38%)]" />
 
                         {/* Inner Decorative Borders */}
                         <div className="absolute inset-3 border-2 border-[#556B5A]/5 rounded-sm" />
@@ -73,7 +73,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
                         {/* Stamp Content */}
                         <div className="relative z-10 flex flex-col items-center">
                             <Image 
-                                src="/Candyd_logo.svg" 
+                                src="/beige png.png" 
                                 alt="Candyd" 
                                 width={140} 
                                 height={140} 
