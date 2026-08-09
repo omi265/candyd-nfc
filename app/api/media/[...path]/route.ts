@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getS3ObjectStream } from "@/lib/storage";
+import { getSession } from "@/lib/session";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { path } = await params;
     const fileKey = path.join("/");
 
