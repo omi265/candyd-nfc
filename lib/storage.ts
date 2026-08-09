@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const hasRailwayStorage = Boolean(
@@ -36,7 +36,7 @@ export async function getRailwayPresignedUploadUrl(filename: string, contentType
   });
 
   const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-  const publicUrl = `${process.env.RAILWAY_STORAGE_PUBLIC_URL}/${fileKey}`;
+  const publicUrl = `/api/media/${fileKey}`;
 
   return { uploadUrl, fileKey, publicUrl };
 }
@@ -60,7 +60,28 @@ export async function uploadDirectToRailwayStorage(filename: string, contentType
   });
 
   await s3Client.send(command);
-  return `${process.env.RAILWAY_STORAGE_PUBLIC_URL}/${fileKey}`;
+  return `/api/media/${fileKey}`;
+}
+
+/**
+ * Fetches object stream from Railway Object Storage for Next.js media proxy
+ */
+export async function getS3ObjectStream(fileKey: string) {
+  if (!s3Client) {
+    throw new Error("Railway Storage credentials not configured in environment");
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: process.env.RAILWAY_STORAGE_BUCKET_NAME,
+    Key: fileKey,
+  });
+
+  const response = await s3Client.send(command);
+  return {
+    stream: response.Body,
+    contentType: response.ContentType,
+    contentLength: response.ContentLength,
+  };
 }
 
 /**
