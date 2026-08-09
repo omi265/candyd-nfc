@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import { updateMemory, deleteMemory } from "@/app/actions/memories";
-import { getCloudinarySignature } from "@/app/actions/upload";
+import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
+import { uploadMedia } from "@/lib/upload-client";
 import { getPeople, createPerson } from "@/app/actions/people";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -325,31 +326,11 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
     };
 
     const uploadFile = async (item: any) => {
-        const processingPromise = (async () => {
-            const signatureData = await getCloudinarySignature();
-            const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
+        try {
+            const uploadPromise = uploadMedia(item.file);
+            uploadPromisesRef.current.set(item.id, uploadPromise);
 
-            const formData = new FormData();
-            formData.append("file", item.file);
-            formData.append("api_key", apiKey!);
-            formData.append("timestamp", timestamp.toString());
-            formData.append("signature", signature);
-            formData.append("folder", folder);
-            formData.append("type", "private");
-
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || "Upload failed");
-            }
-
-            const data = await response.json();
-
-            // Determine final type
+            const data = await uploadPromise;
             const finalType = (item.type === 'audio' || item.file?.type.startsWith('audio')) ? 'audio' : data.resource_type;
 
             const cloudData = { 
@@ -365,14 +346,6 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
                 ? { ...i, status: 'completed', cloudData, type: finalType } 
                 : i
             ));
-            
-            return data;
-        })();
-
-        uploadPromisesRef.current.set(item.id, processingPromise);
-
-        try {
-            await processingPromise;
         } catch (error) {
             console.error("Upload failed for", item.file?.name, error);
             setMediaItems(prev => prev.map(i => 

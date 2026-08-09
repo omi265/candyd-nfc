@@ -2,6 +2,7 @@
 
 import { createMemory } from "@/app/actions/memories";
 import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
+import { uploadMedia } from "@/lib/upload-client";
 import { getPeople, createPerson } from "@/app/actions/people";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -125,30 +126,7 @@ function MemoryUploadContent() {
 
     const uploadFile = async (item: MediaItem) => {
         try {
-            const uploadPromise = (async () => {
-                const signatureData = await getCloudinarySignature();
-                const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
-
-                const formData = new FormData();
-                formData.append("file", item.file);
-                formData.append("api_key", apiKey!);
-                formData.append("timestamp", timestamp.toString());
-                formData.append("signature", signature);
-                formData.append("folder", folder);
-                formData.append("type", "authenticated");
-
-                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error?.message || "Upload failed");
-                }
-
-                return await response.json();
-            })();
+            const uploadPromise = uploadMedia(item.file);
 
             uploadPromisesRef.current.set(item.id, uploadPromise);
 
