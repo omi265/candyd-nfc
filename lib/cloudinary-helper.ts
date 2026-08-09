@@ -11,31 +11,8 @@ export function isValidCloudinaryUrl(url: string): boolean {
   if (!url || typeof url !== "string") return false;
 
   try {
-    const isProtected = url.includes('/authenticated/') || url.includes('/authenticated/');
     const parsed = new URL(url);
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-
-    // Check for standard Cloudinary domains
-    const validHosts = [
-      "res.cloudinary.com",
-      `res-${cloudName}.cloudinary.com`,
-    ];
-
-    // Also allow cloudinary CDN patterns
-    if (validHosts.some((host) => parsed.hostname === host)) {
-      return true;
-    }
-
-    // Check if path contains the cloud name (for CDN URLs)
-    if (
-      parsed.hostname.endsWith(".cloudinary.com") &&
-      cloudName &&
-      parsed.pathname.includes(`/${cloudName}/`)
-    ) {
-      return true;
-    }
-
-    return false;
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
   }
