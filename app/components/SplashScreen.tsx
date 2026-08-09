@@ -73,7 +73,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
                         {/* Stamp Content */}
                         <div className="relative z-10 flex flex-col items-center">
                             <Image 
-                                src="/beige png.png" 
+                                src="/logo.png" 
                                 alt="Candyd" 
                                 width={140} 
                                 height={140} 

@@ -14,7 +14,7 @@ function Logo() {
   return (
     <div className="w-8 h-8 flex items-center justify-center relative">
       <Image
-        src="/beige png.png"
+        src="/logo.png"
         alt="OUR DVE Logo"
         fill
         className="object-contain"
@@ -29,7 +29,7 @@ function StarIcon() {
   return (
     <div className="w-6 h-6 flex items-center justify-center relative">
       <Image
-        src="/beige png.png"
+        src="/logo.png"
         alt="Star"
         fill
         className="object-contain"

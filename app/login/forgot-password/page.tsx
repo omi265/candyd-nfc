@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
             </button>
             <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 mb-4 relative flex items-center justify-center">
-                    <Image src="/beige png.png" alt="Candyd Logo" fill className="object-contain" />
+                    <Image src="/logo.png" alt="Candyd Logo" fill className="object-contain" />
                 </div>
                 <h1 className="text-3xl font-bold tracking-tight text-primary-purple">
                     Forgot password?
