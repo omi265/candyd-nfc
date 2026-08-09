@@ -36,6 +36,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@railway/cli": "^5.35.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
