@@ -32,6 +32,18 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
       },
+      {
+        protocol: 'https',
+        hostname: 't3.storageapi.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.t3.storageapi.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.up.railway.app',
+      },
     ],
   },
 };
