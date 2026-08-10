@@ -246,14 +246,14 @@ function GridCard({
       {/* Type Badge */}
       <div className="relative z-10 p-6 flex items-start justify-between">
         {item.type === 'life_item' ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#556B5A] text-white shadow-lg rounded-full border border-white/20">
             <Check className="w-4 h-4 text-white" />
             <span className="text-xs font-bold text-white uppercase tracking-wider">
               Lived
             </span>
           </div>
         ) : (
-           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#7C9A86] text-white shadow-lg rounded-full border border-white/20">
             <ImageIcon className="w-4 h-4 text-white" />
             <span className="text-xs font-bold text-white uppercase tracking-wider">
               Memory
@@ -263,7 +263,7 @@ function GridCard({
 
         {/* Liked Indicator */}
         {item.isLiked && (
-            <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-[#556B5A] shadow-lg flex items-center justify-center border border-white/20">
                 <Heart className="w-4 h-4 text-white fill-white" />
             </div>
         )}
@@ -281,7 +281,7 @@ function GridCard({
 
         {/* Description */}
         {item.description && (
-          <p className="text-white/70 text-sm line-clamp-2 mb-4">
+          <p className="text-white/90 text-sm line-clamp-2 mb-4 font-medium">
             {item.description}
           </p>
         )}
@@ -289,18 +289,18 @@ function GridCard({
         {/* Meta Tags */}
         <div className="flex flex-wrap gap-2">
           {peopleNames.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
-              <Users className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-xs text-white/80 font-medium">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#556B5A] text-white shadow-md rounded-full border border-white/20">
+              <Users className="w-3.5 h-3.5 text-white" />
+              <span className="text-xs text-white font-bold">
                 {peopleNames.join(", ")}
                 {item.peopleIds.length > 2 && ` +${item.peopleIds.length - 2}`}
               </span>
             </div>
           )}
 
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full">
-              <Calendar className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-xs text-white/80 font-medium">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#556B5A] text-white shadow-md rounded-full border border-white/20">
+              <Calendar className="w-3.5 h-3.5 text-white" />
+              <span className="text-xs text-white font-bold">
                   {formattedDate}
               </span>
           </div>

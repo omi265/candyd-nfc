@@ -305,16 +305,16 @@ function MemoryUploadContent() {
             const finalSizes: number[] = [];
             
             for (const item of currentItems) {
-                const data = completedUploadsRef.current.get(item.id);
+                const data = completedUploadsRef.current.get(item.id) || item.cloudData;
                 if (!data) {
-                    console.error("Missing cloud data for", item.id);
+                    console.error("Missing cloud data for", item.id, item);
                     toast.error("Upload incomplete. Please try again.");
                     setIsUploading(false);
                     return;
                 }
                 finalUrls.push(data.url);
                 finalTypes.push(data.type);
-                finalSizes.push(data.size);
+                finalSizes.push(data.size || 0);
             }
 
              const formData = new FormData();
