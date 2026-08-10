@@ -344,7 +344,13 @@ function MemoryUploadContent() {
                 toast.error(result.error);
             } else if (result?.success) {
                 toast.success("Memory created successfully!");
-                router.back(); 
+                const charmId = selectedProductId || searchParams.get("charmId") || searchParams.get("productId");
+                if (charmId) {
+                  router.push(`/life-charm?charmId=${charmId}`);
+                } else {
+                  router.push("/life-charm");
+                }
+                router.refresh();
             }
             setIsUploading(false);
         });
