@@ -46,6 +46,40 @@ export async function createMemory(prevState: { error?: string; success?: boolea
       return { error: "Invalid date format" };
   }
 
+  let mediaData: Array<{ url: string; type: string; size: number; orderIndex: number }> = [];
+  if (mediaUrls || mediaTypes || mediaSizes) {
+    try {
+      const urls = mediaUrls ? JSON.parse(mediaUrls) : [];
+      const types = mediaTypes ? JSON.parse(mediaTypes) : [];
+      const sizes = mediaSizes ? JSON.parse(mediaSizes) : [];
+
+      if (!Array.isArray(urls) || !Array.isArray(types) || !Array.isArray(sizes)) {
+        return { error: "Invalid media data" };
+      }
+
+      if (urls.length === 0 || urls.length !== types.length) {
+        return { error: "Media upload is incomplete. Please try again." };
+      }
+
+      mediaData = urls.map((url, i) => ({
+        url,
+        type: types[i],
+        size: typeof sizes[i] === "number" ? sizes[i] : 0,
+        orderIndex: i,
+      }));
+
+      if (mediaData.some((item) =>
+        typeof item.url !== "string" ||
+        typeof item.type !== "string" ||
+        !isValidCloudinaryUrl(item.url)
+      )) {
+        return { error: "One or more uploaded media files are invalid. Please upload them again." };
+      }
+    } catch {
+      return { error: "Invalid media data" };
+    }
+  }
+
   try {
     // 1. Create Memory
     const emotionsArray = emotions ? emotions.split(",") : [];
@@ -61,50 +95,29 @@ export async function createMemory(prevState: { error?: string; success?: boolea
       }
     }
     
-    const memory = await db.memory.create({
-      data: {
-        title,
-        description: description || "",
-        date: parsedDate,
-        time,
-        location,
-        emotions: emotionsArray,
-        events: eventsArray,
-        mood,
-        peopleIds: peopleIdsArray,
-        userId: session.user.id,
-        productId: productId || undefined,
-      },
+    await db.$transaction(async (tx) => {
+      const memory = await tx.memory.create({
+        data: {
+          title,
+          description: description || "",
+          date: parsedDate,
+          time,
+          location,
+          emotions: emotionsArray,
+          events: eventsArray,
+          mood,
+          peopleIds: peopleIdsArray,
+          userId: session.user.id,
+          productId: productId || undefined,
+        },
+      });
+
+      if (mediaData.length > 0) {
+        await tx.media.createMany({
+          data: mediaData.map((item) => ({ ...item, memoryId: memory.id })),
+        });
+      }
     });
-
-    // 2. Add Media Records (from client-side uploaded URLs)
-    if (mediaUrls && mediaTypes) {
-        try {
-            const urls = JSON.parse(mediaUrls) as string[];
-            const types = JSON.parse(mediaTypes) as string[];
-            const sizes = mediaSizes ? (JSON.parse(mediaSizes) as number[]) : [];
-
-            if (Array.isArray(urls) && Array.isArray(types) && urls.length === types.length) {
-                // Filter to only valid Cloudinary URLs and prepare batch data
-                const mediaData = urls
-                  .map((url, i) => ({
-                    url,
-                    type: types[i],
-                    size: sizes[i] || 0,
-                    memoryId: memory.id,
-                    orderIndex: i,
-                  }))
-                  .filter((item) => isValidCloudinaryUrl(item.url));
-
-                if (mediaData.length > 0) {
-                  await db.media.createMany({ data: mediaData });
-                }
-            }
-        } catch (e) {
-            console.error("Error parsing media URLs/Types", e);
-            // Non-blocking, but good to know
-        }
-    }
 
     revalidatePath("/"); // Update home page
     revalidatePath("/memories");

@@ -4,11 +4,15 @@ import { extractPublicId } from "./media-helper";
 export { extractPublicId };
 
 /**
- * Validates that a URL is a valid Cloudinary URL
- * Accepts both res.cloudinary.com and cloudinary CDN URLs
+ * Validates a persisted media URL.
+ *
+ * New Railway Storage uploads use the authenticated, same-origin media proxy,
+ * while older uploads may still use absolute Cloudinary/storage URLs.
  */
 export function isValidCloudinaryUrl(url: string): boolean {
   if (!url || typeof url !== "string") return false;
+
+  if (url.startsWith("/api/media/uploads/")) return true;
 
   try {
     const parsed = new URL(url);
