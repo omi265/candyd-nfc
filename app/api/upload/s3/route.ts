@@ -1,37 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
 import { uploadDirectToRailwayStorage } from "@/lib/storage";
+import { validateMediaMetadata } from "@/lib/media-validation";
+import { resolveUploadAuthorization } from "@/lib/upload-authorization";
+import { Readable } from "stream";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session?.user?.id) {
+    const guestToken = req.headers.get("x-candyd-guest-token") || undefined;
+    const authorization = await resolveUploadAuthorization(guestToken);
+    if (!authorization) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
-
-    if (!file) {
+    const encodedFilename = req.headers.get("x-candyd-file-name");
+    const contentType = req.headers.get("content-type") || "";
+    const contentLength = Number(req.headers.get("x-candyd-file-size"));
+    const transportLength = Number(req.headers.get("content-length"));
+    if (!encodedFilename || !req.body) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const publicUrl = await uploadDirectToRailwayStorage(file.name, file.type, buffer);
+    const validation = validateMediaMetadata(contentType, contentLength);
+    if (!validation.valid) {
+      const status = validation.error.includes("smaller") ? 413 : 415;
+      return NextResponse.json({ error: validation.error }, { status });
+    }
+    if (Number.isFinite(transportLength) && transportLength !== contentLength) {
+      return NextResponse.json({ error: "File size does not match request body" }, { status: 400 });
+    }
 
-    const resourceType = file.type.startsWith("video")
+    const filename = decodeURIComponent(encodedFilename);
+    const body = Readable.fromWeb(req.body as import("stream/web").ReadableStream);
+    const publicUrl = await uploadDirectToRailwayStorage(
+      filename,
+      contentType,
+      body,
+      authorization.scope,
+      contentLength
+    );
+
+    const resourceType = contentType.startsWith("video")
       ? "video"
-      : file.type.startsWith("audio")
+      : contentType.startsWith("audio")
       ? "audio"
       : "image";
 
     return NextResponse.json({
       secure_url: publicUrl,
       resource_type: resourceType,
-      bytes: file.size,
+      bytes: contentLength,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("S3 upload route error:", error);
-    return NextResponse.json({ error: error.message || "Upload failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Upload failed" },
+      { status: 500 }
+    );
   }
 }

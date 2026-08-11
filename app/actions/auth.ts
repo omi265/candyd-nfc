@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 import { revalidatePath } from "next/cache";
-import { deleteFromCloudinary, extractPublicId } from "@/lib/cloudinary-helper";
+import { deleteStoredMedia } from "@/lib/media-storage";
 import { changePasswordSchema } from "@/lib/schemas";
 import { sendPasswordResetEmail } from "@/lib/mail";
 
@@ -261,18 +261,14 @@ export async function deleteAccount() {
     try {
         const userId = session.user.id;
 
-        // Gather all Public IDs for Cloudinary cleanup
-        const publicIds: string[] = [];
+        const mediaUrlsToDelete: string[] = [];
 
         // 1. User Profile Image
         const user = await db.user.findUnique({
             where: { id: userId },
             select: { image: true }
         });
-        if (user?.image) {
-            const pid = extractPublicId(user.image);
-            if (pid) publicIds.push(pid);
-        }
+        if (user?.image) mediaUrlsToDelete.push(user.image);
 
         // 2. Memory Media
         const memories = await db.memory.findMany({
@@ -280,10 +276,7 @@ export async function deleteAccount() {
             include: { media: true }
         });
         memories.forEach(mem => {
-            mem.media.forEach(m => {
-                const pid = extractPublicId(m.url);
-                if (pid) publicIds.push(pid);
-            });
+            mem.media.forEach((media) => mediaUrlsToDelete.push(media.url));
         });
 
         // 3. Experience Media
@@ -298,10 +291,7 @@ export async function deleteAccount() {
             include: { media: true }
         });
         experiences.forEach(exp => {
-            exp.media.forEach(m => {
-                const pid = extractPublicId(m.url);
-                if (pid) publicIds.push(pid);
-            });
+            exp.media.forEach((media) => mediaUrlsToDelete.push(media.url));
         });
 
         // 4. Habit Log Images
@@ -315,10 +305,7 @@ export async function deleteAccount() {
             select: { imageUrl: true }
         });
         habitLogs.forEach(log => {
-            if (log.imageUrl) {
-                const pid = extractPublicId(log.imageUrl);
-                if (pid) publicIds.push(pid);
-            }
+            if (log.imageUrl) mediaUrlsToDelete.push(log.imageUrl);
         });
 
         // 5. Person Avatars
@@ -327,16 +314,10 @@ export async function deleteAccount() {
             select: { avatarUrl: true }
         });
         people.forEach(p => {
-            if (p.avatarUrl) {
-                const pid = extractPublicId(p.avatarUrl);
-                if (pid) publicIds.push(pid);
-            }
+            if (p.avatarUrl) mediaUrlsToDelete.push(p.avatarUrl);
         });
 
-        // 6. Delete from Cloudinary
-        if (publicIds.length > 0) {
-            await deleteFromCloudinary(publicIds);
-        }
+        await deleteStoredMedia(mediaUrlsToDelete);
 
         // 7. Delete user (Cascades will handle DB cleanup)
         await db.user.delete({

@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Edit2, Heart, Plus, Image as ImageIcon, Play, Loader2, Upload, MapPin, User, Sparkles, Users, Info, X } from "lucide-react";
 import AudioPlayer from "@/app/components/AudioPlayer";
 import { getOptimizedUrl } from "@/lib/media-helper";
-import Image from "next/image";
+import Image from "@/components/media-image";
 import { motion, AnimatePresence as MotionAnimatePresence } from "framer-motion";
 
 interface MemoryDrawerProps {

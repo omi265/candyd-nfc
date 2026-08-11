@@ -3,7 +3,10 @@
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
-import { extractPublicId, deleteFromCloudinary, getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { deleteStoredMedia } from "@/lib/media-storage";
+import { isMediaUrlAllowedForScope } from "@/lib/media-url";
+import { isMediaKind } from "@/lib/media-validation";
 import { CharmType, CharmState } from "@prisma/client";
 import {
   createLifeListSchema,
@@ -578,15 +581,8 @@ export async function deleteListItem(itemId: string) {
       return { error: "Unauthorized" };
     }
 
-    // Delete media from Cloudinary if experience exists
     if (item.experience?.media && item.experience.media.length > 0) {
-      const publicIds = item.experience.media
-        .map((m) => extractPublicId(m.url))
-        .filter((id): id is string => id !== null);
-
-      if (publicIds.length > 0) {
-        await deleteFromCloudinary(publicIds);
-      }
+      await deleteStoredMedia(item.experience.media.map((media) => media.url));
     }
 
     await db.lifeListItem.delete({ where: { id: itemId } });
@@ -656,6 +652,18 @@ export async function markAsLived(
   }
   const { reflection, location, date, peopleIds, mediaUrls, mediaTypes, mediaSizes } = validated.data;
 
+  if (mediaUrls?.some((url) => !isMediaUrlAllowedForScope(url, `users/${session.user.id}`))) {
+    return { error: "One or more uploaded media files are invalid" };
+  }
+
+  if (mediaUrls && mediaTypes && mediaUrls.length !== mediaTypes.length) {
+    return { error: "Media upload is incomplete. Please try again." };
+  }
+
+  if (mediaTypes?.some((type) => !isMediaKind(type))) {
+    return { error: "Unsupported media type" };
+  }
+
   try {
     const item = await db.lifeListItem.findUnique({
       where: { id: itemId },
@@ -670,37 +678,31 @@ export async function markAsLived(
       return { error: "Item already marked as lived" };
     }
 
-    // Create experience
-    const experience = await db.experience.create({
-      data: {
-        reflection,
-        location,
-        date: new Date(date),
-        peopleIds: peopleIds || [],
-        itemId,
-      },
-    });
-
-    // Add media - Optimized with createMany
-    if (mediaUrls && mediaUrls.length > 0) {
-      await db.experienceMedia.createMany({
-        data: mediaUrls.map((url, i) => ({
-          url,
-          type: mediaTypes?.[i] || "image",
-          size: mediaSizes?.[i] || 0,
-          experienceId: experience.id,
-          orderIndex: i,
-        })),
+    const experience = await db.$transaction(async (tx) => {
+      const createdExperience = await tx.experience.create({
+        data: {
+          reflection,
+          location,
+          date: new Date(date),
+          peopleIds: peopleIds || [],
+          itemId,
+          media: mediaUrls?.length ? {
+            create: mediaUrls.map((url, i) => ({
+              url,
+              type: mediaTypes?.[i] || "image",
+              size: mediaSizes?.[i] || 0,
+              orderIndex: i,
+            })),
+          } : undefined,
+        },
       });
-    }
 
-    // Update item status
-    await db.lifeListItem.update({
-      where: { id: itemId },
-      data: {
-        status: "lived",
-        livedAt: new Date(),
-      },
+      await tx.lifeListItem.update({
+        where: { id: itemId },
+        data: { status: "lived", livedAt: new Date() },
+      });
+
+      return createdExperience;
     });
 
     revalidatePath(`/life-charm`);
@@ -809,6 +811,13 @@ export async function addExperienceMedia(
   const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
 
+  if (media.some((item) =>
+    !isMediaKind(item.type) ||
+    !isMediaUrlAllowedForScope(item.url, `users/${session.user.id}`)
+  )) {
+    return { error: "One or more uploaded media files are invalid" };
+  }
+
   try {
     const experience = await db.experience.findUnique({
       where: { id: experienceId },
@@ -872,11 +881,7 @@ export async function deleteExperienceMedia(mediaId: string) {
       return { error: "Unauthorized" };
     }
 
-    // Delete from Cloudinary
-    const publicId = extractPublicId(media.url);
-    if (publicId) {
-      await deleteFromCloudinary([publicId]);
-    }
+    await deleteStoredMedia([media.url]);
 
     await db.experienceMedia.delete({ where: { id: mediaId } });
 

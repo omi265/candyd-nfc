@@ -5,7 +5,7 @@ import { useEffect, useState, useRef, useMemo, useDeferredValue } from "react";
 import { motion, useMotionValue, animate, useTransform, MotionValue, AnimatePresence } from "motion/react";
 import { MemoryDrawer } from "@/components/memory-drawer";
 import { getOptimizedUrl } from "@/lib/media-helper";
-import Image from "next/image";
+import Image from "@/components/media-image";
 
 import { Plus, Search, LayoutGrid, List, Mic, X, Heart } from "lucide-react";
 

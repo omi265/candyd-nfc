@@ -4,8 +4,10 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import cloudinary from "@/lib/cloudinary";
-import { extractPublicId, deleteFromCloudinary, isValidCloudinaryUrl, getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { deleteStoredMedia } from "@/lib/media-storage";
+import { isMediaUrlAllowedForScope } from "@/lib/media-url";
+import { isMediaKind } from "@/lib/media-validation";
 
 const createMemorySchema = z.object({
   title: z.string().min(1, "Title is required").max(15, "Title too long"),
@@ -70,8 +72,8 @@ export async function createMemory(prevState: { error?: string; success?: boolea
 
       if (mediaData.some((item) =>
         typeof item.url !== "string" ||
-        typeof item.type !== "string" ||
-        !isValidCloudinaryUrl(item.url)
+        !isMediaKind(item.type) ||
+        !isMediaUrlAllowedForScope(item.url, `users/${session.user.id}`)
       )) {
         return { error: "One or more uploaded media files are invalid. Please upload them again." };
       }
@@ -388,136 +390,134 @@ export async function updateMemory(id: string, prevState: any, formData: FormDat
           }
         }
 
-        await db.memory.update({
-            where: { id },
-            data: {
-                title,
-                description: description || "",
-                date: parsedDate,
-                time,
-                location,
-                emotions: emotionsArray,
-                events: eventsArray,
-                mood,
-                peopleIds: peopleIdsArray,
-                productId: productId || undefined,
+        type OrderedMediaItem = {
+            id?: string;
+            url: string;
+            type: string;
+            size?: number;
+            isNew: boolean;
+        };
+
+        let orderedItems: OrderedMediaItem[] | null = null;
+        let removedMedia: { id: string; url: string }[] = [];
+        let fallbackMedia: Array<{ url: string; type: string; size: number }> = [];
+
+        if (orderedMedia) {
+            let parsed: unknown;
+            try {
+                parsed = JSON.parse(orderedMedia);
+            } catch {
+                return { error: "Invalid media data" };
+            }
+
+            if (!Array.isArray(parsed)) return { error: "Invalid media data" };
+            orderedItems = parsed as OrderedMediaItem[];
+
+            if (orderedItems.some((item) =>
+                !item || typeof item.url !== "string" || !isMediaKind(item.type) ||
+                typeof item.isNew !== "boolean" ||
+                (item.isNew && !isMediaUrlAllowedForScope(item.url, `users/${session.user.id}`))
+            )) {
+                return { error: "One or more uploaded media files are invalid" };
+            }
+
+            const currentMedia = await db.media.findMany({
+                where: { memoryId: id },
+                select: { id: true, url: true },
+            });
+            const currentIds = new Set(currentMedia.map((item) => item.id));
+            const existingIds = orderedItems
+                .filter((item) => !item.isNew && item.id)
+                .map((item) => item.id!);
+
+            if (existingIds.some((mediaId) => !currentIds.has(mediaId))) {
+                return { error: "Invalid existing media item" };
+            }
+            removedMedia = currentMedia.filter((item) => !existingIds.includes(item.id));
+        } else if (mediaUrls || mediaTypes || mediaSizes) {
+            try {
+                const urls: unknown = mediaUrls ? JSON.parse(mediaUrls) : [];
+                const types: unknown = mediaTypes ? JSON.parse(mediaTypes) : [];
+                const sizes: unknown = mediaSizes ? JSON.parse(mediaSizes) : [];
+                if (!Array.isArray(urls) || !Array.isArray(types) || !Array.isArray(sizes) || urls.length !== types.length) {
+                    return { error: "Invalid media data" };
+                }
+                fallbackMedia = urls.map((url, index) => ({
+                    url,
+                    type: types[index],
+                    size: typeof sizes[index] === "number" ? sizes[index] : 0,
+                }));
+                if (fallbackMedia.some((item) =>
+                    typeof item.url !== "string" || !isMediaKind(item.type) ||
+                    !isMediaUrlAllowedForScope(item.url, `users/${session.user.id}`)
+                )) {
+                    return { error: "One or more uploaded media files are invalid" };
+                }
+            } catch {
+                return { error: "Invalid media data" };
+            }
+        }
+
+        await db.$transaction(async (tx) => {
+            await tx.memory.update({
+                where: { id },
+                data: {
+                    title,
+                    description: description || "",
+                    date: parsedDate,
+                    time,
+                    location,
+                    emotions: emotionsArray,
+                    events: eventsArray,
+                    mood,
+                    peopleIds: peopleIdsArray,
+                    productId: productId || undefined,
+                },
+            });
+
+            if (orderedItems) {
+                if (removedMedia.length > 0) {
+                    await tx.media.deleteMany({ where: { id: { in: removedMedia.map((item) => item.id) } } });
+                }
+
+                const newItems = orderedItems.filter((item) => item.isNew);
+                if (newItems.length > 0) {
+                    await tx.media.createMany({
+                        data: newItems.map((item) => ({
+                            url: item.url,
+                            type: item.type,
+                            size: item.size || 0,
+                            memoryId: id,
+                            orderIndex: orderedItems!.indexOf(item),
+                        })),
+                    });
+                }
+
+                for (const item of orderedItems.filter((entry) => !entry.isNew && entry.id)) {
+                    await tx.media.update({
+                        where: { id: item.id! },
+                        data: { orderIndex: orderedItems.indexOf(item) },
+                    });
+                }
+            } else if (fallbackMedia.length > 0) {
+                const lastMedia = await tx.media.findFirst({
+                    where: { memoryId: id },
+                    orderBy: { orderIndex: "desc" },
+                    select: { orderIndex: true },
+                });
+                const startIndex = (lastMedia?.orderIndex ?? -1) + 1;
+                await tx.media.createMany({
+                    data: fallbackMedia.map((item, index) => ({
+                        ...item,
+                        memoryId: id,
+                        orderIndex: startIndex + index,
+                    })),
+                });
             }
         });
 
-        // Handle Ordered Media (Consolidated New + Existing)
-        if (orderedMedia) {
-             let items: any[] = [];
-             try {
-               items = JSON.parse(orderedMedia);
-               if (!Array.isArray(items)) items = [];
-             } catch {
-               items = [];
-             }
-
-             // Separate new and existing items
-             const newItems = items.filter(item => item.isNew);
-             const existingItems = items.filter(item => !item.isNew && item.id);
-             const existingIds = existingItems.map(item => item.id);
-
-             // 0. Identify and delete removed items
-             const currentMedia = await db.media.findMany({
-                 where: { memoryId: id },
-                 select: { id: true, url: true }
-             });
-
-             const removedMedia = currentMedia.filter(m => !existingIds.includes(m.id));
-             
-             if (removedMedia.length > 0) {
-                 // Delete from Cloudinary
-                 const publicIds = removedMedia
-                     .map(m => extractPublicId(m.url))
-                     .filter((id): id is string => id !== null);
-                 
-                 if (publicIds.length > 0) {
-                     await deleteFromCloudinary(publicIds);
-                 }
-
-                 // Delete from Database
-                 await db.media.deleteMany({
-                     where: {
-                         id: { in: removedMedia.map(m => m.id) }
-                     }
-                 });
-             }
-
-             // 1. Bulk create new items
-             if (newItems.length > 0) {
-                 // We need to map them to the correct order index relative to the FULL list
-                 // Since createMany doesn't let us easily map "this item from the source array goes to this index" 
-                 // without strict ordering, we can assign orderIndex based on their position in the `items` array.
-                 // However, we need to know WHICH `i` corresponds to which item.
-                 
-                 // Strategy: iterate original `items` to find the index for new items
-                 const newMediaData = newItems.map(newItem => {
-                     const index = items.indexOf(newItem);
-                     return {
-                        url: newItem.url,
-                        type: newItem.type,
-                        size: newItem.size || 0,
-                        memoryId: id,
-                        orderIndex: index
-                     };
-                 });
-
-                 await db.media.createMany({
-                     data: newMediaData
-                 });
-             }
-
-             // 2. Batch update existing items (reordering)
-             if (existingItems.length > 0) {
-                 await db.$transaction(
-                     existingItems.map((item) => db.media.update({
-                         where: { id: item.id },
-                         data: { orderIndex: items.indexOf(item) }
-                     }))
-                 );
-             }
-        }
-        // Fallback: Add NEW media if provided via old method (only if orderedMedia not present)
-        else if (mediaUrls && mediaTypes) {
-             let urls: string[] = [];
-             let types: string[] = [];
-             let sizes: number[] = [];
-
-             try {
-               urls = JSON.parse(mediaUrls);
-               types = JSON.parse(mediaTypes);
-               sizes = mediaSizes ? JSON.parse(mediaSizes) : [];
-               if (!Array.isArray(urls)) urls = [];
-               if (!Array.isArray(types)) types = [];
-               if (!Array.isArray(sizes)) sizes = [];
-             } catch {
-               urls = [];
-               types = [];
-               sizes = [];
-             }
-
-             // Get current media count to append correctly? or just append.
-             // For now just appending with arbitrary orderIndex might be tricky if we mix methods.
-             // We'll just append using 0-based index or maybe 100+ to be safe?
-             // Actually, simplest is to just start at 0 if we don't care, or better: 
-             // find max index? Too complex for fallback. 
-             // Let's assume standard creation logic.
-             
-             if (Array.isArray(urls) && Array.isArray(types)) {
-                 for (let i = 0; i < urls.length; i++) {
-                     await db.media.create({
-                        data: {
-                            url: urls[i],
-                            type: types[i],
-                            size: sizes[i] || 0,
-                            memoryId: id,
-                            orderIndex: 1000 + i // Append to end roughly
-                        }
-                    });
-                }
-             }
+        if (removedMedia.length > 0) {
+            await deleteStoredMedia(removedMedia.map((item) => item.url));
         }
 
         revalidatePath("/");
@@ -542,15 +542,8 @@ export async function deleteMemory(id: string) {
         });
         if (!memory || memory.userId !== session.user.id) return { error: "Unauthorized" };
 
-        // Cloudinary Cleanup
         if (memory.media && memory.media.length > 0) {
-            const publicIds = memory.media
-                .map(m => extractPublicId(m.url))
-                .filter((id): id is string => id !== null);
-            
-            if (publicIds.length > 0) {
-                await deleteFromCloudinary(publicIds);
-            }
+            await deleteStoredMedia(memory.media.map((media) => media.url));
         }
 
         await db.memory.delete({ where: { id } });
@@ -605,7 +598,7 @@ export async function deleteProduct(id: string) {
             return { error: "Unauthorized" };
         }
 
-        const publicIds: string[] = [];
+        const mediaUrlsToDelete: string[] = [];
 
         if (product.type === 'MEMORY' || product.type === 'LIFE') {
             // 1. Gather all media from Memories
@@ -616,10 +609,7 @@ export async function deleteProduct(id: string) {
 
             memories.forEach(mem => {
                 if (mem.media) {
-                    mem.media.forEach(m => {
-                        const pid = extractPublicId(m.url);
-                        if (pid) publicIds.push(pid);
-                    });
+                    mem.media.forEach((media) => mediaUrlsToDelete.push(media.url));
                 }
             });
 
@@ -640,13 +630,13 @@ export async function deleteProduct(id: string) {
             lifeLists.forEach(ll => {
                 ll.items.forEach(item => {
                     if (item.experience?.media) {
-                        item.experience.media.forEach(m => {
-                            const pid = extractPublicId(m.url);
-                            if (pid) publicIds.push(pid);
-                        });
+                        item.experience.media.forEach((media) => mediaUrlsToDelete.push(media.url));
                     }
                 });
             });
+
+            await deleteStoredMedia(mediaUrlsToDelete);
+            mediaUrlsToDelete.length = 0;
 
             // 3. Delete DB records
             await db.lifeList.deleteMany({ where: { productId: id } });
@@ -665,21 +655,18 @@ export async function deleteProduct(id: string) {
 
             habits.forEach(h => {
                 h.logs.forEach(log => {
-                    if (log.imageUrl) {
-                        const pid = extractPublicId(log.imageUrl);
-                        if (pid) publicIds.push(pid);
-                    }
+                    if (log.imageUrl) mediaUrlsToDelete.push(log.imageUrl);
                 });
             });
+
+            await deleteStoredMedia(mediaUrlsToDelete);
+            mediaUrlsToDelete.length = 0;
 
             // 2. Delete DB records
             await db.habit.deleteMany({ where: { productId: id } });
         }
 
-        // 2. Delete from Cloudinary
-        if (publicIds.length > 0) {
-            await deleteFromCloudinary(publicIds);
-        }
+        await deleteStoredMedia(mediaUrlsToDelete);
 
         await db.product.delete({
             where: { id }

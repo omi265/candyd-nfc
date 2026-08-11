@@ -2,7 +2,11 @@
 
 import cloudinary from "@/lib/cloudinary";
 import { getSession } from "@/lib/session";
-import { extractPublicId, deleteFromCloudinary } from "@/lib/cloudinary-helper";
+import { extractPublicId } from "@/lib/cloudinary-helper";
+import { validateMediaMetadata } from "@/lib/media-validation";
+import { resolveUploadAuthorization } from "@/lib/upload-authorization";
+import { deleteStoredMedia } from "@/lib/media-storage";
+import { extractRailwayFileKey } from "@/lib/media-url";
 
 export async function getCloudinarySignature(folder: string = "candyd_memories") {
   const session = await getSession();
@@ -13,11 +17,12 @@ export async function getCloudinarySignature(folder: string = "candyd_memories")
 
   const timestamp = Math.round(new Date().getTime() / 1000);
   const type = "authenticated";
+  const scopedFolder = `${folder}/${session.user.id}`;
 
   const signature = cloudinary.utils.api_sign_request(
     {
       timestamp,
-      folder,
+      folder: scopedFolder,
       type,
     },
     process.env.CLOUDINARY_API_SECRET!
@@ -26,23 +31,38 @@ export async function getCloudinarySignature(folder: string = "candyd_memories")
   return {
     signature,
     timestamp,
-    folder,
+    folder: scopedFolder,
     type,
     cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
   };
 }
 
-import { getRailwayPresignedUploadUrl, deleteFromRailwayStorage } from "@/lib/storage";
+import { getRailwayPresignedUploadUrl } from "@/lib/storage";
 
-export async function getStorageUploadPresignedUrl(filename: string, contentType: string) {
-  const session = await getSession();
+export async function getStorageUploadPresignedUrl(filename: string, contentType: string, size: number) {
+  const validation = validateMediaMetadata(contentType, size);
+  if (!validation.valid) throw new Error(validation.error);
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
+  const authorization = await resolveUploadAuthorization();
+  if (!authorization) throw new Error("Unauthorized");
 
-  return getRailwayPresignedUploadUrl(filename, contentType);
+  return getRailwayPresignedUploadUrl(filename, contentType, size, authorization.scope);
+}
+
+export async function getGuestStorageUploadPresignedUrl(
+  guestToken: string,
+  filename: string,
+  contentType: string,
+  size: number
+) {
+  const validation = validateMediaMetadata(contentType, size);
+  if (!validation.valid) throw new Error(validation.error);
+
+  const authorization = await resolveUploadAuthorization(guestToken);
+  if (!authorization) throw new Error("Guest uploads are not authorized for this charm");
+
+  return getRailwayPresignedUploadUrl(filename, contentType, size, authorization.scope);
 }
 
 export async function deleteUploadedFile(url: string) {
@@ -52,14 +72,11 @@ export async function deleteUploadedFile(url: string) {
     throw new Error("Unauthorized");
   }
 
-  if (process.env.RAILWAY_STORAGE_PUBLIC_URL && url.startsWith(process.env.RAILWAY_STORAGE_PUBLIC_URL)) {
-    const fileKey = url.replace(`${process.env.RAILWAY_STORAGE_PUBLIC_URL}/`, "");
-    await deleteFromRailwayStorage(fileKey);
-    return;
-  }
-
+  const railwayKey = extractRailwayFileKey(url);
   const publicId = extractPublicId(url);
-  if (publicId) {
-    await deleteFromCloudinary([publicId]);
-  }
+  const ownsUnattachedUpload = railwayKey?.startsWith(`uploads/users/${session.user.id}/`) ||
+    publicId?.startsWith(`candyd_memories/${session.user.id}/`);
+
+  if (!ownsUnattachedUpload) throw new Error("Unauthorized media deletion");
+  await deleteStoredMedia([url]);
 }

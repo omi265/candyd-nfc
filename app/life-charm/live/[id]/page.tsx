@@ -17,11 +17,11 @@ import {
 } from "lucide-react";
 import { getListItem, markAsLived } from "@/app/actions/life-charm";
 import { getPeople, createPerson } from "@/app/actions/people";
-import { getCloudinarySignature } from "@/app/actions/upload";
+import { deleteUploadedFile } from "@/app/actions/upload";
 import { uploadMedia } from "@/lib/upload-client";
 import { Person, LifeListItem } from "@prisma/client";
 import { toast } from "sonner";
-import Image from "next/image";
+import Image from "@/components/media-image";
 
 interface MediaItem {
   id: string;
@@ -157,8 +157,23 @@ export default function MarkAsLivedPage() {
     }
   };
 
-  const removeMedia = (mediaId: string) => {
+  const removeMedia = async (mediaId: string) => {
+    const item = media.find((mediaItem) => mediaItem.id === mediaId);
+    if (item?.status === "complete" && item.url) {
+      await deleteUploadedFile(item.url).catch((error) => {
+        console.error("Failed to discard uploaded media", error);
+      });
+    }
     setMedia((prev) => prev.filter((m) => m.id !== mediaId));
+  };
+
+  const discardUploadsAndLeave = async () => {
+    await Promise.allSettled(
+      media
+        .filter((item) => item.status === "complete" && item.url)
+        .map((item) => deleteUploadedFile(item.url))
+    );
+    router.push(`/life-charm?charmId=${charmId}`);
   };
 
   const handleSubmit = () => {
@@ -208,7 +223,7 @@ export default function MarkAsLivedPage() {
       {/* Header */}
       <header className="flex items-center gap-4 px-6 py-4 border-b border-[#556B5A]/10">
         <button
-          onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
+          onClick={discardUploadsAndLeave}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
         >
           <ArrowLeft className="w-5 h-5 text-[#556B5A]" />

@@ -7,6 +7,8 @@ import { createHabitSchema, logHabitSchema } from "@/lib/schemas";
 import { HabitLogType, Habit, HabitLog } from "@prisma/client";
 import { CORE_HABITS } from "@/lib/habit-templates";
 import { getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { deleteStoredMedia } from "@/lib/media-storage";
+import { isMediaUrlAllowedForScope } from "@/lib/media-url";
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 const RITUAL_TYPES = ["MORNING", "NIGHT"] as const;
@@ -420,6 +422,9 @@ async function checkProgression(habitId: string, currentStreak: number) {
 export async function logHabit(habitId: string, notes?: string, logType: HabitLogType = "DONE", imageUrl?: string, dateStr?: string, reflection?: string) {
     const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
+    if (imageUrl && !isMediaUrlAllowedForScope(imageUrl, `users/${session.user.id}`)) {
+        return { error: "Invalid uploaded image" };
+    }
 
     try {
         const habit = await db.habit.findUnique({ where: { id: habitId } });
@@ -453,6 +458,9 @@ export async function logHabit(habitId: string, notes?: string, logType: HabitLo
                     logType: logType
                 }
             });
+            if (imageUrl && existingLog.imageUrl && existingLog.imageUrl !== imageUrl) {
+                await deleteStoredMedia([existingLog.imageUrl]);
+            }
         } else {
             // Create new log
             await db.habitLog.create({
@@ -486,6 +494,9 @@ export async function logRitual(
 ) {
     const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
+    if (imageUrl && !isMediaUrlAllowedForScope(imageUrl, `users/${session.user.id}`)) {
+        return { error: "Invalid uploaded image" };
+    }
 
     try {
         const targetDate = getTargetHabitDate(dateStr);
@@ -500,6 +511,7 @@ export async function logRitual(
 
         if (habits.length === 0) return { error: "No habits found" };
 
+        const replacedImageUrls: string[] = [];
         await db.$transaction(async (tx) => {
             for (let i = 0; i < habits.length; i++) {
                 const habit = habits[i];
@@ -530,6 +542,9 @@ export async function logRitual(
                         where: { id: existingLog.id },
                         data: logData
                     });
+                    if (isLastValid && imageUrl && existingLog.imageUrl && existingLog.imageUrl !== imageUrl) {
+                        replacedImageUrls.push(existingLog.imageUrl);
+                    }
                 } else {
                     await tx.habitLog.create({
                         data: {
@@ -540,6 +555,8 @@ export async function logRitual(
                 }
             }
         });
+
+        await deleteStoredMedia(replacedImageUrls);
 
         // Recalculate stats for all habits
         for (const habit of habits) {
@@ -792,6 +809,16 @@ export async function updateRitualHabits(
 export async function deleteHabit(habitId: string) {
     const session = await getSession();
     if (!session?.user?.id) return { error: "Unauthorized" };
+
+    const habit = await db.habit.findUnique({
+        where: { id: habitId },
+        include: { logs: { select: { imageUrl: true } } },
+    });
+    if (!habit || habit.userId !== session.user.id) return { error: "Unauthorized" };
+
+    await deleteStoredMedia(
+        habit.logs.flatMap((log) => log.imageUrl ? [log.imageUrl] : [])
+    );
     await db.habit.delete({ where: { id: habitId } });
     revalidatePath(`/habit-charm`);
     return { success: true };

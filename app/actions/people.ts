@@ -3,6 +3,8 @@
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
+import { deleteStoredMedia } from "@/lib/media-storage";
+import { isMediaUrlAllowedForScope } from "@/lib/media-url";
 
 // ===========================================
 // PEOPLE CRUD
@@ -11,6 +13,9 @@ import { revalidatePath } from "next/cache";
 export async function createPerson(data: { name: string; avatarUrl?: string }) {
   const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
+  if (data.avatarUrl && !isMediaUrlAllowedForScope(data.avatarUrl, `users/${session.user.id}`)) {
+    return { error: "Invalid uploaded avatar" };
+  }
 
   try {
     const person = await db.person.create({
@@ -89,11 +94,14 @@ export async function updatePerson(
 ) {
   const session = await getSession();
   if (!session?.user?.id) return { error: "Unauthorized" };
+  if (data.avatarUrl && !isMediaUrlAllowedForScope(data.avatarUrl, `users/${session.user.id}`)) {
+    return { error: "Invalid uploaded avatar" };
+  }
 
   try {
     const person = await db.person.findUnique({
       where: { id: personId },
-      select: { userId: true },
+      select: { userId: true, avatarUrl: true },
     });
 
     if (!person || person.userId !== session.user.id) {
@@ -107,6 +115,10 @@ export async function updatePerson(
         avatarUrl: data.avatarUrl,
       },
     });
+
+    if (person.avatarUrl && person.avatarUrl !== data.avatarUrl) {
+      await deleteStoredMedia([person.avatarUrl]);
+    }
 
     revalidatePath(`/life-charm`);
     return { success: true, person: updated };
@@ -123,13 +135,14 @@ export async function deletePerson(personId: string) {
   try {
     const person = await db.person.findUnique({
       where: { id: personId },
-      select: { userId: true },
+      select: { userId: true, avatarUrl: true },
     });
 
     if (!person || person.userId !== session.user.id) {
       return { error: "Unauthorized" };
     }
 
+    if (person.avatarUrl) await deleteStoredMedia([person.avatarUrl]);
     await db.person.delete({ where: { id: personId } });
 
     revalidatePath(`/life-charm`);

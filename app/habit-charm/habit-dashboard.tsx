@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { Habit, HabitLog, Product, HabitLogType } from "@prisma/client";
 import { CORE_HABITS } from "@/lib/habit-templates";
 import { useRitualTimer, type RitualType } from "@/lib/ritual-timer-context";
+import { deleteUploadedFile } from "@/app/actions/upload";
 import {
   Drawer,
   DrawerContent,
@@ -2131,6 +2132,7 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
             try {
                 const { uploadMedia } = await import("@/lib/upload-client");
                 const data = await uploadMedia(file);
+                if (imageUrl) await deleteUploadedFile(imageUrl);
                 setImageUrl(data.secure_url);
                 toast.success("Image uploaded!");
             } catch (error) {
@@ -2139,6 +2141,20 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
                 setIsUploading(false);
             }
         }
+    };
+
+    const discardImage = async () => {
+        if (imageUrl) {
+            await deleteUploadedFile(imageUrl).catch((error) => {
+                console.error("Failed to discard habit image", error);
+            });
+        }
+        setImageUrl(null);
+    };
+
+    const handleClose = async () => {
+        await discardImage();
+        onClose();
     };
 
     const handleLogClick = () => {
@@ -2150,7 +2166,7 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
     const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' }) : new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' });
 
     return (
-        <Drawer repositionInputs={true} open={isOpen} onOpenChange={(o) => !o && onClose()}>
+        <Drawer repositionInputs={true} open={isOpen} onOpenChange={(o) => { if (!o) void handleClose(); }}>
             <DrawerContent className="bg-[#F6F2EC]/90 backdrop-blur-xl rounded-t-[32px] border-none font-[Outfit] max-h-[96dvh]">
                 <DrawerHeader className="sr-only">
                     <DrawerTitle>Log Habit Progress</DrawerTitle>
@@ -2187,7 +2203,7 @@ function LogHabitDrawer({ habit, isOpen, type, dateStr, onClose, onLog, isLoggin
                                 <div className="relative aspect-video w-full rounded-[24px] overflow-hidden group">
                                     <img src={imageUrl} alt="Habit log" className="w-full h-full object-cover" />
                                     <button 
-                                        onClick={() => setImageUrl(null)}
+                                        onClick={discardImage}
                                         className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
                                         <X className="w-4 h-4" />

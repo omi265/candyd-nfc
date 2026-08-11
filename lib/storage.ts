@@ -1,5 +1,7 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { randomUUID } from "crypto";
+import { Readable } from "stream";
 
 const hasRailwayStorage = Boolean(
   process.env.RAILWAY_STORAGE_ENDPOINT &&
@@ -21,18 +23,19 @@ const s3Client = hasRailwayStorage
 /**
  * Generates an S3 presigned PUT URL for direct browser upload to Railway Object Storage
  */
-export async function getRailwayPresignedUploadUrl(filename: string, contentType: string) {
+export async function getRailwayPresignedUploadUrl(filename: string, contentType: string, size: number, scope: string) {
   if (!s3Client) {
     throw new Error("Railway Storage credentials not configured in environment");
   }
 
-  const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-  const fileKey = `uploads/${Date.now()}-${sanitizedFilename}`;
+  const extension = filename.match(/\.[a-zA-Z0-9]{1,10}$/)?.[0].toLowerCase() || "";
+  const fileKey = `uploads/${scope}/${randomUUID()}${extension}`;
   
   const command = new PutObjectCommand({
     Bucket: process.env.RAILWAY_STORAGE_BUCKET_NAME,
     Key: fileKey,
     ContentType: contentType,
+    ContentLength: size,
   });
 
   const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
@@ -44,19 +47,26 @@ export async function getRailwayPresignedUploadUrl(filename: string, contentType
 /**
  * Direct server-side upload to Railway Object Storage
  */
-export async function uploadDirectToRailwayStorage(filename: string, contentType: string, body: Buffer) {
+export async function uploadDirectToRailwayStorage(
+  filename: string,
+  contentType: string,
+  body: Buffer | Readable,
+  scope: string,
+  contentLength?: number
+) {
   if (!s3Client) {
     throw new Error("Railway Storage credentials not configured in environment");
   }
 
-  const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-  const fileKey = `uploads/${Date.now()}-${sanitizedFilename}`;
+  const extension = filename.match(/\.[a-zA-Z0-9]{1,10}$/)?.[0].toLowerCase() || "";
+  const fileKey = `uploads/${scope}/${randomUUID()}${extension}`;
 
   const command = new PutObjectCommand({
     Bucket: process.env.RAILWAY_STORAGE_BUCKET_NAME,
     Key: fileKey,
     ContentType: contentType,
     Body: body,
+    ContentLength: contentLength,
   });
 
   await s3Client.send(command);
@@ -64,28 +74,9 @@ export async function uploadDirectToRailwayStorage(filename: string, contentType
 }
 
 /**
- * Generates an S3 presigned GET URL with cryptographic signature and expiration
- */
-export async function getS3PresignedReadUrl(fileKey: string, expiresInSeconds: number = 3600) {
-  if (!s3Client) return fileKey;
-
-  try {
-    const cleanKey = fileKey.includes("uploads/") ? fileKey.slice(fileKey.indexOf("uploads/")) : fileKey;
-    const command = new GetObjectCommand({
-      Bucket: process.env.RAILWAY_STORAGE_BUCKET_NAME,
-      Key: cleanKey,
-    });
-    return await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
-  } catch (error) {
-    console.error("Error generating S3 presigned read URL:", error);
-    return fileKey;
-  }
-}
-
-/**
  * Fetches object stream from Railway Object Storage for Next.js media proxy
  */
-export async function getS3ObjectStream(fileKey: string) {
+export async function getS3ObjectStream(fileKey: string, range?: string) {
   if (!s3Client) {
     throw new Error("Railway Storage credentials not configured in environment");
   }
@@ -93,6 +84,7 @@ export async function getS3ObjectStream(fileKey: string) {
   const command = new GetObjectCommand({
     Bucket: process.env.RAILWAY_STORAGE_BUCKET_NAME,
     Key: fileKey,
+    Range: range,
   });
 
   const response = await s3Client.send(command);
@@ -100,6 +92,8 @@ export async function getS3ObjectStream(fileKey: string) {
     stream: response.Body,
     contentType: response.ContentType,
     contentLength: response.ContentLength,
+    contentRange: response.ContentRange,
+    acceptRanges: response.AcceptRanges,
   };
 }
 
@@ -109,13 +103,9 @@ export async function getS3ObjectStream(fileKey: string) {
 export async function deleteFromRailwayStorage(fileKey: string) {
   if (!s3Client) return;
 
-  try {
-    const command = new DeleteObjectCommand({
-      Bucket: process.env.RAILWAY_STORAGE_BUCKET_NAME,
-      Key: fileKey,
-    });
-    await s3Client.send(command);
-  } catch (error) {
-    console.error("Railway Storage delete error:", error);
-  }
+  const command = new DeleteObjectCommand({
+    Bucket: process.env.RAILWAY_STORAGE_BUCKET_NAME,
+    Key: fileKey,
+  });
+  await s3Client.send(command);
 }

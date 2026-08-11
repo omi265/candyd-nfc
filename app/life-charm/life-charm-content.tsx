@@ -21,7 +21,7 @@ import { getOptimizedUrl } from "@/lib/media-helper";
 import { MemoryDrawer } from "@/components/memory-drawer";
 import CameraCapture from "@/app/components/CameraCapture";
 import { toast } from "sonner";
-import Image from "next/image";
+import Image from "@/components/media-image";
 import { AnimatePresence } from "framer-motion";
 
 type LifeListItemWithExperience = LifeListItem & {

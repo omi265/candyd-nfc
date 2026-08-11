@@ -4,7 +4,7 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Camera, RefreshCw, X, Check, Loader2, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { getGuestCloudinarySignature, createGuestMemory } from "@/app/actions/nfc";
+import { createGuestMemory } from "@/app/actions/nfc";
 import { uploadMedia } from "@/lib/upload-client";
 import { haptics } from "@/lib/haptics";
 
@@ -145,7 +145,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
 
     try {
       const file = new File([capturedBlob], "quick-capture.jpg", { type: "image/jpeg" });
-      const uploadResult = await uploadMedia(file);
+      const uploadResult = await uploadMedia(file, { guestToken: token });
 
       // Create Guest Memory in Database
       const dbResult = await createGuestMemory(token, {

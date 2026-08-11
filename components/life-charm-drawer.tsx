@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { getOptimizedUrl } from "@/lib/media-helper";
-import Image from "next/image";
+import Image from "@/components/media-image";
 
 interface LifeCharmDrawerProps {
   lifeCharm: any | null;

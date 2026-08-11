@@ -1,6 +1,6 @@
 "use client";
 
-import { getGifterProduct, createGifterFullMemory, getGuestCloudinarySignature, getGifterMemories } from "@/app/actions/nfc";
+import { getGifterProduct, createGifterFullMemory, getGifterMemories } from "@/app/actions/nfc";
 import { uploadMedia } from "@/lib/upload-client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, useRef, Suspense, useMemo } from "react";
@@ -31,7 +31,7 @@ import {
     Check
 } from "lucide-react";
 import { toast } from "sonner";
-import Image from "next/image";
+import Image from "@/components/media-image";
 
 const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet", "Warm", "Intimate", "Reflective", "Emotional", "Lighthearted", "Cozy", "Energetic", "Sentimental", "Playful", "Soft", "Meaningful", "Heavy"];
 
@@ -263,7 +263,7 @@ function GifterUploadContent() {
 
     const uploadFile = async (item: any) => {
         try {
-            const uploadPromise = uploadMedia(item.file);
+            const uploadPromise = uploadMedia(item.file, { guestToken: token! });
             uploadPromisesRef.current.set(item.id, uploadPromise);
             const data = await uploadPromise;
             completedUploadsRef.current.set(item.id, { 

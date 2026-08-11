@@ -21,12 +21,12 @@ import {
     deleteExperienceMedia 
 } from "@/app/actions/life-charm";
 import { createPerson } from "@/app/actions/people";
-import { getCloudinarySignature } from "@/app/actions/upload";
+import { deleteUploadedFile } from "@/app/actions/upload";
 import { uploadMedia } from "@/lib/upload-client";
 import { Person, Experience, ExperienceMedia, LifeListItem } from "@prisma/client";
 import { toast } from "sonner";
 import { getOptimizedUrl } from "@/lib/media-helper";
-import Image from "next/image";
+import Image from "@/components/media-image";
 
 type ExperienceWithRelations = Experience & {
   media: ExperienceMedia[];
@@ -171,9 +171,22 @@ export default function EditExperienceClient({
               }
           }
       } else {
-          // Just remove from local state
+          if (mediaItem.status === "complete" && mediaItem.url) {
+              await deleteUploadedFile(mediaItem.url).catch((error) => {
+                  console.error("Failed to discard uploaded media", error);
+              });
+          }
           setMedia(prev => prev.filter(m => m.id !== mediaItem.id));
       }
+  };
+
+  const discardNewUploadsAndLeave = async () => {
+      await Promise.allSettled(
+          media
+              .filter((item) => item.isNew && item.status === "complete" && item.url)
+              .map((item) => deleteUploadedFile(item.url))
+      );
+      router.push(`/life-charm/experience/${experience.id}?charmId=${charmId}`);
   };
 
   const handleSubmit = () => {
@@ -229,7 +242,7 @@ export default function EditExperienceClient({
       {/* Header */}
       <header className="flex items-center gap-4 px-6 py-4 border-b border-[#556B5A]/10 bg-[#F6F2EC]">
         <button
-          onClick={() => router.push(`/life-charm/experience/${experience.id}?charmId=${charmId}`)}
+          onClick={discardNewUploadsAndLeave}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm"
         >
           <ArrowLeft className="w-5 h-5 text-[#556B5A]" />

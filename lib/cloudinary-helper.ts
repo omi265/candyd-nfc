@@ -1,5 +1,6 @@
 import cloudinary from "@/lib/cloudinary";
 import { extractPublicId } from "./media-helper";
+import { getPrivateMediaPath, isCloudinaryMediaUrl } from "./media-url";
 
 export { extractPublicId };
 
@@ -12,14 +13,7 @@ export { extractPublicId };
 export function isValidCloudinaryUrl(url: string): boolean {
   if (!url || typeof url !== "string") return false;
 
-  if (url.startsWith("/api/media/uploads/")) return true;
-
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
+  return Boolean(getPrivateMediaPath(url) || isCloudinaryMediaUrl(url));
 }
 
 /**
@@ -31,19 +25,16 @@ export function filterValidCloudinaryUrls(urls: string[]): string[] {
 
 export async function deleteFromCloudinary(publicIds: string[]) {
     if (publicIds.length === 0) return;
-    
-    try {
-        console.log("Deleting from Cloudinary:", publicIds);
-        
-        // Optimize: Run deletions in parallel
-        await Promise.all([
-            cloudinary.api.delete_resources(publicIds, { resource_type: 'image' }).catch(e => console.error("Failed to delete images", e)),
-            cloudinary.api.delete_resources(publicIds, { resource_type: 'video' }).catch(e => console.error("Failed to delete videos", e)),
-            cloudinary.api.delete_resources(publicIds, { resource_type: 'raw' }).catch(e => console.error("Failed to delete raw files", e))
-        ]);
 
-    } catch (error) {
-        console.error("Cloudinary Delete Error:", error);
+    const results = await Promise.allSettled([
+        cloudinary.api.delete_resources(publicIds, { resource_type: 'image' }),
+        cloudinary.api.delete_resources(publicIds, { resource_type: 'video' }),
+        cloudinary.api.delete_resources(publicIds, { resource_type: 'raw' }),
+    ]);
+    const failures = results.filter((result) => result.status === "rejected");
+    if (failures.length > 0) {
+        console.error("Cloudinary deletion failed", failures);
+        throw new Error("Failed to delete one or more Cloudinary media files");
     }
 }
 
@@ -81,16 +72,13 @@ export function generateSignedUrl(publicId: string, resourceType: string = "imag
   });
 }
 
-import { getS3PresignedReadUrl } from "./storage";
-
 export async function getSignedUrlFromCloudinaryUrl(url: string, resourceType: string = "image", width?: number) {
   if (!url) return "";
 
-  // 1. If URL is an S3 / Railway Object Storage URL, generate S3 Presigned Signed GET URL
-  if (url.includes("uploads/") || url.includes("storageapi.dev") || url.includes("/api/media/")) {
-    const fileKey = url.includes("uploads/") ? url.slice(url.indexOf("uploads/")) : url;
-    return await getS3PresignedReadUrl(fileKey, 3600); // Expires in 1 hour
-  }
+  // Railway objects are always served through the app so access remains tied
+  // to the current session/public-showcase authorization.
+  const privateMediaPath = getPrivateMediaPath(url);
+  if (privateMediaPath) return privateMediaPath;
 
   if (!url.includes("cloudinary.com")) return url;
   

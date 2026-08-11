@@ -7,6 +7,7 @@ import { logHabit, logRitual } from "@/app/actions/habit";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check, ChevronDown, Loader2, Minus, Moon, Pause, Play, Plus, Sparkles, Sun, X } from "lucide-react";
+import { deleteUploadedFile } from "@/app/actions/upload";
 
 export type RitualType = "MORNING" | "NIGHT";
 
@@ -96,6 +97,7 @@ function RitualTimerOverlay() {
           try {
               const { uploadMedia } = await import("@/lib/upload-client");
               const data = await uploadMedia(file);
+              if (ritual?.imageUrl) await deleteUploadedFile(ritual.imageUrl);
               setImageUrl(data.secure_url);
               toast.success("Image uploaded!");
           } catch (error) {
@@ -287,7 +289,10 @@ function RitualTimerOverlay() {
                               <div className="relative aspect-video w-full rounded-[24px] overflow-hidden group shadow-sm">
                                   <img src={ritual.imageUrl} alt="Ritual log" className="w-full h-full object-cover" />
                                   <button 
-                                      onClick={() => setImageUrl(null)}
+                                      onClick={async () => {
+                                        await deleteUploadedFile(ritual.imageUrl!);
+                                        setImageUrl(null);
+                                      }}
                                       className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                   >
                                       <X className="w-4 h-4" />
@@ -523,10 +528,12 @@ export function RitualTimerProvider({ children }: { children: ReactNode }) {
       }
     },
     cancelRitual: () => {
+      if (ritual?.imageUrl) void deleteUploadedFile(ritual.imageUrl);
       setRitual(null);
       setIsPlayerOpen(false);
     },
     clearRitual: () => {
+      if (ritual?.imageUrl) void deleteUploadedFile(ritual.imageUrl);
       setRitual(null);
       setIsPlayerOpen(false);
     },

@@ -20,7 +20,7 @@ import {
 import { Experience, ExperienceMedia, LifeListItem, Person } from "@prisma/client";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import AudioPlayer from "@/app/components/AudioPlayer";
-import Image from "next/image";
+import Image from "@/components/media-image";
 
 type ExperienceWithRelations = Experience & {
   media: (ExperienceMedia & { posterUrl?: string })[];

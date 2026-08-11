@@ -1,7 +1,7 @@
 "use client";
 
 import { createMemory } from "@/app/actions/memories";
-import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
+import { deleteUploadedFile } from "@/app/actions/upload";
 import { uploadMedia } from "@/lib/upload-client";
 import { getPeople, createPerson } from "@/app/actions/people";
 import { useAuth } from "@/lib/auth-context";
@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
-import Image from "next/image";
+import Image from "@/components/media-image";
 
 // --- Components ---
 
@@ -356,6 +356,13 @@ function MemoryUploadContent() {
         });
     };
 
+    const discardUploadsAndGoBack = async () => {
+        await Promise.allSettled(
+            Array.from(completedUploadsRef.current.values(), (data) => deleteUploadedFile(data.url))
+        );
+        router.back();
+    };
+
     const hasMedia = mediaItems.length > 0;
 
     return (
@@ -365,7 +372,7 @@ function MemoryUploadContent() {
              <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-12 overflow-x-hidden">
                 <div className="max-w-xl mx-auto w-full relative z-20">
                     <button 
-                        onClick={() => router.back()}
+                        onClick={discardUploadsAndGoBack}
                         className="mb-6 p-2 -ml-2 text-[#556B5A] hover:bg-[#556B5A]/5 rounded-full transition-colors flex items-center gap-1 group"
                     >
                         <ChevronLeft className="w-5 h-5 group-active:-translate-x-1 transition-transform" />
@@ -881,7 +888,7 @@ function MemoryUploadContent() {
                         <div className="pt-4 flex items-center gap-3">
                              <button
                                 type="button"
-                                onClick={() => router.back()}
+                                onClick={discardUploadsAndGoBack}
                                 className="w-[56px] h-[56px] rounded-full bg-[#E6DED1] flex items-center justify-center shadow-lg text-[#556B5A] shrink-0 active:scale-95 transition-transform"
                             >
                                 <ChevronLeft className="w-6 h-6" />

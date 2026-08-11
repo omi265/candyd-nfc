@@ -1,4 +1,10 @@
-import { getStorageUploadPresignedUrl, getCloudinarySignature } from "@/app/actions/upload";
+import {
+  getStorageUploadPresignedUrl,
+  getGuestStorageUploadPresignedUrl,
+  getCloudinarySignature,
+} from "@/app/actions/upload";
+import { getGuestCloudinarySignature } from "@/app/actions/nfc";
+import { validateMediaFile } from "@/lib/media-validation";
 
 /**
  * Fast client-side image compressor using HTML5 Canvas.
@@ -74,13 +80,20 @@ async function compressImageIfNeeded(file: File): Promise<File> {
   });
 }
 
-export async function uploadMedia(rawFile: File) {
+export async function uploadMedia(rawFile: File, options?: { guestToken?: string }) {
+  const rawValidation = validateMediaFile(rawFile);
+  if (!rawValidation.valid) throw new Error(rawValidation.error);
+
   // Compress image client-side before upload for 20x faster upload speeds
   const file = await compressImageIfNeeded(rawFile);
+  const validation = validateMediaFile(file);
+  if (!validation.valid) throw new Error(validation.error);
 
   // 1. Attempt S3 Railway Object Storage upload first
   try {
-    const { uploadUrl, publicUrl } = await getStorageUploadPresignedUrl(file.name, file.type);
+    const { uploadUrl, publicUrl } = options?.guestToken
+      ? await getGuestStorageUploadPresignedUrl(options.guestToken, file.name, file.type, file.size)
+      : await getStorageUploadPresignedUrl(file.name, file.type, file.size);
     const res = await fetch(uploadUrl, {
       method: "PUT",
       headers: { "Content-Type": file.type },
@@ -100,11 +113,15 @@ export async function uploadMedia(rawFile: File) {
 
   // 2. Server-side S3 upload route (bypasses browser CORS completely)
   try {
-    const formData = new FormData();
-    formData.append("file", file);
     const res = await fetch("/api/upload/s3", {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": file.type,
+        "X-Candyd-File-Name": encodeURIComponent(file.name),
+        "X-Candyd-File-Size": String(file.size),
+        ...(options?.guestToken ? { "X-Candyd-Guest-Token": options.guestToken } : {}),
+      },
+      body: file,
     });
     if (res.ok) {
       return await res.json();
@@ -114,7 +131,10 @@ export async function uploadMedia(rawFile: File) {
   }
 
   // 3. Fallback to Cloudinary upload
-  const signatureData = await getCloudinarySignature();
+  const signatureData = options?.guestToken
+    ? await getGuestCloudinarySignature(options.guestToken)
+    : await getCloudinarySignature();
+  if (!signatureData) throw new Error("Upload authorization failed");
   const { signature, timestamp, folder, cloudName, apiKey } = signatureData;
   const formData = new FormData();
   formData.append("file", file);

@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
 import { LRUCache } from "lru-cache";
 import { getSignedUrlFromCloudinaryUrl } from "@/lib/cloudinary-helper";
+import { isMediaUrlAllowedForScope } from "@/lib/media-url";
+import { isMediaKind } from "@/lib/media-validation";
 
 // Simple in-memory rate limiter
 const rateLimiter = new LRUCache<string, number>({
@@ -171,7 +173,7 @@ export async function getGuestCloudinarySignature(token: string) {
         }
 
         const timestamp = Math.round(new Date().getTime() / 1000);
-        const folder = "candyd_guest_memories";
+        const folder = `candyd_guest_memories/${product.id}`;
         const type = "authenticated";
 
         const signature = cloudinary.utils.api_sign_request(
@@ -226,6 +228,10 @@ export async function createGuestMemory(token: string, data: {
             return { error: "Guest uploads are disabled for this charm" };
         }
 
+        if (!isMediaKind(data.mediaType) || !isMediaUrlAllowedForScope(data.mediaUrl, `guests/${product.id}`)) {
+            return { error: "Invalid uploaded media" };
+        }
+
         const memory = await db.memory.create({
             data: {
                 title: data.title || "Quick Capture",
@@ -236,17 +242,15 @@ export async function createGuestMemory(token: string, data: {
                 isLiked: product.autoApproveGuestUploads,
                 emotions: [],
                 events: [],
-                peopleIds: []
-            }
-        });
-
-        await db.media.create({
-            data: {
-                url: data.mediaUrl,
-                type: data.mediaType,
-                size: data.mediaSize,
-                memoryId: memory.id,
-                orderIndex: 0
+                peopleIds: [],
+                media: {
+                    create: {
+                        url: data.mediaUrl,
+                        type: data.mediaType,
+                        size: data.mediaSize,
+                        orderIndex: 0
+                    }
+                }
             }
         });
 
@@ -435,6 +439,13 @@ export async function createGifterFullMemory(token: string, data: {
         const isUnassignedCharm = !product.userId;
         if (!isOwner && !isUnassignedCharm && !product.allowGuestUploads) {
             return { error: "Guest uploads are disabled for this charm." };
+        }
+
+        if (data.media.length === 0 || data.media.some((media) =>
+            !isMediaKind(media.type) ||
+            !isMediaUrlAllowedForScope(media.url, `guests/${product.id}`)
+        )) {
+            return { error: "One or more uploaded media files are invalid." };
         }
 
         const memory = await db.memory.create({

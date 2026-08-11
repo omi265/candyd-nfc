@@ -21,7 +21,7 @@ import { LifeListItem, Person, Experience, ExperienceMedia } from "@prisma/clien
 import { deleteListItem } from "@/app/actions/life-charm";
 import { getOptimizedUrl } from "@/lib/media-helper";
 import { toast } from "sonner";
-import Image from "next/image";
+import Image from "@/components/media-image";
 
 type ItemWithExperience = LifeListItem & {
   lifeList: { userId: string; productId: string };

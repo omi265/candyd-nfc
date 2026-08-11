@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { updateMemory, deleteMemory } from "@/app/actions/memories";
-import { getCloudinarySignature, deleteUploadedFile } from "@/app/actions/upload";
+import { deleteUploadedFile } from "@/app/actions/upload";
 import { uploadMedia } from "@/lib/upload-client";
 import { getPeople, createPerson } from "@/app/actions/people";
 import { useRouter } from "next/navigation";
@@ -30,7 +30,7 @@ import {
 import { toast } from "sonner";
 import AudioPlayer from "@/app/components/AudioPlayer";
 import { getOptimizedUrl } from "@/lib/media-helper";
-import Image from "next/image";
+import Image from "@/components/media-image";
 
 const EMOTIONS = ["Joy", "Peace", "Gratitude", "Sad", "Pride", "Longing", "Comfort", "Fear", "Love", "Melancholy", "Excited", "Content", "Hopeful", "Anxious", "Calm", "Relieved", "Proud", "Loved", "Vulnerable", "Fulfilled", "Overwhelmed", "Missed"];
 const MOODS = ["Serene", "Celebratory", "Nostalgic", "Dreamy", "Quiet", "Vibrant", "Tender", "Bittersweet", "Warm", "Intimate", "Reflective", "Emotional", "Lighthearted", "Cozy", "Energetic", "Sentimental", "Playful", "Soft", "Meaningful", "Heavy"];
@@ -395,7 +395,14 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         }
     }
 
-    const handleCancel = () => {
+    const handleCancel = async () => {
+        const newUploadUrls = mediaItems
+            .filter((item) => item.isNew)
+            .flatMap((item) => {
+                const upload = completedUploadsRef.current.get(item.id);
+                return upload?.url ? [upload.url] : [];
+            });
+        await Promise.allSettled(newUploadUrls.map((url) => deleteUploadedFile(url)));
         router.back();
     };
 
@@ -419,10 +426,11 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
 
     const handleRemoveMedia = (index: number) => {
         const itemToRemove = mediaItems[index];
-        if (itemToRemove.isNew && itemToRemove.status === 'completed' && itemToRemove.url) {
-            // Optional: delete from cloudinary if it was just uploaded
-            // getCloudinarySignature().then(...) - but we don't have delete action easily here
-            // For now, just remove from UI, the backend won't see it
+        const completedUpload = completedUploadsRef.current.get(itemToRemove.id);
+        if (itemToRemove.isNew && completedUpload?.url) {
+            void deleteUploadedFile(completedUpload.url).catch((error) => {
+                console.error("Failed to discard uploaded media", error);
+            });
         }
         
         setMediaItems(prev => prev.filter((_, i) => i !== index));
@@ -1008,4 +1016,3 @@ export default function MemoryClientPage({ memory, products }: MemoryClientPageP
         </div>
     )
 }
-
