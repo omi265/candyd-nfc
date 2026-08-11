@@ -4,12 +4,39 @@ import { signIn, signOut, auth } from "@/auth";
 import { db } from "@/lib/db";
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
+import { createHmac, randomInt, timingSafeEqual } from "crypto";
 import { z } from "zod";
 
 import { revalidatePath } from "next/cache";
 import { deleteStoredMedia } from "@/lib/media-storage";
 import { changePasswordSchema } from "@/lib/schemas";
-import { sendPasswordResetEmail } from "@/lib/mail";
+import { sendPasswordResetEmail, sendRegistrationVerificationEmail } from "@/lib/mail";
+
+const REGISTRATION_CODE_TTL_MS = 15 * 60 * 1000;
+const REGISTRATION_RESEND_COOLDOWN_MS = 60 * 1000;
+const MAX_REGISTRATION_ATTEMPTS = 5;
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function generateRegistrationCode() {
+  return randomInt(100000, 1000000).toString();
+}
+
+function hashRegistrationCode(email: string, code: string) {
+  const configuredSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!configuredSecret && process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET is required for registration verification");
+  }
+  const secret = configuredSecret || "our-dve-development-secret";
+  return createHmac("sha256", secret).update(`${email}:${code}`).digest("hex");
+}
+
+function registrationCodeMatches(expectedHash: string, email: string, code: string) {
+  const suppliedHash = hashRegistrationCode(email, code);
+  return timingSafeEqual(Buffer.from(expectedHash, "hex"), Buffer.from(suppliedHash, "hex"));
+}
 
 async function logActivity(action: string, details?: string, userId?: string) {
     try {
@@ -27,10 +54,12 @@ async function logActivity(action: string, details?: string, userId?: string) {
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   contact: z.string().optional(),
 });
+
+const registrationCodeSchema = z.string().regex(/^\d{6}$/, "Enter the 6-digit verification code");
 
 const updateProfileSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -61,7 +90,7 @@ export async function authenticate(prevState: string | undefined, formData: Form
   }
 }
 
-export async function registerUser(prevState: { error?: string, success?: boolean } | undefined, formData: FormData) {
+export async function requestRegistrationVerification(formData: FormData) {
      const validatedFields = registerSchema.safeParse(Object.fromEntries(formData.entries()));
 
      if (!validatedFields.success) {
@@ -70,7 +99,6 @@ export async function registerUser(prevState: { error?: string, success?: boolea
 
      const { email, password, name, contact } = validatedFields.data;
 
-     // Check if user exists
      const existingUser = await db.user.findUnique({
          where: { email }
      });
@@ -79,25 +107,151 @@ export async function registerUser(prevState: { error?: string, success?: boolea
          return { error: "Email already in use!" };
      }
 
-     const hashedPassword = await bcrypt.hash(password, 10);
-
-     await db.user.create({
-         data: {
-             name,
-             email,
-             password: hashedPassword,
-             contact,
-         },
+     const pendingVerification = await db.registrationVerification.findUnique({
+         where: { email },
+         select: { updatedAt: true }
      });
 
-     return { success: true };
+     if (
+         pendingVerification &&
+         Date.now() - pendingVerification.updatedAt.getTime() < REGISTRATION_RESEND_COOLDOWN_MS
+     ) {
+         return { error: "A verification code was sent recently. Please wait a minute before trying again." };
+     }
+
+     const code = generateRegistrationCode();
+     const tokenHash = hashRegistrationCode(email, code);
+     const passwordHash = await bcrypt.hash(password, 10);
+     const expiresAt = new Date(Date.now() + REGISTRATION_CODE_TTL_MS);
+
+     await db.registrationVerification.upsert({
+         where: { email },
+         create: { email, name, contact: contact || null, passwordHash, tokenHash, expiresAt },
+         update: {
+             name,
+             contact: contact || null,
+             passwordHash,
+             tokenHash,
+             expiresAt,
+             attempts: 0
+         }
+     });
+
+     try {
+         await sendRegistrationVerificationEmail(email, code);
+     } catch (error) {
+         console.error("Registration verification email failed:", error);
+         await db.registrationVerification.deleteMany({ where: { email, tokenHash } });
+         return { error: "We couldn't send the verification email. Please try again." };
+     }
+
+     await logActivity("REGISTRATION_CODE_SENT", `Registration verification sent to ${email}`);
+
+     return { success: true, email };
+}
+
+export async function resendRegistrationVerification(rawEmail: string) {
+    const parsedEmail = z.string().trim().toLowerCase().email().safeParse(rawEmail);
+    if (!parsedEmail.success) return { error: "Invalid email address" };
+
+    const email = normalizeEmail(parsedEmail.data);
+    const pendingVerification = await db.registrationVerification.findUnique({ where: { email } });
+
+    if (!pendingVerification) {
+        return { error: "Registration request not found. Please start again." };
+    }
+
+    if (Date.now() - pendingVerification.updatedAt.getTime() < REGISTRATION_RESEND_COOLDOWN_MS) {
+        return { error: "Please wait a minute before requesting another code." };
+    }
+
+    const code = generateRegistrationCode();
+    const tokenHash = hashRegistrationCode(email, code);
+
+    try {
+        await sendRegistrationVerificationEmail(email, code);
+        await db.registrationVerification.update({
+            where: { email },
+            data: {
+                tokenHash,
+                attempts: 0,
+                expiresAt: new Date(Date.now() + REGISTRATION_CODE_TTL_MS)
+            }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Registration verification resend failed:", error);
+        return { error: "We couldn't resend the verification email. Please try again." };
+    }
+}
+
+export async function verifyRegistrationCode(rawEmail: string, rawCode: string) {
+    const emailResult = z.string().trim().toLowerCase().email().safeParse(rawEmail);
+    const codeResult = registrationCodeSchema.safeParse(rawCode.trim());
+
+    if (!emailResult.success || !codeResult.success) {
+        return { error: "Enter the valid 6-digit code sent to your email." };
+    }
+
+    const email = normalizeEmail(emailResult.data);
+    const code = codeResult.data;
+    const pendingVerification = await db.registrationVerification.findUnique({ where: { email } });
+
+    if (!pendingVerification) {
+        return { error: "Registration request not found. Please start again." };
+    }
+
+    if (pendingVerification.expiresAt.getTime() <= Date.now()) {
+        await db.registrationVerification.delete({ where: { email } });
+        return { error: "This verification code has expired. Please start again." };
+    }
+
+    if (pendingVerification.attempts >= MAX_REGISTRATION_ATTEMPTS) {
+        return { error: "Too many incorrect attempts. Please request a new code." };
+    }
+
+    if (!registrationCodeMatches(pendingVerification.tokenHash, email, code)) {
+        await db.registrationVerification.update({
+            where: { email },
+            data: { attempts: { increment: 1 } }
+        });
+        return { error: "Incorrect verification code." };
+    }
+
+    try {
+        const user = await db.$transaction(async (tx) => {
+            const existingUser = await tx.user.findUnique({ where: { email }, select: { id: true } });
+            if (existingUser) throw new Error("EMAIL_ALREADY_REGISTERED");
+
+            const createdUser = await tx.user.create({
+                data: {
+                    name: pendingVerification.name,
+                    email,
+                    password: pendingVerification.passwordHash,
+                    contact: pendingVerification.contact
+                },
+                select: { id: true }
+            });
+            await tx.registrationVerification.delete({ where: { email } });
+            return createdUser;
+        });
+
+        await logActivity("ACCOUNT_CREATED", `Verified account created for ${email}`, user.id);
+        return { success: true };
+    } catch (error) {
+        if (error instanceof Error && error.message === "EMAIL_ALREADY_REGISTERED") {
+            return { error: "Email already in use!" };
+        }
+        console.error("Registration verification failed:", error);
+        return { error: "Failed to create account. Please try again." };
+    }
 }
 
 export async function logout() {
   await signOut({ redirectTo: "/login" });
 }
 
-export async function updateProfile(prevState: any, formData: FormData) {
+export async function updateProfile(_prevState: unknown, formData: FormData) {
     const session = await auth(); 
     if (!session?.user?.id) return { error: "Not authenticated" };
     
@@ -121,12 +275,12 @@ export async function updateProfile(prevState: any, formData: FormData) {
         revalidatePath("/settings");
         revalidatePath("/settings/profile");
         return { success: true };
-    } catch (error) {
+    } catch {
         return { error: "Failed to update profile" };
     }
 }
 
-export async function changePassword(prevState: any, formData: FormData) {
+export async function changePassword(_prevState: unknown, formData: FormData) {
     const session = await auth();
     if (!session?.user?.id) return { error: "Not authenticated" };
 
@@ -263,28 +417,37 @@ export async function deleteAccount() {
 
         const mediaUrlsToDelete: string[] = [];
 
-        // 1. User Profile Image
         const user = await db.user.findUnique({
             where: { id: userId },
-            select: { image: true }
+            select: {
+                image: true,
+                products: { select: { id: true } }
+            }
         });
-        if (user?.image) mediaUrlsToDelete.push(user.image);
+        if (!user) return { error: "Account not found" };
 
-        // 2. Memory Media
+        if (user?.image) mediaUrlsToDelete.push(user.image);
+        const productIds = user.products.map(product => product.id);
+        const ownedContentFilter = {
+            OR: [
+                { userId },
+                ...(productIds.length > 0 ? [{ productId: { in: productIds } }] : [])
+            ]
+        };
+
         const memories = await db.memory.findMany({
-            where: { userId },
+            where: ownedContentFilter,
             include: { media: true }
         });
         memories.forEach(mem => {
             mem.media.forEach((media) => mediaUrlsToDelete.push(media.url));
         });
 
-        // 3. Experience Media
         const experiences = await db.experience.findMany({
             where: {
                 item: {
                     lifeList: {
-                        userId
+                        OR: ownedContentFilter.OR
                     }
                 }
             },
@@ -294,11 +457,10 @@ export async function deleteAccount() {
             exp.media.forEach((media) => mediaUrlsToDelete.push(media.url));
         });
 
-        // 4. Habit Log Images
         const habitLogs = await db.habitLog.findMany({
             where: {
                 habit: {
-                    userId
+                    OR: ownedContentFilter.OR
                 },
                 imageUrl: { not: null }
             },
@@ -308,7 +470,6 @@ export async function deleteAccount() {
             if (log.imageUrl) mediaUrlsToDelete.push(log.imageUrl);
         });
 
-        // 5. Person Avatars
         const people = await db.person.findMany({
             where: { userId },
             select: { avatarUrl: true }
@@ -317,14 +478,27 @@ export async function deleteAccount() {
             if (p.avatarUrl) mediaUrlsToDelete.push(p.avatarUrl);
         });
 
-        await deleteStoredMedia(mediaUrlsToDelete);
-
-        // 7. Delete user (Cascades will handle DB cleanup)
-        await db.user.delete({
-            where: { id: userId }
+        // Explicitly remove content linked through products before deleting the user.
+        // LifeList and Habit product relations use RESTRICT, so relying only on the
+        // user cascade can fail depending on the database's constraint order.
+        await db.$transaction(async (tx) => {
+            await tx.lifeList.deleteMany({ where: ownedContentFilter });
+            await tx.habit.deleteMany({ where: ownedContentFilter });
+            await tx.memory.deleteMany({ where: ownedContentFilter });
+            await tx.person.deleteMany({ where: { userId } });
+            await tx.product.deleteMany({ where: { userId } });
+            await tx.user.delete({ where: { id: userId } });
         });
 
         await logActivity("ACCOUNT_DELETED", `Account ${userId} deleted`);
+
+        // Storage cleanup must not prevent account deletion. Any failed objects can
+        // be retried separately, while the user's account and personal data are gone.
+        try {
+            await deleteStoredMedia([...new Set(mediaUrlsToDelete)]);
+        } catch (error) {
+            console.error("Deleted account but failed to clean up some media:", error);
+        }
 
         return { success: true };
     } catch (error) {

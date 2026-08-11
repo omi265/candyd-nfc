@@ -27,7 +27,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             
             const tokenVal = (credentials.token && typeof credentials.token === 'string' && credentials.token !== "undefined" && credentials.token.length > 5) ? credentials.token : null;
             const passwordVal = (credentials.password && typeof credentials.password === 'string') ? credentials.password : null;
-            const emailVal = (credentials.email && typeof credentials.email === 'string') ? credentials.email : null;
+            const emailVal = (credentials.email && typeof credentials.email === 'string') ? credentials.email.trim().toLowerCase() : null;
 
             // 1. Token + Password Login (Verifying owner password on new device)
             if (tokenVal && passwordVal) {

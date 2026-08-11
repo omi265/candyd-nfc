@@ -1,7 +1,7 @@
 "use client";
 
-import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -43,11 +43,13 @@ export default function AccountSettingsPage() {
             const result = await deleteAccount();
             if (result?.success) {
                 toast.success("Account deleted successfully");
-                router.push("/login");
+                await signOut({ redirect: false });
+                router.replace("/login");
+                router.refresh();
             } else {
                 toast.error(result?.error || "Failed to delete account");
             }
-        } catch (error) {
+        } catch {
             toast.error("An error occurred");
         } finally {
             setIsDeleting(false);
@@ -88,7 +90,7 @@ export default function AccountSettingsPage() {
             } else {
                 toast.error(result?.error || "Failed to change password");
             }
-        } catch (error) {
+        } catch {
             toast.error("An error occurred");
         } finally {
             setIsChangingPassword(false);

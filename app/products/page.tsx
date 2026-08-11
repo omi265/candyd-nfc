@@ -162,7 +162,7 @@ export default function ProductsPage() {
                     className={`w-full py-6 px-8 ${charm.bgColor} text-white rounded-[24px] font-black text-xl flex items-center justify-center gap-3 shadow-xl hover:brightness-110 transition-all active:scale-[0.98] group/btn uppercase tracking-tight`}
                 >
                     <ShoppingBag className="w-6 h-6" />
-                    Get yours on Candyd
+                    Get yours on Our DVE
                     <ChevronRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
                 </a>
               </div>

@@ -465,7 +465,9 @@ Client                    Server                    Cloudinary
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
 | `authenticate` | FormData | Redirect | Email/password login |
-| `registerUser` | FormData | Redirect | Create new account |
+| `requestRegistrationVerification` | FormData | Result | Send registration email OTP |
+| `verifyRegistrationCode` | email, code | Result | Verify OTP and create account |
+| `resendRegistrationVerification` | email | Result | Send a replacement OTP |
 | `logout` | - | Redirect | Sign out user |
 | `updateProfile` | FormData | - | Update user profile |
 
@@ -772,6 +774,9 @@ CLOUDINARY_API_SECRET="your-api-secret"
 
 # Authentication
 AUTH_SECRET="auto-generated-secret"
+
+# Transactional email (signup verification and password reset)
+RESEND_API_KEY="re_your-resend-api-key"
 ```
 
 ### next.config.ts
@@ -888,6 +893,7 @@ CLOUDINARY_CLOUD_NAME
 CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET
 AUTH_SECRET
+RESEND_API_KEY
 ```
 
 ### Performance Optimizations
@@ -1016,7 +1022,13 @@ startTransition(() => {
 
 ```typescript
 // Authentication
-import { authenticate, registerUser, logout } from '@/app/actions/auth';
+import {
+  authenticate,
+  requestRegistrationVerification,
+  verifyRegistrationCode,
+  resendRegistrationVerification,
+  logout,
+} from '@/app/actions/auth';
 
 // Memory operations
 import { createMemory, getMemories, updateMemory, deleteMemory } from '@/app/actions/memories';

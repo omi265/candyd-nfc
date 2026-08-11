@@ -22,13 +22,13 @@ export default function TermsPage() {
                 <div className="bg-[#556B5A] text-white p-6 rounded-3xl mb-8 shadow-lg">
                     <h2 className="text-white text-xl font-bold mb-2">Experimental Product Notice</h2>
                     <p className="opacity-90">
-                        Candyd NFC is a new experimental product currently in development. Features, pricing, and functionality are subject to significant changes without prior notice.
+                        Our DVE is a new experimental product currently in development. Features, pricing, and functionality are subject to significant changes without prior notice.
                     </p>
                 </div>
 
                 <section className="space-y-6 text-[#556B5A]/80">
                     <h3 className="text-[#556B5A] text-xl font-bold">1. Acceptance of Terms</h3>
-                    <p>By accessing and using Candyd, you agree to be bound by these Terms and Conditions.</p>
+                    <p>By accessing and using Our DVE, you agree to be bound by these Terms and Conditions.</p>
 
                     <h3 className="text-[#556B5A] text-xl font-bold">2. Use of Service</h3>
                     <p>You agree to use the service for personal, non-commercial use only. You are responsible for maintaining the security of your account and any content you upload.</p>

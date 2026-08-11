@@ -238,6 +238,21 @@ model PasswordResetToken {
   @@unique([email, token])
 }
 
+model RegistrationVerification {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  contact      String?
+  passwordHash String
+  tokenHash    String
+  attempts     Int      @default(0)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
 model ActivityLog {
   id        String   @id @default(cuid())
   userId    String?

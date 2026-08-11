@@ -70,7 +70,7 @@ export default function FullOnboardingTour() {
   const steps: Step[] = [
     {
       title: "The Magic of Scanning",
-      description: "Experience the seamless connection between the physical and digital. Simply tap your phone to any Candyd NFC charm to instantly unlock its stories and secrets.",
+      description: "Experience the seamless connection between the physical and digital. Simply tap your phone to any Our DVE charm to instantly unlock its stories and secrets.",
       mockScreen: (
         <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#F6F2EC] relative overflow-hidden">
           {/* NFC Waves Animation */}
