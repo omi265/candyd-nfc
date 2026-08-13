@@ -25,7 +25,7 @@ import Image from "@/components/media-image";
 import { AnimatePresence } from "framer-motion";
 
 type LifeListItemWithExperience = LifeListItem & {
-  experience: (Experience & { media: ExperienceMedia[] }) | null;
+  experience: (Experience & { media: Array<ExperienceMedia & { posterUrl?: string }> }) | null;
 };
 
 type LifeListWithItems = LifeList & {
@@ -33,7 +33,7 @@ type LifeListWithItems = LifeList & {
 };
 
 type MemoryWithMedia = Memory & {
-    media: Media[];
+    media: Array<Media & { posterUrl?: string }>;
 };
 
 type ProductWithState = Product & {
@@ -48,7 +48,7 @@ type GridItem = {
     title: string;
     description?: string | null;
     date: Date;
-    media: { url: string; type: string }[];
+    media: { url: string; type: string; posterUrl?: string }[];
     peopleIds: string[];
     isLiked: boolean;
     originalData: LifeListItemWithExperience | MemoryWithMedia;
@@ -80,7 +80,7 @@ function FilterBar({ searchQuery, setSearchQuery, isSearchOpen, setIsSearchOpen 
   }, [isSearchOpen]);
 
   return (
-    <div className="flex items-center gap-3 px-5 py-3 z-30 relative">
+    <div className="flex items-center gap-3 px-5 py-3 z-30 relative bg-[#F6F2EC]/80 backdrop-blur-md border-b border-[#E6DED1]/30">
       <div className={`shrink-0 rounded-full bg-white shadow-sm border border-[#E6DED1] flex items-center transition-all duration-300 overflow-hidden h-10 ${isSearchOpen ? 'w-full px-4' : 'w-10 justify-center'}`}>
          {isSearchOpen ? (
              <>
@@ -152,6 +152,43 @@ function getCenterOutOrder(n: number): number[] {
   return cells.map((cell) => cell.index);
 }
 
+function MediaCover({ media }: { media: { url: string; type: string; posterUrl?: string } }) {
+  if (media.type.includes("video")) {
+    const posterUrl = media.posterUrl;
+
+    if (!posterUrl || posterUrl === media.url) {
+      return (
+        <video
+          src={`${media.url}#t=0.001`}
+          className="w-full h-full object-cover"
+          muted
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        />
+      );
+    }
+
+    return (
+      <Image
+        src={getOptimizedUrl(posterUrl, "image", 600)}
+        alt=""
+        fill
+        className="object-cover"
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={getOptimizedUrl(media.url, "image", 600)}
+      alt=""
+      fill
+      className="object-cover"
+    />
+  );
+}
+
 // --- Life Item / Memory Card ---
 function GridCard({
   item,
@@ -164,7 +201,6 @@ function GridCard({
   cellSize,
   containerSize,
   visualYOffset,
-  index,
 }: {
   item: GridItem;
   people: Person[];
@@ -176,7 +212,6 @@ function GridCard({
   cellSize: { width: number; height: number };
   containerSize: { width: number; height: number };
   visualYOffset: number;
-  index: number;
 }) {
   const dist = useDistance(x, y, row, col, cellSize, containerSize, visualYOffset);
 
@@ -221,19 +256,7 @@ function GridCard({
       {/* Background */}
       {hasMedia && (firstMedia?.type.includes("image") || firstMedia?.type.includes("video")) ? (
         <div className="absolute inset-0">
-          <Image
-             src={getOptimizedUrl(
-                 firstMedia.type.includes("video") 
-                 ? ((firstMedia as any).posterUrl || (firstMedia.url.includes('.') ? firstMedia.url.replace(/\.[^/.]+$/, ".jpg") : `${firstMedia.url}.jpg`))
-                 : firstMedia.url, 
-                 "image", 
-                 600
-             )}
-            alt=""
-            fill
-            className="object-cover"
-            priority={index < 4}
-          />
+          <MediaCover media={firstMedia} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         </div>
       ) : (
@@ -387,16 +410,15 @@ export default function LifeCharmContent({
       // Add Lived List Items
       (lifeList?.items || []).forEach(item => {
           if (item.status === 'lived' && item.experience) {
-              const exp = item.experience as any; // Cast to access isLiked if not in type yet (it is on db type)
               unifiedItems.push({
                   id: item.id,
                   type: 'life_item',
                   title: item.title,
                   description: item.experience.reflection || item.description,
                   date: item.experience.date,
-                  media: item.experience.media.map(m => ({ url: m.url, type: m.type })),
+                  media: item.experience.media.map(m => ({ url: m.url, type: m.type, posterUrl: m.posterUrl })),
                   peopleIds: item.experience.peopleIds.length > 0 ? item.experience.peopleIds : item.peopleIds,
-                  isLiked: exp.isLiked || false,
+                  isLiked: item.experience.isLiked || false,
                   originalData: item
               });
           }
@@ -404,16 +426,15 @@ export default function LifeCharmContent({
 
       // Add Standalone Memories
       memories.forEach(memory => {
-          const mem = memory as any;
           unifiedItems.push({
               id: memory.id,
               type: 'memory',
               title: memory.title,
               description: memory.description,
               date: memory.date,
-              media: memory.media.map(m => ({ url: m.url, type: m.type, posterUrl: (m as any).posterUrl })),
+              media: memory.media.map(m => ({ url: m.url, type: m.type, posterUrl: m.posterUrl })),
               peopleIds: memory.peopleIds,
-              isLiked: mem.isLiked || false,
+              isLiked: memory.isLiked || false,
               originalData: memory
           });
       });
@@ -802,7 +823,6 @@ export default function LifeCharmContent({
                     cellSize={cellSize}
                     containerSize={containerSize}
                     visualYOffset={VISUAL_Y_OFFSET}
-                    index={index}
                   />
               </div>
             );

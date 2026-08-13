@@ -165,7 +165,7 @@ export default function LifeCharmSetupPage() {
         toast.error(result.error);
       } else {
         toast.success("Life list created!");
-        router.push(`/life-charm?charmId=${charmId}`);
+        router.replace(`/life-charm?charmId=${charmId}&view=list`);
       }
     });
   };
@@ -173,18 +173,18 @@ export default function LifeCharmSetupPage() {
   if (!charmId) return null;
 
   return (
-    <div className="fixed inset-0 bg-[#F6F2EC] flex flex-col font-[family-name:var(--font-outfit)] overflow-hidden">
+    <div className="relative w-full h-full min-h-0 bg-[#F6F2EC] flex flex-col font-[family-name:var(--font-outfit)] overflow-hidden">
        {phase === "swipe" ? (
-          <div className="flex-1 flex flex-col items-center justify-between py-8 px-6 overflow-hidden">
-             <header className="text-center w-full mx-auto max-w-sm mt-2 shrink-0 bg-white/40 backdrop-blur-xl p-4 rounded-3xl border border-white/50 shadow-sm z-20">
-               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 15 }} className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm border border-[#556B5A]/10">
+          <div className="flex-1 min-h-0 flex flex-col items-center justify-between py-4 sm:py-6 px-6 overflow-hidden">
+             <header className="text-center w-full mx-auto max-w-sm shrink-0 bg-white/40 backdrop-blur-xl p-3 sm:p-4 rounded-3xl border border-white/50 shadow-sm z-20">
+               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 15 }} className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-1 sm:mb-2 shadow-sm border border-[#556B5A]/10">
                  <Sparkles className="w-6 h-6 text-[#7C9A86]" />
                </motion.div>
                <h1 className="text-2xl font-black text-[#556B5A] uppercase tracking-tight leading-none">Build Your List</h1>
                <p className="text-[#556B5A]/60 font-bold text-xs mt-2">Pick up to 5 goals ({selected.length}/5)</p>
              </header>
 
-             <div className="relative w-full max-w-[340px] flex-1 my-6 flex items-center justify-center perspective-[1000px]">
+             <div className="relative w-full max-w-[340px] flex-1 min-h-0 my-4 sm:my-6 flex items-center justify-center perspective-[1000px]">
                 <AnimatePresence custom={direction}>
                    {cards.slice(-3).map((card, idx, arr) => (
                       <Card 
@@ -214,7 +214,7 @@ export default function LifeCharmSetupPage() {
              </div>
           </div>
        ) : (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex-1 flex flex-col p-6 overflow-y-auto no-scrollbar pb-32">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex-1 min-h-0 flex flex-col p-6 overflow-y-auto no-scrollbar pb-[calc(8rem+env(safe-area-inset-bottom))]">
              <header className="mb-8 mt-2 text-center w-full mx-auto max-w-sm bg-white/40 backdrop-blur-xl p-6 rounded-3xl border border-white/50 shadow-sm z-20">
                 <div className="w-12 h-12 bg-[#556B5A] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl rotate-3">
                    <ListTodo className="w-6 h-6 text-white -rotate-3" />
@@ -277,7 +277,7 @@ export default function LifeCharmSetupPage() {
                 )}
              </div>
 
-             <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#F6F2EC] via-[#F6F2EC]/80 to-transparent pt-12 z-50 pointer-events-none">
+             <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="absolute bottom-0 left-0 right-0 px-6 pt-12 pb-[calc(1.5rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-[#F6F2EC] via-[#F6F2EC]/80 to-transparent z-50 pointer-events-none">
                 <div className="max-w-md mx-auto pointer-events-auto">
                    <button onClick={handleCreate} disabled={isPending || selected.length === 0} className="w-full py-5 bg-[#556B5A] text-white rounded-[24px] font-black uppercase tracking-widest text-[13px] flex items-center justify-center gap-2 shadow-xl hover:bg-[#445849] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100">
                       {isPending ? "Creating..." : "Create Life List"}

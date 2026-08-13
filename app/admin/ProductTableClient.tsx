@@ -96,7 +96,7 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
                         className="bg-white/50 border border-[#556B5A]/10 rounded-xl px-3 py-2 text-sm text-[#556B5A] focus:outline-none focus:ring-2 focus:ring-[#556B5A]/20 transition-all cursor-pointer"
                     >
                         <option value="ALL">All Types</option>
-                        <option value="MEMORY">Memory</option>
+                        <option value="MEMORY">Life (legacy)</option>
                         <option value="LIFE">Life</option>
                         <option value="HABIT">Habit</option>
                     </select>
@@ -146,13 +146,11 @@ export function ProductTableClient({ initialProducts }: ProductTableClientProps)
                                     <td className="py-3 pr-4 text-[#556B5A] font-medium">{product.name}</td>
                                     <td className="py-3 pr-4">
                                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                            product.type === "LIFE"
+                                            product.type !== "HABIT"
                                                 ? "bg-[#7C9A86]/20 text-[#7A9429]"
-                                                : product.type === "HABIT"
-                                                ? "bg-[#F37B55]/20 text-[#D45A35]"
-                                                : "bg-[#556B5A]/20 text-[#556B5A]"
+                                                : "bg-[#F37B55]/20 text-[#D45A35]"
                                         }`}>
-                                            {product.type === "LIFE" ? "Life" : product.type === "HABIT" ? "Habit" : "Memory"}
+                                            {product.type === "HABIT" ? "Habit" : "Life"}
                                         </span>
                                     </td>
                                     <td className="py-3 pr-4">

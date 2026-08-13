@@ -23,10 +23,7 @@ export default async function LifeCharmPage({ searchParams }: PageProps) {
     charmId = product.id;
   }
 
-  if (product.type !== "LIFE") {
-    if (product.type === "MEMORY") {
-      redirect("/");
-    }
+  if (product.type === "HABIT") {
     redirect("/");
   }
 

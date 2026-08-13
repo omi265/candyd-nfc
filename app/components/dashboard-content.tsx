@@ -295,7 +295,7 @@ export default function DashboardContent({ products }: DashboardContentProps) {
           return;
       }
 
-      if (product.type === "LIFE") {
+      if (product.type === "LIFE" || product.type === "MEMORY") {
           router.push(`/life-charm?charmId=${product.id}`);
       } else if (product.type === "HABIT") {
           router.push(`/habit-charm?charmId=${product.id}`);

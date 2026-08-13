@@ -30,7 +30,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   ]);
 
   if (!item) {
-    redirect(`/life-charm?charmId=${charmId}`);
+    redirect(`/life-charm?charmId=${charmId}&view=list`);
   }
 
   return (

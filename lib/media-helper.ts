@@ -39,6 +39,11 @@ export function getOptimizedUrl(url: string, type: 'image' | 'video' = 'image', 
     const [base, rest] = parts;
     const transformations = ['f_auto', 'q_auto']; // Default format & quality auto
 
+    // Add start offset for videos to extract poster frame instantly
+    if (url.includes('/video/')) {
+        transformations.push('so_0');
+    }
+
     // Add width limit if provided
     if (width) {
         transformations.push(`w_${width}`);

@@ -23,6 +23,10 @@ export default async function Dashboard({ searchParams }: PageProps) {
     charmId = product.id;
   }
 
+  if (product.type === "HABIT") {
+    redirect(`/habit-charm?charmId=${product.id}`);
+  }
+
   const [lifeList, people, memories] = await Promise.all([
     getLifeList(product.id),
     getPeople(),

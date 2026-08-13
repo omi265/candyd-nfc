@@ -27,7 +27,7 @@ export default async function EditItemPage({ params, searchParams }: PageProps) 
   const item = await getListItem(itemId);
 
   if (!item) {
-    redirect(`/life-charm?charmId=${charmId}`);
+    redirect(`/life-charm?charmId=${charmId}&view=list`);
   }
 
   // If item is already lived, redirect to experience edit or detail

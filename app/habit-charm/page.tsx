@@ -26,7 +26,7 @@ export default async function HabitCharmPage({
   }
 
   if (product.type !== "HABIT") {
-      if (product.type === "LIFE") {
+      if (product.type === "LIFE" || product.type === "MEMORY") {
           redirect(`/life-charm?charmId=${charmId}`);
       }
       redirect("/");

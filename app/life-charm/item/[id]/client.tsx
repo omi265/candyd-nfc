@@ -52,6 +52,9 @@ export default function ItemDetailClient({
 
   const isLived = item.status === "lived";
   const hasExperience = !!item.experience;
+  const returnHref = isLived
+    ? `/life-charm?charmId=${charmId}&view=grid&focusId=${item.id}`
+    : `/life-charm?charmId=${charmId}&view=list`;
 
   const getPersonName = (personId: string) => {
     const person = people.find((p) => p.id === personId);
@@ -65,7 +68,7 @@ export default function ItemDetailClient({
         toast.error(result.error);
       } else {
         toast.success("Item deleted");
-        router.push(`/life-charm?charmId=${charmId}`);
+        router.push(returnHref);
       }
     });
   };
@@ -132,7 +135,7 @@ export default function ItemDetailClient({
         {/* Header Buttons */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 z-10">
           <button
-            onClick={() => router.push(`/life-charm?charmId=${charmId}`)}
+            onClick={() => router.push(returnHref)}
             className="w-10 h-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center border border-white/10"
           >
             <ArrowLeft className="w-5 h-5 text-white" />

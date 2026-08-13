@@ -66,7 +66,7 @@ export default function MarkAsLivedPage() {
       ]);
 
       if (!itemData || itemData.status === "lived") {
-        router.push(`/life-charm?charmId=${charmId}`);
+        router.push(`/life-charm?charmId=${charmId}&view=list`);
         return;
       }
 
@@ -173,7 +173,7 @@ export default function MarkAsLivedPage() {
         .filter((item) => item.status === "complete" && item.url)
         .map((item) => deleteUploadedFile(item.url))
     );
-    router.push(`/life-charm?charmId=${charmId}`);
+    router.push(`/life-charm?charmId=${charmId}&view=list`);
   };
 
   const handleSubmit = () => {

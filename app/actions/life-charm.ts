@@ -309,6 +309,7 @@ export async function createLifeList(
     }
 
     revalidatePath(`/life-charm`);
+    revalidatePath(`/`);
     return { success: true, lifeListId: lifeList.id };
   } catch (error: any) {
     console.error("Create LifeList Error:", error);

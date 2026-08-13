@@ -35,7 +35,7 @@ model Product {
   active                  Boolean    @default(true)
   graduatedAt             DateTime?
   state                   CharmState @default(ACTIVE)
-  type                    CharmType  @default(MEMORY)
+  type                    CharmType  @default(LIFE)
   lastResetAt             DateTime?
   currentStreak           Int        @default(0)
   longestStreak           Int        @default(0)

@@ -176,7 +176,7 @@ export async function generateBatchProducts(
 export async function createUserAndProduct(
   email: string,
   productName: string = "New Charm",
-  charmType: "LIFE" | "HABIT" | "MEMORY" = "LIFE"
+  charmType: "LIFE" | "HABIT" = "LIFE"
 ) {
   const session = await getSession();
   if (session?.user?.role !== "ADMIN") {

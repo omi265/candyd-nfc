@@ -98,7 +98,7 @@ export async function getSignedUrlFromCloudinaryUrl(url: string, resourceType: s
       secure: true,
       sign_url: true,
       transformation: [
-        { fetch_format: "auto", quality: "auto" },
+        { fetch_format: "auto", quality: "auto", start_offset: 0 },
         ...(width ? [{ width, crop: "limit" }] : [])
       ]
     });

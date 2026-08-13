@@ -99,14 +99,7 @@ function MenuDropdown({
       } else {
           params.set('charmId', productId);
           
-          let route = '/';
-          if (selected.type === 'LIFE') {
-              route = '/';
-          } else if (selected.type === 'MEMORY') {
-              route = '/memories';
-          } else if (selected.type === 'HABIT') {
-              route = '/habit-charm';
-          }
+          const route = selected.type === 'HABIT' ? '/habit-charm' : '/life-charm';
           
           router.push(`${route}?${params.toString()}`);
       }
@@ -208,9 +201,8 @@ function MenuDropdown({
                         className="w-full flex items-center justify-between px-3 py-2 text-[#556B5A] hover:bg-[#E6DED1]/50 rounded-xl transition-colors"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          {product.type === "LIFE" && <Heart className="w-4 h-4 text-[#7C9A86] fill-[#7C9A86] shrink-0" />}
+                          {product.type !== "HABIT" && <Heart className="w-4 h-4 text-[#7C9A86] fill-[#7C9A86] shrink-0" />}
                           {product.type === "HABIT" && <Zap className="w-4 h-4 text-[#EA580C] fill-[#EA580C] shrink-0" />}
-                          {product.type === "MEMORY" && <Sparkles className="w-4 h-4 text-[#556B5A] shrink-0" />}
                           <span
                             className={`truncate ${
                               currentCharmId === product.id
@@ -223,7 +215,7 @@ function MenuDropdown({
                         </div>
                         <div className="flex items-center gap-1 shrink-0 ml-2">
                           <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/60 text-[#556B5A]/70 uppercase tracking-wider">
-                            {product.type === "LIFE" ? "Bucket List" : product.type === "HABIT" ? "Habit" : "Memory"}
+                            {product.type === "HABIT" ? "Habit" : "Life Charm"}
                           </span>
                           {currentCharmId === product.id && <Check className="w-4 h-4 text-[#556B5A]" />}
                         </div>

@@ -312,6 +312,20 @@ function NFCLoginContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleRedirect = useCallback(async (tokenVal: string) => {
+      try {
+          const prod = await getProductWithType(tokenVal);
+          if (prod) {
+              if (prod.type === "LIFE" || prod.type === "MEMORY") {
+                  router.push(`/life-charm?charmId=${prod.id}`);
+                  return;
+              } else if (prod.type === "HABIT") {
+                  router.push(`/habit-charm?charmId=${prod.id}`);
+                  return;
+              }
+          }
+      } catch (err) {
+          console.error("Error fetching product type on redirect:", err);
+      }
       router.push("/");
   }, [router]);
 
@@ -450,7 +464,7 @@ function NFCLoginContent() {
           const r = await completeUserSetup(token, newName, password);
           if (r.error) { setError(r.error); setIsLoading(false); }
           else {
-              if (!ownerInfo || ownerInfo.type === "MEMORY" || ownerInfo.type === undefined) {
+              if (!ownerInfo || ownerInfo.type !== "HABIT") {
                   localStorage.removeItem("has_completed_full_tour");
               }
               await onPasswordLogin(e);
@@ -465,7 +479,7 @@ function NFCLoginContent() {
           if (r.error) { setError(r.error); setIsLoading(false); }
           else {
               localStorage.setItem(`trusted_tag_${token}`, "true");
-              if (!ownerInfo || ownerInfo.type === "MEMORY" || ownerInfo.type === undefined) {
+              if (!ownerInfo || ownerInfo.type !== "HABIT") {
                   localStorage.removeItem("has_completed_full_tour");
               }
               const lr = await signIn("credentials", { email: newEmail, password, redirect: false });
