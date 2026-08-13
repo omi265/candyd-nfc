@@ -80,7 +80,7 @@ function FilterBar({ searchQuery, setSearchQuery, isSearchOpen, setIsSearchOpen 
   }, [isSearchOpen]);
 
   return (
-    <div className="flex items-center gap-3 px-5 py-3 z-30 relative bg-[#F6F2EC]/80 backdrop-blur-md border-b border-[#E6DED1]/30">
+    <div className="flex items-center gap-3 px-5 py-3 z-30 relative">
       <div className={`shrink-0 rounded-full bg-white shadow-sm border border-[#E6DED1] flex items-center transition-all duration-300 overflow-hidden h-10 ${isSearchOpen ? 'w-full px-4' : 'w-10 justify-center'}`}>
          {isSearchOpen ? (
              <>
