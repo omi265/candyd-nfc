@@ -331,7 +331,7 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref, 
 
   return (
     <>
-      <header className="flex items-center justify-between px-4 py-4 relative z-40">
+      <header className="flex items-center justify-between px-4 py-2 relative z-40">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
               {backHref && (
@@ -360,7 +360,7 @@ export default function AppHeader({ userName, userRole, contextTitle, backHref, 
                     <div className="h-4 w-32 bg-[#556B5A]/20 rounded-full animate-pulse" />
                 </div>
             ) : contextTitle ? (
-                <h1 className="text-lg font-bold text-[#556B5A] leading-tight line-clamp-1">{contextTitle}</h1>
+                <h1 className="text-base font-bold text-[#556B5A] leading-tight line-clamp-1">{contextTitle}</h1>
             ) : (
                 <>
                     <p className="text-[#556B5A] text-xs opacity-70">Hello, {userName}!</p>
