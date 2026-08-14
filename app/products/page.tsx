@@ -177,7 +177,7 @@ export default function ProductsPage() {
               <Image src="/green_logo.png" alt="Logo" fill className="object-contain" />
           </div>
           <p className="text-[#556B5A]/40 text-sm font-bold uppercase tracking-widest">
-              Crafted with magic by Candyd
+              Crafted with magic by OUR DVE
           </p>
       </section>
     </div>
