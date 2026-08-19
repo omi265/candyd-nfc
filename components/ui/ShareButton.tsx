@@ -18,8 +18,8 @@ export function ShareButton({ token, charmName, variant = "icon" }: ShareButtonP
 
   const handleShare = async () => {
     const shareData = {
-        title: `Candyd Charm: ${charmName || 'My Charm'}`,
-        text: `Check out this Candyd Charm: ${charmName || 'My Charm'}`,
+        title: `Our Dve Charm: ${charmName || 'My Charm'}`,
+        text: `Check out this Our Dve Charm: ${charmName || 'My Charm'}`,
         url: fullUrl,
     };
 

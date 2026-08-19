@@ -15,7 +15,7 @@ function Logo() {
     <div className="w-20 h-20 flex items-center justify-center relative">
       <Image
         src="/green_logo.png"
-        alt="OUR DVE Logo"
+        alt="Our Dve Logo"
         fill
         className="object-contain"
         priority

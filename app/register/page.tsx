@@ -91,7 +91,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-8 rounded-3xl border border-white/50 bg-white/40 p-8 shadow-sm backdrop-blur-xl">
         <div className="flex flex-col items-center text-center">
           <div className="relative -mb-4 flex h-64 w-64 items-center justify-center">
-            <Image src="/green_logo.png" alt="Our DVE Logo" fill className="object-contain" priority />
+            <Image src="/green_logo.png" alt="Our Dve Logo" fill className="object-contain" priority />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-[#556B5A]">
             {step === "details" && "Create an account"}
@@ -101,7 +101,7 @@ export default function RegisterPage() {
           <p className="mt-2 text-sm text-[#556B5A]/70">
             {step === "details" && "Sign up to get started"}
             {step === "verify" && `We sent a 6-digit code to ${verifiedEmail}`}
-            {step === "complete" && "Your Our DVE account is ready"}
+            {step === "complete" && "Your Our Dve account is ready"}
           </p>
         </div>
 

@@ -287,7 +287,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
               
               {!isUploading && (
                 <p className="text-white/60 text-xs font-medium text-center bg-white/5 py-2 px-4 rounded-full backdrop-blur-sm">
-                  This will be added to your Candyd Charm instantly
+                  This will be added to your Our Dve Charm instantly
                 </p>
               )}
             </motion.div>

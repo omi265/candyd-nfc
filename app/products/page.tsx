@@ -162,7 +162,7 @@ export default function ProductsPage() {
                     className={`w-full py-6 px-8 ${charm.bgColor} text-white rounded-[24px] font-black text-xl flex items-center justify-center gap-3 shadow-xl hover:brightness-110 transition-all active:scale-[0.98] group/btn uppercase tracking-tight`}
                 >
                     <ShoppingBag className="w-6 h-6" />
-                    Get yours on Our DVE
+                    Get yours on Our Dve
                     <ChevronRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
                 </a>
               </div>
@@ -177,7 +177,7 @@ export default function ProductsPage() {
               <Image src="/green_logo.png" alt="Logo" fill className="object-contain" />
           </div>
           <p className="text-[#556B5A]/40 text-sm font-bold uppercase tracking-widest">
-              Crafted with magic by OUR DVE
+              Crafted with magic by Our Dve
           </p>
       </section>
     </div>

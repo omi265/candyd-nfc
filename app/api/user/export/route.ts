@@ -56,7 +56,7 @@ export async function GET() {
             metadata: {
                 exportDate: new Date().toISOString(),
                 version: "1.0",
-                app: "Candyd NFC"
+                app: "Our Dve"
             },
             user,
             memories,
@@ -70,17 +70,17 @@ export async function GET() {
         zip.file("data.json", JSON.stringify(exportData, null, 2));
         
         const readme = `
-Candyd NFC Data Export
+Our Dve Data Export
 ---------------------
 Export Date: ${new Date().toLocaleString()}
 
-This archive contains your digital life on Candyd.
+This archive contains your digital life on Our Dve.
 - data.json: Your profile, memories, habits, and life goals in a structured format.
 - Media files are currently provided as direct links to Cloudinary within the JSON.
 
 To view your photos and videos, simply open the links found in the "media" arrays throughout the JSON.
 
-Thank you for being part of Candyd.
+Thank you for being part of Our Dve.
 `;
         zip.file("README.txt", readme);
 
@@ -91,7 +91,7 @@ Thank you for being part of Candyd.
             status: 200,
             headers: {
                 "Content-Type": "application/zip",
-                "Content-Disposition": `attachment; filename="candyd_export_${userId}.zip"`
+                "Content-Disposition": `attachment; filename="ourdve_export_${userId}.zip"`
             }
         });
 

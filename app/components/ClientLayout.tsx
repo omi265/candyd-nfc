@@ -33,10 +33,10 @@ function GlobalLayout({
         style={{
           contain: "strict",
           background:
-            "radial-gradient(circle at 90% 6%, rgba(164,197,56,0.32), transparent 34%), radial-gradient(circle at 8% 94%, rgba(91,45,125,0.24), transparent 38%), linear-gradient(180deg, #F6F2EC 0%, #F9ECE8 100%)",
+            "radial-gradient(circle at 90% 6%, rgba(124,154,134,0.30), transparent 34%), radial-gradient(circle at 8% 94%, rgba(85,107,90,0.18), transparent 38%), linear-gradient(180deg, #F6F2EC 0%, #E6DED1 100%)",
         }}
       >
-          <div className="absolute inset-0 bg-[#E6DED1]/15" />
+          <div className="absolute inset-0 bg-[#E6DED1]/10" />
       </div>
 
       {!hideHeader && (

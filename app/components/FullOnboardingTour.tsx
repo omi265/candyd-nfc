@@ -70,7 +70,7 @@ export default function FullOnboardingTour() {
   const steps: Step[] = [
     {
       title: "The Magic of Scanning",
-      description: "Experience the seamless connection between the physical and digital. Simply tap your phone to any Our DVE charm to instantly unlock its stories and secrets.",
+      description: "Experience the seamless connection between the physical and digital. Simply tap your phone to any Our Dve charm to instantly unlock its stories and secrets.",
       mockScreen: (
         <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-[#F6F2EC] relative overflow-hidden">
           {/* NFC Waves Animation */}
@@ -93,7 +93,7 @@ export default function FullOnboardingTour() {
 
           {/* Charm */}
           <div className="w-24 h-24 bg-[#556B5A] rounded-[24px] flex items-center justify-center mb-12 shadow-xl relative z-10">
-             <img src="/green_logo.png" alt="Candyd" className="w-16 h-16 invert" />
+             <img src="/green_logo.png" alt="Our Dve" className="w-16 h-16 invert" />
           </div>
 
           {/* Phone Tapping Animation */}

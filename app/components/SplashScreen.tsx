@@ -74,7 +74,7 @@ export default function SplashScreen({ isLoading }: { isLoading: boolean }) {
                         <div className="relative z-10 flex flex-col items-center">
                             <Image 
                                 src="/green_logo.png" 
-                                alt="Candyd" 
+                                alt="Our Dve" 
                                 width={140} 
                                 height={140} 
                                 className="drop-shadow-sm grayscale-[0.2]"

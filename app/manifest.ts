@@ -3,9 +3,9 @@ import type { MetadataRoute } from 'next'
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: 'com.ourdve.nfc.app',
-    name: 'OUR DVE',
-    short_name: 'OUR DVE',
-    description: 'OUR DVE uses NFC technology to link your physical products to digital experiences.',
+    name: 'Our Dve',
+    short_name: 'Our Dve',
+    description: 'Our Dve uses NFC technology to link your physical products to digital experiences.',
     start_url: '/',
     scope: '/',
     display: 'standalone',

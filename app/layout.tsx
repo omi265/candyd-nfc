@@ -17,15 +17,15 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "OUR DVE | Relive Your Experiences",
-  description: "OUR DVE uses NFC technology to link physical products to digital experiences.",
-  keywords: ["OUR DVE", "NFC", "Memories", "Digital Experiences", "Bucket List"],
-  authors: [{ name: "OUR DVE Team" }],
+  title: "Our Dve | Relive Your Experiences",
+  description: "Our Dve uses NFC technology to link physical products to digital experiences.",
+  keywords: ["Our Dve", "NFC", "Memories", "Digital Experiences", "Bucket List"],
+  authors: [{ name: "Our Dve Team" }],
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "OUR DVE",
+    title: "Our Dve",
   },
   other: {
     "mobile-web-app-capable": "yes",
