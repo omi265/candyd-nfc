@@ -143,7 +143,7 @@ export async function createProduct(
 export async function generateBatchProducts(
     type: "LIFE" | "HABIT",
     count: number,
-    baseName: string = "Candyd Charm"
+    baseName: string = "Our Dve Charm"
 ) {
     const session = await getSession();
     if (session?.user?.role !== "ADMIN") {
