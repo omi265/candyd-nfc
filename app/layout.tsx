@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins, Outfit } from "next/font/google";
+import { Poppins } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import ClientLayout from "./components/ClientLayout";
@@ -12,10 +13,26 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+const allrounderMonument = localFont({
+  src: [
+    {
+      path: "../public/fonts/allroundermonumenttest-regular.otf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/allroundermonumenttest-book.otf",
+      weight: "350",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/allroundermonumenttest-medium.otf",
+      weight: "500",
+      style: "normal",
+    },
+  ],
+  variable: "--font-allrounder",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -56,7 +73,7 @@ export default async function RootLayout({
     const session = await auth();
   
   return (
-    <html lang="en" className={`${poppins.variable} ${outfit.variable} ${poppins.className} antialiased`}>
+    <html lang="en" className={`${poppins.variable} ${allrounderMonument.variable} ${poppins.className} antialiased`}>
       <body>
         <AuthProvider session={session}>
             <ClientLayout>{children}</ClientLayout>
