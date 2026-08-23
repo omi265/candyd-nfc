@@ -28,7 +28,7 @@ export function HabitCharmDrawer({ product, open, onOpenChange }: HabitCharmDraw
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-[#F6F2EC]/45 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] font-[Outfit]">
+      <DrawerContent className="bg-[#F6F2EC]/45 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] ">
         <DrawerHeader className="sr-only">
             <DrawerTitle>Habit Charm</DrawerTitle>
             <DrawerDescription>{activeHabit ? "Track your habit" : "Setup your habit"}</DrawerDescription>

@@ -36,7 +36,7 @@ export default function SupportPage() {
     };
 
     return (
-        <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 font-[Outfit]">
+        <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 ">
             <div className="max-w-md w-full bg-white rounded-[32px] p-8 shadow-sm">
                 <div className="flex flex-col items-center text-center mb-8">
                     <div className="w-16 h-16 bg-[#F2E6DE] rounded-full flex items-center justify-center mb-4 text-[#556B5A]">

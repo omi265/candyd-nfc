@@ -171,7 +171,7 @@ function MemoryCard({
                 className="relative z-10 text-center mb-6"
                 style={{ opacity: titleOpacity }}
             >
-                 <h3 className={`text-2xl font-bold font-[Outfit] ${item.mediaType === 'audio' ? 'text-[#556B5A]' : 'text-white'}`}>{item.title}</h3>
+                 <h3 className={`text-2xl font-bold  ${item.mediaType === 'audio' ? 'text-[#556B5A]' : 'text-white'}`}>{item.title}</h3>
                  <p className={`text-sm mt-1 ${item.mediaType === 'audio' ? 'text-[#556B5A]/70' : 'text-white/80'}`}>{item.date}</p>
              </motion.div>
         </motion.div>
@@ -218,7 +218,7 @@ function EmptyCard({
                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 shadow-sm bg-[#E6DED1]`}>
                     <Plus className="w-8 h-8 text-[#556B5A]" />
                  </div>
-                 <span className="text-[#556B5A] font-medium font-[Outfit]">Add a Memory</span>
+                 <span className="text-[#556B5A] font-medium ">Add a Memory</span>
              </motion.div>
         </motion.div>
     )
@@ -248,7 +248,7 @@ function ListMemoryCard({ item, onClick }: { item: Extract<GridItemType, { type:
             </div>
 
             <div className="pt-2 pb-1">
-                 <h3 className="text-[#556B5A] font-bold text-lg leading-tight font-[Outfit]">{item.title}</h3>
+                 <h3 className="text-[#556B5A] font-bold text-lg leading-tight ">{item.title}</h3>
                  <p className="text-[#556B5A]/60 text-xs mt-1">{item.date}</p>
             </div>
         </div>
@@ -707,7 +707,7 @@ export default function HomeContent({ initialMemories, people = [], user, forced
                      <div className="w-12 h-12 rounded-full bg-[#556B5A]/10 flex items-center justify-center mb-2">
                         <Plus className="w-6 h-6 text-[#556B5A]" />
                      </div>
-                     <span className="text-[#556B5A] font-medium font-[Outfit] text-sm">Add New</span>
+                     <span className="text-[#556B5A] font-medium  text-sm">Add New</span>
                 </div>
             </div>
         </div>

@@ -132,7 +132,7 @@ function RitualTimerOverlay() {
       </AnimatePresence>
 
       <Drawer open={isPlayerOpen} onOpenChange={(open) => !open && closePlayer()} repositionInputs={true}>
-        <DrawerContent className="bg-[#F6F2EC]/60 backdrop-blur-3xl border-none font-[Outfit] h-[100dvh] max-h-[100dvh] rounded-none z-[100] overflow-hidden flex flex-col">
+        <DrawerContent className="bg-[#F6F2EC]/60 backdrop-blur-3xl border-none  h-[100dvh] max-h-[100dvh] rounded-none z-[100] overflow-hidden flex flex-col">
           {/* Background Decorative Shapes */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl transform translate-x-20 -translate-y-20 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl transform -translate-x-10 translate-y-10 pointer-events-none" />

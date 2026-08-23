@@ -57,7 +57,7 @@ export default function SettingsPage() {
     if (isLoading) return <div className="min-h-screen bg-transparent flex items-center justify-center">Loading...</div>;
 
     return (
-        <div className="min-h-screen bg-transparent font-[Outfit]">
+        <div className="min-h-screen bg-transparent ">
             <main className="px-6 pb-12">
                 <h1 className="text-[#3A4B3E] text-3xl font-bold mb-8">Settings</h1>
 

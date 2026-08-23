@@ -366,7 +366,7 @@ function MemoryUploadContent() {
     const hasMedia = mediaItems.length > 0;
 
     return (
-        <div className="flex flex-col h-full bg-transparent font-[Outfit] relative overflow-x-hidden">
+        <div className="flex flex-col h-full bg-transparent  relative overflow-x-hidden">
              <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-[#F6F2EC] to-transparent z-10 pointer-events-none"></div>
 
              <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-6 pb-12 overflow-x-hidden">

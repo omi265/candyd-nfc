@@ -173,7 +173,7 @@ export default function LifeCharmSetupPage() {
   if (!charmId) return null;
 
   return (
-    <div className="relative w-full h-full min-h-0 bg-[#F6F2EC] flex flex-col font-[family-name:var(--font-outfit)] overflow-hidden">
+    <div className="relative w-full h-full min-h-0 bg-[#F6F2EC] flex flex-col  overflow-hidden">
        {phase === "swipe" ? (
           <div className="flex-1 min-h-0 flex flex-col items-center justify-between py-4 sm:py-6 px-6 overflow-hidden">
              <header className="text-center w-full mx-auto max-w-sm shrink-0 bg-white/40 backdrop-blur-xl p-3 sm:p-4 rounded-3xl border border-white/50 shadow-sm z-20">

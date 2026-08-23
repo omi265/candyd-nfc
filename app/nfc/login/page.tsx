@@ -230,7 +230,7 @@ function ShowcaseGallery({ publicData, onUnlock, onCamera, onUpload, token, onIt
     };
 
     return (
-        <div className="flex flex-col h-dvh relative overflow-hidden bg-transparent font-[Outfit]">
+        <div className="flex flex-col h-dvh relative overflow-hidden bg-transparent ">
             <div className="absolute top-0 left-0 right-0 z-30 pt-8 px-6 text-center pointer-events-none">
                 <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="inline-block px-4 py-2 bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 shadow-lg pointer-events-auto">
                     <h1 className="text-xl font-black text-[#556B5A] uppercase tracking-tight">{publicData.name}</h1>
@@ -507,7 +507,7 @@ function NFCLoginContent() {
 
   const renderContent = () => {
     if (!token) return (
-      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
+      <div className="h-dvh flex items-center justify-center bg-transparent ">
         <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><Zap className="w-8 h-8 text-red-500" /></div>
           <h2 className="text-xl font-bold text-[#556B5A] mb-2">Access Denied</h2>
@@ -517,7 +517,7 @@ function NFCLoginContent() {
     );
 
     if (isLoading && !needsPassword && !isSetupMode && !isUnassigned) return (
-      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
+      <div className="h-dvh flex items-center justify-center bg-transparent ">
           <div className="text-center"><Loader2 className="w-10 h-10 text-[#556B5A] animate-spin mx-auto mb-4" /><p className="text-[#556B5A] font-medium animate-pulse">{status}</p></div>
       </div>
     );
@@ -534,7 +534,7 @@ function NFCLoginContent() {
     );
 
     if (isUnassigned && ownerInfo) return (
-      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
+      <div className="h-dvh flex items-center justify-center bg-transparent  p-4 text-center">
           <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
               {ownerInfo.canGuestUpload && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#7C9A86] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#556B5A] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
               <div className="w-16 h-16 bg-[#7C9A86]/20 rounded-2xl flex items-center justify-center mx-auto mb-6"><Sparkles className="w-8 h-8 text-[#7C9A86]" /></div>
@@ -552,7 +552,7 @@ function NFCLoginContent() {
     );
 
     if (isSetupMode && ownerInfo) return (
-      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
+      <div className="h-dvh flex items-center justify-center bg-transparent  p-4 text-center">
           <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
               {ownerInfo.canGuestUpload && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#7C9A86] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#556B5A] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
               <div className="w-12 h-12 bg-[#F2E6DE] rounded-full flex items-center justify-center mx-auto mb-6 mt-4"><Zap className="w-6 h-6 text-[#556B5A]" /></div>
@@ -569,7 +569,7 @@ function NFCLoginContent() {
     );
 
     if (needsPassword && ownerInfo) return (
-      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit] p-4 text-center">
+      <div className="h-dvh flex items-center justify-center bg-transparent  p-4 text-center">
           <div className="bg-white/60 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full border border-white/50 relative overflow-hidden">
               {ownerInfo.canGuestUpload && <div className="absolute top-0 right-0"><button onClick={() => setShowCamera(true)} className="bg-[#7C9A86] text-white px-4 py-2 rounded-bl-2xl flex items-center gap-2 hover:bg-[#556B5A] transition-colors shadow-sm"><Camera className="w-4 h-4" /><span className="text-[10px] font-bold uppercase tracking-wider">Quick Snap</span></button></div>}
               <div className="w-12 h-12 bg-[#F2E6DE] rounded-full flex items-center justify-center mx-auto mb-6 mt-4"><Lock className="w-6 h-6 text-[#556B5A]" /></div>
@@ -585,7 +585,7 @@ function NFCLoginContent() {
     );
 
     return (
-      <div className="h-dvh flex items-center justify-center bg-transparent font-[Outfit]">
+      <div className="h-dvh flex items-center justify-center bg-transparent ">
         <div className="bg-white/40 backdrop-blur-xl p-8 rounded-[32px] shadow-lg max-w-sm w-full text-center border border-white/50 relative overflow-hidden">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 mt-4"><Zap className="w-8 h-8 text-red-500" /></div>
           <h2 className="text-xl font-bold text-[#556B5A] mb-2">Access Denied</h2>
@@ -596,7 +596,7 @@ function NFCLoginContent() {
   };
 
   return (
-    <div className="h-dvh bg-transparent font-[Outfit] relative">
+    <div className="h-dvh bg-transparent  relative">
         {renderContent()}
 
         {/* --- Global Overlays (Rendered outside conditional logic to maintain state) --- */}

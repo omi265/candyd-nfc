@@ -87,7 +87,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 font-[family-name:var(--font-outfit)]">
+    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 ">
       <div className="w-full max-w-md space-y-8 rounded-3xl border border-white/50 bg-white/40 p-8 shadow-sm backdrop-blur-xl">
         <div className="flex flex-col items-center text-center">
           <div className="relative -mb-4 flex h-64 w-64 items-center justify-center">

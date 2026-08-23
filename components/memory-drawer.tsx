@@ -80,7 +80,7 @@ export function MemoryDrawer({ memory, open, onOpenChange, people = [], onEdit, 
 
     return (
         <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerContent className="bg-[#F6F2EC]/45 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] font-[Outfit]">
+            <DrawerContent className="bg-[#F6F2EC]/45 backdrop-blur-xl border-t border-white/30 max-h-[96vh] h-full rounded-t-[32px] ">
                 
                  <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
                     <DrawerHeader className="p-0">

@@ -85,7 +85,7 @@ export default function ItemDetailClient({
   const heroMedia = item.experience?.media?.[0];
 
   return (
-    <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
+    <div className="min-h-dvh bg-transparent flex flex-col ">
       {/* Hero Section */}
       <div className="relative">
         {/* Background */}

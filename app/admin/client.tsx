@@ -93,7 +93,7 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
                 max={50}
                 value={batchCount}
                 onChange={(e) => setBatchCount(parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white border border-[#E6DED1] rounded-xl focus:ring-2 focus:ring-[#556B5A] outline-none text-[#556B5A] font-[Outfit]"
+                className="w-full px-4 py-3 bg-white border border-[#E6DED1] rounded-xl focus:ring-2 focus:ring-[#556B5A] outline-none text-[#556B5A] "
             />
           </div>
       ) : (
@@ -108,11 +108,11 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
                 required={mode === "EXISTING"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-[#E6DED1] rounded-xl focus:ring-2 focus:ring-[#556B5A] outline-none text-[#556B5A] appearance-none font-[Outfit]"
+                className="w-full px-4 py-3 bg-white border border-[#E6DED1] rounded-xl focus:ring-2 focus:ring-[#556B5A] outline-none text-[#556B5A] appearance-none "
                 >
-                <option value="" className="font-[Outfit]">-- Choose a user --</option>
+                <option value="" className="">-- Choose a user --</option>
                 {users.map((user) => (
-                    <option key={user.id} value={user.email} className="font-[Outfit]">
+                    <option key={user.id} value={user.email} className="">
                     {user.name} ({user.email})
                     </option>
                 ))}
@@ -124,7 +124,7 @@ export function AdminDashboardClient({ users = [] }: { users: any[] }) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter new user email..."
-                    className="w-full px-4 py-3 bg-white border border-[#E6DED1] rounded-xl focus:ring-2 focus:ring-[#556B5A] outline-none text-[#556B5A] font-[Outfit]"
+                    className="w-full px-4 py-3 bg-white border border-[#E6DED1] rounded-xl focus:ring-2 focus:ring-[#556B5A] outline-none text-[#556B5A] "
                 />
             )}
           </div>

@@ -193,7 +193,7 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 font-[family-name:var(--font-outfit)]">
+    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 ">
         <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin text-primary-green-dark" />}>
             <ResetPasswordContent />
         </Suspense>

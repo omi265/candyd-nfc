@@ -38,7 +38,7 @@ export default function ProfilePage() {
     if (isLoading) return <div className="min-h-screen bg-transparent flex items-center justify-center">Loading...</div>;
 
     return (
-        <div className="min-h-screen bg-transparent font-[Outfit] text-[#556B5A]">
+        <div className="min-h-screen bg-transparent  text-[#556B5A]">
              {/* Header */}
              <header className="flex items-center justify-between px-6 py-6">
                 <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">

@@ -19,7 +19,7 @@ export default function LoginPage() {
   }, [errorMessage]);
   
   return (
-    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 font-[family-name:var(--font-outfit)]">
+    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 ">
       <div className="w-full max-w-md space-y-8 bg-white/40 backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-white/50">
         <div className="flex flex-col items-center text-center">
             <div className="w-64 h-64 -mb-4 relative flex items-center justify-center">

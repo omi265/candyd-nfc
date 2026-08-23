@@ -238,7 +238,7 @@ export default function EditExperienceClient({
   };
 
   return (
-    <div className="min-h-dvh bg-transparent flex flex-col font-[Outfit]">
+    <div className="min-h-dvh bg-transparent flex flex-col ">
       {/* Header */}
       <header className="flex items-center gap-4 px-6 py-4 border-b border-[#556B5A]/10 bg-[#F6F2EC]">
         <button

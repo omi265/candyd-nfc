@@ -115,7 +115,7 @@ export default function HabitSetup({ product }: { product: Product }) {
     };
 
     return (
-        <div className="min-h-dvh bg-[#F6F2EC] flex flex-col font-[Outfit] relative overflow-hidden">
+        <div className="min-h-dvh bg-[#F6F2EC] flex flex-col  relative overflow-hidden">
             {/* Background Decorative Shapes */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl transform translate-x-20 -translate-y-20 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform -translate-x-10 translate-y-10 pointer-events-none" />

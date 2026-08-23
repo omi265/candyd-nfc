@@ -177,7 +177,7 @@ export default function CameraCapture({ token, onClose, onSuccess }: CameraCaptu
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-between font-[Outfit]"
+      className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-between "
     >
       {/* Header */}
       <div className="w-full p-6 flex justify-between items-center z-10">

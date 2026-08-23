@@ -98,7 +98,7 @@ export default function AccountSettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-transparent font-[Outfit] text-[#556B5A] relative">
+        <div className="min-h-screen bg-transparent  text-[#556B5A] relative">
              {/* Header */}
              <header className="flex items-center justify-between px-6 py-6">
                 <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">

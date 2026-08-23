@@ -63,7 +63,7 @@ export default function ProductsPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-transparent font-[Outfit] pb-24">
+    <div className="min-h-screen bg-transparent  pb-24">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-[#F6F2EC]/80 backdrop-blur-xl border-b border-[#556B5A]/5 px-6 py-4 flex items-center justify-between">
         <button

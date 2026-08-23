@@ -326,7 +326,7 @@ function GifterUploadContent() {
     if (error) return <div className="h-dvh flex flex-col items-center justify-center p-6 text-center bg-[#F6F2EC]"><Zap className="w-8 h-8 text-red-500 mb-4" /><h2 className="text-xl font-bold">{error}</h2></div>;
 
     return (
-        <div className="flex flex-col h-full bg-[#F6F2EC] font-[Outfit] relative overflow-hidden">
+        <div className="flex flex-col h-full bg-[#F6F2EC]  relative overflow-hidden">
             <AnimatePresence mode="wait">
                 {viewMode === 'upload' ? (
                     <motion.div 

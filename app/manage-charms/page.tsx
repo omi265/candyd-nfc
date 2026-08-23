@@ -164,7 +164,7 @@ export default function ManageCharmsPage() {
     const percentUsed = stats ? Math.min(Math.round((stats.memoryCount / stats.limit) * 100), 100) : 0;
 
     return (
-        <div className="min-h-screen bg-transparent font-[Outfit] pb-12 relative">
+        <div className="min-h-screen bg-transparent  pb-12 relative">
             <main className="px-6">
                 {/* Charm Selector */}
                 <div className="mb-8 w-full overflow-hidden">

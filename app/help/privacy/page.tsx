@@ -7,7 +7,7 @@ export default function PrivacyPage() {
     const router = useRouter();
 
     return (
-        <div className="min-h-screen bg-transparent font-[Outfit] text-[#556B5A] pb-12">
+        <div className="min-h-screen bg-transparent  text-[#556B5A] pb-12">
             <header className="sticky top-0 z-30 bg-[#F6F2EC]/80 backdrop-blur-xl border-b border-[#556B5A]/5 px-6 py-4 flex items-center gap-4">
                 <button
                     onClick={() => router.back()}

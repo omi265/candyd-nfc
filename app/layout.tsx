@@ -1,19 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Outfit } from "next/font/google";
+import { Poppins, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import ClientLayout from "./components/ClientLayout";
 import { Toaster } from "sonner";
 import { auth } from "@/auth";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -54,7 +56,7 @@ export default async function RootLayout({
     const session = await auth();
   
   return (
-    <html lang="en" className={`${outfit.variable} ${geistSans.variable} ${outfit.className} antialiased`}>
+    <html lang="en" className={`${poppins.variable} ${outfit.variable} ${poppins.className} antialiased`}>
       <body>
         <AuthProvider session={session}>
             <ClientLayout>{children}</ClientLayout>
